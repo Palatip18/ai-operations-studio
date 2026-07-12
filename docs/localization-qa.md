@@ -58,3 +58,12 @@ After the assistant answered a withdrawal question, the customer corrected it wi
 ## Regression coverage
 
 Automated tests reproduce the exact Thai correction, verify `deposit_withdrawal` intent, confirm `DEPOSIT / NEEDS_REFERENCE`, prohibit a withdrawal-reference response, and confirm that no handoff is created before the required deposit reference is supplied.
+
+## Thai customer-service voice
+
+- Customer-facing Thai uses a friendly female-admin voice with natural `ค่ะ` / `นะคะ` phrasing.
+- The opening message is concise: customers are invited to describe the issue without instructions about how to use the chat UI.
+- Account lookup requests ask for `ยูสเซอร์หรือเบอร์โทรที่ลงทะเบียนไว้` conversationally.
+- Transaction replies are tailored to queued withdrawals, bank settlement periods, completed records, and promotion-turnover restrictions.
+- Customer-facing cards hide `simulated`, API, confidence, and internal back-office terminology; those details remain available in Internal AI Operations.
+- Tests prohibit rigid phrases such as `เจ้าหน้าที่มนุษย์` and internal system wording in customer replies.

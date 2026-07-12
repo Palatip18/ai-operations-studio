@@ -8,7 +8,9 @@ describe("response composer", () => {
 
   it("creates natural Thai demo-queue wording without callback promises", async () => {
     const reply = await composeCustomerResponse({ message: "ยอดเงินผิด", intent: "billing_payment", risk: "HIGH", decision: "ESCALATE", escalationReason: "dispute", evidence: "", locale: "th", tone: "urgent", handoffId: "DEMO-CS-123" });
-    expect(reply).toContain("เคสจำลอง");
+    expect(reply).toContain("แอดมิน");
+    expect(reply).toContain("ค่ะ");
+    expect(reply).not.toMatch(/ระบบ|จำลอง|เจ้าหน้าที่มนุษย์/);
     expect(reply).toContain("DEMO-CS-123");
     expect(reply).not.toMatch(/เจ้าหน้าที่มนุษย์|ติดต่อกลับ|ประสานงานให้เรียบร้อย/);
   });

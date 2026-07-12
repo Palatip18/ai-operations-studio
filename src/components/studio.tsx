@@ -1726,9 +1726,8 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
         {!customer && !verificationLoading && !submittedMessage && history.length === 0 && (
           <div className="max-w-[95%] rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] p-4 sm:max-w-[85%]">
             <div className="text-sm leading-6 text-foreground">
-              {locale === "th" ? "สวัสดีครับ สอบถามข้อมูลทั่วไป โปรโมชั่น หรือปัญหาเกมได้เลย หากต้องการตรวจสอบรายการฝาก–ถอน ผมจะขอ User ID ในบทสนทนา และคุณสามารถพิมพ์ตอบในช่องแชตได้เลยครับ" : locale === "zh" ? "您好，您可以直接咨询一般信息、促销或游戏问题。如需查询存款或提款，我会在对话中询问 User ID，您直接在聊天框回复即可。" : "Hello. Ask general, promotion, or game questions right away. If a deposit or withdrawal lookup is needed, I’ll ask for the User ID in the conversation—just reply in the normal chat box."}
+              {locale === "th" ? "สวัสดีค่ะ ลูกค้ามีอะไรให้แอดมินช่วย แจ้งได้เลยนะคะ" : locale === "zh" ? "您好，请问有什么可以帮您？" : "Hello. How can I help you today?"}
             </div>
-            <p className="mt-2 text-xs text-muted/55">Demo User: USER-RAY01 · USER-MALI02</p>
           </div>
         )}
         {customer && history.length === 0 && !submittedMessage && !errorText && (
@@ -1799,7 +1798,7 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
                   className="kb-focusable mt-2 block min-h-[44px] w-full rounded-lg border border-white/10 bg-black/20 p-2 text-xs text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:font-semibold file:text-[#07101F]"
                 />
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-[11px] text-muted/55">PNG/JPEG · max 3 MB · simulated OCR · not stored</p>
+                  <p className="text-[11px] text-muted/55">{customerView ? "PNG/JPEG · ไม่เกิน 3 MB" : "PNG/JPEG · max 3 MB · simulated OCR · not stored"}</p>
                   <button type="submit" disabled={!slipFile || slipLoading} className="kb-focusable min-h-[40px] rounded-lg bg-accent px-4 text-xs font-semibold text-[#07101F] disabled:opacity-50">
                     {slipLoading ? copy.checking : locale === "th" ? "สแกนและตรวจสลิป" : locale === "zh" ? "扫描并验证" : "Scan and verify"}
                   </button>
@@ -1811,14 +1810,14 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
             {slipResult && (
               <div className={`rounded-xl border p-4 text-sm ${slipResult.verification.status === "VERIFIED" ? "border-success/25 bg-success/5" : "border-warning/25 bg-warning/5"}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-semibold text-foreground">{locale === "th" ? "ผลตรวจสลิปแบบจำลอง" : locale === "zh" ? "模拟凭证验证结果" : "Simulated slip verification"}</p>
-                  <span className={`rounded px-2 py-1 font-mono text-[10px] font-semibold ${slipResult.verification.status === "VERIFIED" ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>{slipResult.verification.status}</span>
+                  <p className="font-semibold text-foreground">{locale === "th" ? "ผลตรวจสอบสลิป" : locale === "zh" ? "凭证验证结果" : "Slip verification result"}</p>
+                  <span className={`rounded px-2 py-1 font-mono text-[10px] font-semibold ${slipResult.verification.status === "VERIFIED" ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>{customerView && locale === "th" ? slipResult.verification.status === "VERIFIED" ? "ตรวจสอบผ่าน" : slipResult.verification.status === "DUPLICATE" ? "สลิปซ้ำ" : "ตรวจสอบไม่ผ่าน" : slipResult.verification.status}</span>
                 </div>
                 <div className="mt-3 grid gap-2 text-xs text-muted sm:grid-cols-2">
                   <p>Slip: <span className="font-mono text-foreground">{slipResult.verification.slipReference}</span></p>
                   <p>{locale === "th" ? "ยอดที่สกัดได้" : locale === "zh" ? "识别金额" : "Extracted amount"}: <span className="text-foreground">{slipResult.verification.extracted.amount?.toLocaleString() ?? "—"} THB</span></p>
-                  <p>{locale === "th" ? "ความมั่นใจ" : locale === "zh" ? "置信度" : "Confidence"}: <span className="text-foreground">{Math.round(slipResult.verification.confidence * 100)}%</span></p>
-                  <p>Back office: <span className="font-mono text-foreground">{slipResult.reconciliation.status}</span></p>
+                  {!customerView && <p>{locale === "th" ? "ความมั่นใจ" : locale === "zh" ? "置信度" : "Confidence"}: <span className="text-foreground">{Math.round(slipResult.verification.confidence * 100)}%</span></p>}
+                  {!customerView && <p>Back office: <span className="font-mono text-foreground">{slipResult.reconciliation.status}</span></p>}
                 </div>
                 {slipResult.reconciliation.backofficeReference && <p className="mt-3 text-xs text-muted">{copy.reference}: <span className="font-mono text-accent-secondary">{slipResult.reconciliation.backofficeReference}</span></p>}
                 <p className="mt-3 text-[11px] leading-5 text-muted/55">{slipResult.verification.reason}</p>
@@ -1829,7 +1828,7 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
               <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <p className="font-semibold text-foreground">
-                    {locale === "th" ? "สถานะรายการจากระบบหลังบ้าน" : locale === "zh" ? "后台交易状态" : "Back-office transaction status"}
+                    {customerView && locale === "th" ? "สถานะรายการ" : locale === "th" ? "สถานะรายการจากระบบหลังบ้าน" : locale === "zh" ? "后台交易状态" : "Back-office transaction status"}
                   </p>
                   <span className={`rounded px-2 py-1 font-mono text-[10px] font-semibold ${result.transaction.reviewRequired ? "bg-warning/15 text-warning" : "bg-success/15 text-success"}`}>
                     {result.transaction.status}
@@ -1840,7 +1839,7 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
                   <p>{locale === "th" ? "ประเภท" : locale === "zh" ? "类型" : "Type"}: <span className="text-foreground">{result.transaction.kind}</span></p>
                   {result.transaction.amount !== undefined && <p>{locale === "th" ? "ยอดเงิน" : locale === "zh" ? "金额" : "Amount"}: <span className="text-foreground">{result.transaction.amount.toLocaleString()} {result.transaction.currency}</span></p>}
                 </div>
-                <p className="mt-3 text-[11px] text-muted/60">{copy.simulated} · API response</p>
+                {!customerView && <p className="mt-3 text-[11px] text-muted/60">{copy.simulated} · API response</p>}
               </div>
             )}
 
@@ -1850,9 +1849,9 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-foreground">{copy.handoffCreated}</span>
-                    <span className="rounded bg-accent/20 px-2 py-0.5 font-mono text-[9px] text-accent font-semibold uppercase tracking-wider">
+                    {!customerView && <span className="rounded bg-accent/20 px-2 py-0.5 font-mono text-[9px] text-accent font-semibold uppercase tracking-wider">
                       {copy.simulated}
-                    </span>
+                    </span>}
                   </div>
                   <span className="font-mono text-xs bg-success/20 text-success px-2 py-0.5 rounded font-semibold">
                     {result.handoff.status}

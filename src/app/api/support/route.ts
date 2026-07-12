@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const verifiedCustomer = findDemoCustomer(message);
     if (!verifiedCustomer) {
       const thai = previousUserMessages.some((item) => /\p{Script=Thai}/u.test(item));
-      const answer = thai ? "ขออภัยครับ ไม่พบ User ID นี้ในระบบตัวอย่าง กรุณาตรวจสอบแล้วพิมพ์ใหม่อีกครั้ง เช่น USER-RAY01" : "Sorry, that User ID was not found in the demo system. Please check it and try again, for example USER-RAY01.";
+      const answer = thai ? "ขออภัยค่ะ แอดมินยังไม่พบยูสเซอร์นี้ รบกวนลูกค้าตรวจสอบแล้วแจ้งเข้ามาใหม่อีกครั้งนะคะ" : "Sorry, that User ID was not found. Please check it and try again.";
       return NextResponse.json(verificationOnlyResult(answer, true));
     }
 
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
       : verificationOnlyResult(`User ${verifiedCustomer.userId} verified for this chat session. How can I help?`, false);
     const thai = Boolean(pendingMessage && /\p{Script=Thai}/u.test(pendingMessage));
     result.answer = thai
-      ? `ยืนยัน User ${verifiedCustomer.userId} เรียบร้อยแล้วครับ ${result.answer}`
+      ? `ได้ค่ะ แอดมินตรวจสอบยูสเซอร์ ${verifiedCustomer.userId} เรียบร้อยแล้วนะคะ ${result.answer}`
       : `User ${verifiedCustomer.userId} is verified for this chat session. ${result.answer}`;
     result.trace.customerScope = verifiedCustomer.userId;
     const response = NextResponse.json(result);

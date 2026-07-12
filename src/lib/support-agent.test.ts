@@ -115,7 +115,7 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     const deposit = await runSupportAgent("ฝากเงินรายการ DEP-1002 สำเร็จแล้ว แต่เครดิตยังไม่เข้า", [], "USER-RAY01");
     expect(deposit.trace.intent).toBe("deposit_withdrawal");
     expect(deposit.trace.decision).toBe("ESCALATE");
-    expect(deposit.answer).toContain("ตรวจสอบธุรกรรม");
+    expect(deposit.answer).toContain("ตรวจสอบเพิ่มเติม");
 
     const withdrawal = await runSupportAgent("รายการ WDL-2002 แสดงว่าถอนเงินสำเร็จแล้ว แต่เงินยังไม่เข้าบัญชี", [], "USER-RAY01");
     expect(withdrawal.trace.intent).toBe("deposit_withdrawal");
@@ -144,7 +144,7 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     expect(transaction.customerVerificationRequired).toBe(true);
     expect(transaction.trace.decision).toBe("AUTO_RESPOND");
     expect(transaction.handoff).toBeNull();
-    expect(transaction.answer).toContain("User ID");
+    expect(transaction.answer).toContain("ยูสเซอร์");
 
     const promotion = await runSupportAgent("โปรโมชั่นสมาชิกใหม่มีเงื่อนไขอะไรบ้าง");
     expect(promotion.customerVerificationRequired).toBe(false);

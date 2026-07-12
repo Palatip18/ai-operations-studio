@@ -192,7 +192,7 @@ describe("agent trace redaction", () => {
     const verifiedBody = await verify.json();
     expect(verifiedBody.trace.customerScope).toBe("USER-RAY01");
     expect(verifiedBody.slipUploadRequired).toBe(true);
-    expect(verifiedBody.answer).toContain("ยืนยัน User USER-RAY01");
+    expect(verifiedBody.answer).toContain("ตรวจสอบยูสเซอร์ USER-RAY01");
   });
 });
 

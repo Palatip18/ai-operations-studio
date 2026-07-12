@@ -129,7 +129,7 @@ export async function normalizeSupportInput(text: string): Promise<{ language: S
 
 export async function localizeSupportAnswer(text: string, language: SupportedLanguage): Promise<string> {
   if (language === "en") return text;
-  const translated = await translate(text, language === "th" ? "Translate this grounded support response into natural Thai." : "Translate this grounded support response into Simplified Chinese.");
+  const translated = await translate(text, language === "th" ? "Rewrite this grounded support response as concise, natural Thai online customer support. Speak as a friendly female admin, call the user ลูกค้า when useful, and use ค่ะ/นะคะ naturally. Do not expose system terms, source placeholders, or internal policy language." : "Translate this grounded support response into natural Simplified Chinese customer-support language.");
   if (translated) return translated;
   return language === "th"
     ? `ขณะนี้เดโมแบบออฟไลน์ยังใช้เอกสารอ้างอิงภาษาอังกฤษ: ${text}`

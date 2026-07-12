@@ -51,10 +51,10 @@ export function lookupSimulatedTransaction(message: string, customerUserId: stri
 export function composeTransactionStatusReply(result: BackofficeTransactionResult, locale: string): string {
   if (result.status === "NEEDS_REFERENCE") {
     if (locale === "th") return result.kind === "DEPOSIT"
-      ? "เข้าใจแล้วครับ เป็นรายการฝากเงินที่เครดิตยังไม่เข้า กรุณาส่งหมายเลขอ้างอิงการฝากรูปแบบ DEP-1001 เพื่อตรวจสอบสถานะ โดยไม่ต้องส่งเลขบัญชีเต็ม รหัสผ่าน หรือ OTP"
+      ? "รับทราบค่ะ รบกวนลูกค้าแจ้งหมายเลขอ้างอิงการฝากให้แอดมินหน่อยนะคะ"
       : result.kind === "WITHDRAWAL"
-        ? "เข้าใจแล้วครับ เป็นรายการถอนเงิน กรุณาส่งหมายเลขอ้างอิงการถอนรูปแบบ WDL-2001 เพื่อตรวจสอบสถานะ โดยไม่ต้องส่งเลขบัญชีเต็ม รหัสผ่าน หรือ OTP"
-        : "ขอหมายเลขอ้างอิงรายการก่อนนะครับ เช่น DEP-1001 สำหรับฝากเงิน หรือ WDL-2001 สำหรับถอนเงิน โดยไม่ต้องส่งเลขบัญชีเต็ม รหัสผ่าน หรือ OTP";
+        ? "รับทราบค่ะ รบกวนลูกค้าแจ้งหมายเลขอ้างอิงการถอนให้แอดมินหน่อยนะคะ"
+        : "ได้ค่ะ รบกวนลูกค้าแจ้งหมายเลขอ้างอิงรายการให้แอดมินหน่อยนะคะ";
     if (locale === "zh") return result.kind === "DEPOSIT"
       ? "明白了，这是存款未到账问题。请提供 DEP-1001 格式的存款编号以查询状态，请勿发送完整银行账号、密码或 OTP。"
       : result.kind === "WITHDRAWAL"
@@ -67,17 +67,26 @@ export function composeTransactionStatusReply(result: BackofficeTransactionResul
         : "Please provide the transaction reference first, such as DEP-1001 for a deposit or WDL-2001 for a withdrawal. Do not send a full bank-account number, password, or OTP.";
   }
   if (result.status === "NOT_FOUND") {
-    if (locale === "th") return `ไม่พบรายการ ${result.reference} ในระบบหลังบ้านจำลอง ระบบจึงสร้างเคสจำลองเพื่อตรวจสอบเลขอ้างอิงนี้เพิ่มเติมครับ`;
+    if (locale === "th") return `ขออภัยค่ะ แอดมินยังไม่พบรายการ ${result.reference} จึงส่งเรื่องให้ตรวจสอบเพิ่มเติมเรียบร้อยแล้วนะคะ`;
     if (locale === "zh") return `模拟后台未找到交易 ${result.reference}，系统已创建模拟审核工单以进一步核实该编号。`;
     return `Transaction ${result.reference} was not found in the simulated back office, so a demo review case has been created to verify the reference.`;
   }
   const status = `${result.reference} · ${result.status}`;
   if (result.reviewRequired) {
-    if (locale === "th") return `ตรวจพบรายการ ${status} แต่สถานะหลังบ้านไม่ตรงกับข้อมูลที่แจ้ง ระบบจึงสร้างเคสจำลองสำหรับตรวจสอบธุรกรรมเพิ่มเติมครับ`;
+    if (locale === "th") {
+      const time = result.updatedAt ? new Intl.DateTimeFormat("th-TH", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" }).format(new Date(result.updatedAt)) : null;
+      return `จากการตรวจสอบ รายการ ${result.reference} แสดงว่าสำเร็จ${time ? `เมื่อเวลา ${time} น.` : "แล้ว"} แต่ยอดยังไม่ตรงกับที่ลูกค้าแจ้ง แอดมินส่งรายการให้ตรวจสอบเพิ่มเติมเรียบร้อยแล้วค่ะ`;
+    }
     if (locale === "zh") return `已找到交易 ${status}，但后台状态与您报告的情况不一致，因此系统已创建模拟交易审核工单。`;
     return `Transaction ${status} was found, but the back-office status conflicts with the reported outcome, so a simulated transaction-review case has been created.`;
   }
-  if (locale === "th") return `ตรวจพบรายการ ${status} ในระบบหลังบ้านจำลองครับ ${result.safeReason ?? "รายการกำลังดำเนินการตามสถานะที่แสดง"}`;
+  if (locale === "th") {
+    if (result.kind === "WITHDRAWAL" && result.status === "PROCESSING") return `จากการตรวจสอบ รายการถอนเงิน ${result.reference} อยู่ในคิวแล้วนะคะ รายการอาจใช้เวลาสักครู่ ลูกค้าไม่ต้องกังวลค่ะ`;
+    if (result.kind === "DEPOSIT" && result.status === "PENDING") return `จากการตรวจสอบ รายการฝากเงิน ${result.reference} อยู่ระหว่างดำเนินการนะคะ ช่วงสรุปยอดรายวันของธนาคารอาจใช้เวลามากกว่าปกตินิดหน่อยค่ะ หากเกิน 20 นาทีแล้วยอดยังไม่เข้ายูส รบกวนลูกค้าติดต่อเข้ามาอีกครั้งนะคะ`;
+    if (result.status === "REJECTED") return `จากการตรวจสอบ รายการถอนเงิน ${result.reference} ยังดำเนินการไม่ได้ เนื่องจากยอดเทิร์นของโปรโมชั่นยังไม่ครบค่ะ รบกวนลูกค้าตรวจสอบเงื่อนไขโปรโมชั่นอีกครั้งนะคะ`;
+    if (result.status === "CREDITED" || result.status === "COMPLETED") return `จากการตรวจสอบ รายการ ${result.reference} สำเร็จเรียบร้อยแล้วค่ะ`;
+    return `จากการตรวจสอบ รายการ ${result.reference} กำลังดำเนินการอยู่นะคะ รบกวนลูกค้ารอสักครู่ค่ะ`;
+  }
   if (locale === "zh") return `已在模拟后台找到交易 ${status}。${result.safeReason ?? "交易正按所示状态处理。"}`;
   return `Transaction ${status} was found in the simulated back office. ${result.safeReason ?? "It is progressing according to the displayed status."}`;
 }

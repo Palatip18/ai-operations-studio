@@ -247,13 +247,13 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   });
   if (customerVerificationRequired) {
     safeAnswer = multilingual.language === "th"
-      ? "ยินดีช่วยตรวจสอบให้ครับ ก่อนเปิดดูรายการฝากหรือถอน ขอทราบ User ID ของลูกค้าเพื่อให้ระบบตรวจสอบข้อมูลได้ตรงบัญชีและปลอดภัยครับ ไม่ต้องส่งรหัสผ่าน OTP หรือเลขบัญชีธนาคาร"
+      ? "ได้ค่ะ รบกวนแจ้งยูสเซอร์หรือเบอร์โทรที่ลงทะเบียนไว้ให้แอดมินหน่อยนะคะ แอดมินจะได้ตรวจสอบรายการให้ตรงบัญชีค่ะ"
       : multilingual.language === "zh"
         ? "很乐意帮您查询。查看存款或提款记录前，请提供客户 User ID，以便系统安全地查询正确账户。请勿发送密码、OTP 或银行账号。"
         : "I’ll be happy to check that. Before viewing a deposit or withdrawal, please provide the customer User ID so the system can securely query the correct account. Do not send a password, OTP, or bank-account number.";
   } else if (slipUploadRequired) {
     safeAnswer = multilingual.language === "th"
-      ? "ยินดีช่วยตรวจสอบให้ครับ กรุณาอัปโหลดรูปสลิปฝากเงิน ระบบจะสแกนข้อมูลและตรวจสลิปแบบจำลองก่อน หากผ่านการตรวจสอบจึงจะส่งข้อมูลต่อไปยังระบบหลังบ้านครับ กรุณาปิดบังข้อมูลส่วนตัวที่ไม่จำเป็น"
+      ? "ได้ค่ะ รบกวนลูกค้าส่งรูปสลิปฝากเงินให้แอดมินตรวจสอบหน่อยนะคะ หากมีข้อมูลส่วนตัวที่ไม่เกี่ยวข้องสามารถปิดบังไว้ก่อนได้ค่ะ"
       : multilingual.language === "zh"
         ? "很乐意帮您查询。请上传存款凭证图片，系统会先进行模拟扫描与验证；验证通过后才会将结构化结果发送到模拟后台。请遮盖不必要的个人信息。"
         : "I’ll be happy to check that. Please upload the deposit-slip image. The system will run simulated scanning and verification first, and only a verified result will be sent to the simulated back office. Please mask unnecessary personal information.";
@@ -261,7 +261,7 @@ export async function runSupportAgent(message: string, previousUserMessages: str
     safeAnswer = composeTransactionStatusReply(transaction, multilingual.language);
     if (handoff?.handoffId) {
       safeAnswer += multilingual.language === "th"
-        ? ` หมายเลขอ้างอิงเคสสำหรับเดโมคือ ${handoff.handoffId}`
+        ? ` หมายเลขอ้างอิงคือ ${handoff.handoffId} ค่ะ`
         : multilingual.language === "zh"
           ? ` 演示工单编号为 ${handoff.handoffId}。`
           : ` Your demo case reference is ${handoff.handoffId}.`;

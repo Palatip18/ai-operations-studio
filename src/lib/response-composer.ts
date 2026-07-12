@@ -27,17 +27,17 @@ export function deriveTone(message: string, risk: RiskLevel, intent: Intent): Su
 function localizedEscalation(input: ComposerInput): string {
   const id = input.handoffId;
   if (!id) {
-    if (input.locale === "th") return "ขออภัยครับ ระบบยังไม่สามารถสร้างเคสจำลองได้ในขณะนี้ กรุณาลองใหม่อีกครั้งหรือติดต่อทีมบริการลูกค้าโดยตรงครับ";
+    if (input.locale === "th") return "ขออภัยค่ะ ตอนนี้แอดมินยังเปิดรายการตรวจสอบให้ไม่ได้ รบกวนลูกค้าลองใหม่อีกครั้งสักครู่นะคะ";
     if (input.locale === "zh") return "抱歉，系统暂时无法创建模拟客服工单。请稍后重试或直接联系客户服务团队。";
     return "Sorry, the demo support case could not be created right now. Please try again or contact customer support directly.";
   }
 
   if (input.locale === "th") {
-    if (input.intent === "deposit_withdrawal") return `เข้าใจครับว่าเรื่องฝากหรือถอนเงินนี้สำคัญ ระบบได้สร้างเคสจำลองไว้ในคิวตรวจสอบธุรกรรมแล้วครับ หมายเลขอ้างอิงสำหรับเดโมคือ ${id}`;
-    if (input.intent === "billing_payment") return `เข้าใจครับว่าเรื่องยอดเงินนี้สำคัญและควรได้รับการตรวจสอบอย่างละเอียด ระบบได้สร้างเคสจำลองไว้ในคิวบริการลูกค้าแล้วครับ หมายเลขอ้างอิงสำหรับเดโมคือ ${id}`;
-    if (input.intent === "complaint") return `เข้าใจครับว่าเรื่องนี้ทำให้คุณไม่พอใจมาก ระบบได้สร้างเคสจำลองไว้สำหรับการตรวจสอบเพิ่มเติมแล้วครับ หมายเลขอ้างอิงสำหรับเดโมคือ ${id}`;
-    if (input.intent === "privacy_security") return `เนื่องจากเรื่องนี้เกี่ยวข้องกับความปลอดภัยของบัญชี ระบบได้สร้างเคสจำลองสำหรับการตรวจสอบเพิ่มเติมแล้วครับ หมายเลขอ้างอิงสำหรับเดโมคือ ${id}`;
-    return `เพื่อให้ตรวจสอบรายละเอียดได้รอบคอบ ระบบได้สร้างเคสจำลองไว้ในคิวบริการลูกค้าแล้วครับ หมายเลขอ้างอิงสำหรับเดโมคือ ${id}`;
+    if (input.intent === "deposit_withdrawal") return `แอดมินส่งรายการให้ตรวจสอบเพิ่มเติมเรียบร้อยแล้วค่ะ หมายเลขอ้างอิงคือ ${id} รบกวนลูกค้ารอสักครู่นะคะ`;
+    if (input.intent === "billing_payment") return `แอดมินเปิดรายการตรวจสอบยอดเงินให้เรียบร้อยแล้วค่ะ หมายเลขอ้างอิงคือ ${id}`;
+    if (input.intent === "complaint") return `เข้าใจค่ะว่าเรื่องนี้ทำให้ลูกค้าไม่สบายใจ แอดมินเปิดรายการตรวจสอบเพิ่มเติมให้แล้วนะคะ หมายเลขอ้างอิงคือ ${id}`;
+    if (input.intent === "privacy_security") return `เรื่องนี้เกี่ยวข้องกับความปลอดภัยของบัญชี แอดมินเปิดรายการตรวจสอบเพิ่มเติมให้แล้วค่ะ หมายเลขอ้างอิงคือ ${id}`;
+    return `แอดมินเปิดรายการตรวจสอบเพิ่มเติมให้เรียบร้อยแล้วค่ะ หมายเลขอ้างอิงคือ ${id}`;
   }
   if (input.locale === "zh") {
     if (input.intent === "deposit_withdrawal") return `理解您对存款或提款状态的担忧。系统已创建一个模拟交易审核工单并加入队列。演示编号为 ${id}。`;
@@ -57,7 +57,7 @@ export async function composeCustomerResponse(input: ComposerInput): Promise<str
     .replace(/\s+/g, " ")
     .trim();
   if (!evidence) {
-    if (input.locale === "th") return "ขออภัยครับ ตอนนี้ยังไม่พบข้อมูลที่เพียงพอสำหรับตอบคำถามนี้อย่างถูกต้อง";
+    if (input.locale === "th") return "ขออภัยค่ะ ตอนนี้แอดมินยังไม่พบข้อมูลที่เพียงพอ รบกวนลูกค้าแจ้งรายละเอียดเพิ่มเติมอีกนิดนะคะ";
     if (input.locale === "zh") return "抱歉，目前没有足够的信息可以准确回答这个问题。";
     return "I could not find enough information to answer this accurately.";
   }
@@ -65,9 +65,9 @@ export async function composeCustomerResponse(input: ComposerInput): Promise<str
   const language = input.locale === "th" ? "th" : input.locale === "zh" ? "zh" : "en";
   const localized = await localizeSupportAnswer(evidence, language);
   if (language === "th") {
-    if (input.tone === "empathetic") return `เข้าใจครับว่าเรื่องนี้ทำให้คุณไม่สบายใจ ${localized}`;
-    if (input.tone === "urgent") return `เข้าใจครับว่าเรื่องนี้เร่งด่วน ${localized}`;
-    return `ได้เลยครับ ${localized}`;
+    if (input.tone === "empathetic") return `เข้าใจค่ะว่าเรื่องนี้ทำให้ลูกค้าไม่สบายใจ ${localized}`;
+    if (input.tone === "urgent") return `รับทราบค่ะ แอดมินจะช่วยตรวจสอบเรื่องนี้ให้นะคะ ${localized}`;
+    return `ได้ค่ะ ${localized}`;
   }
   if (language === "zh") {
     if (input.tone === "empathetic") return `理解您的担忧。${localized}`;
