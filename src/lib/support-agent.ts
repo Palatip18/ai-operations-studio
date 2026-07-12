@@ -7,7 +7,9 @@ import { isOpenAIConfigured } from "./openai";
 import { summarize } from "./trace-redaction";
 import { RETRIEVAL_RELEVANCE_THRESHOLD } from "./agent";
 import { classifyQueryTopics } from "./query-topics";
-import { localizeSupportAnswer, localizedEscalation, normalizeSupportInput, type SupportedLanguage } from "./multilingual";
+import { normalizeSupportInput } from "./multilingual";
+import { deriveTone, composeCustomerResponse } from "./response-composer";
+import { handleSimulatedHandoff, type HandoffResult } from "./support-handoff";
 
 /**
  * Bounded customer-support agent:
@@ -50,19 +52,17 @@ export type SupportTrace = {
   modelCallCount: number;
   estimatedUsage: { promptTokens: number; totalTokens: number } | null;
   mode: "live" | "deterministic";
-  language: SupportedLanguage;
+  language: string;
   normalizationMode: "original" | "local-map" | "live-translation";
 };
 
-export type SupportResult = { answer: string; trace: SupportTrace };
+export type SupportResult = { answer: string; handoff?: HandoffResult | null; trace: SupportTrace };
 
 const WORKFLOW_INTENTS = new Set<Intent>(["request_status", "account_onboarding"]);
 
 /**
  * Pure policy decision, deliberately separated from retrieval so it can be
- * unit-tested with constructed inputs instead of depending on the (noisier,
- * scale-sensitive) retrieval step. Order matters: a keyword-based mandatory
- * trigger always wins, then insufficient evidence, then high risk.
+ * unit-tested with constructed findings instead of depending on retrieval.
  */
 export type MandatoryEscalationCheck = ReturnType<typeof checkMandatoryEscalation>;
 
@@ -155,18 +155,58 @@ export async function runSupportAgent(message: string): Promise<SupportResult> {
   const mandatory = checkMandatoryEscalation(processingMessage, intent);
   const { decision, escalationReason } = decideSupportPolicy(mandatory, verifier, risk, intent);
 
-  let safeAnswer: string;
-  if (decision === "AUTO_RESPOND") {
-    safeAnswer = await localizeSupportAnswer(answer, multilingual.language);
-  } else if (multilingual.language !== "en" && live) {
-    safeAnswer = await localizeSupportAnswer(`This request has been escalated to a human agent. ${escalationReason ?? "Human review is required."}`, multilingual.language);
-  } else {
-    safeAnswer = localizedEscalation(multilingual.language, escalationReason ?? "Human review is required.");
+  // If escalated, invoke the simulated support handoff tool
+  let handoff: HandoffResult | null = null;
+  if (decision === "ESCALATE") {
+    // Deterministic key based on message content to protect idempotency (demo scope)
+    const idempotencyKey = `idemp-${Buffer.from(message.slice(0, 30)).toString("hex")}`;
+    
+    // Call the shared simulated handoff service directly
+    const resultHandoff = handleSimulatedHandoff({
+      customerMessage: summarize(message), // Apply existing trace-redaction protections
+      intent,
+      risk,
+      escalationReason: escalationReason ?? "Escalation",
+      locale: multilingual.language,
+      idempotencyKey
+    });
+
+    handoff = resultHandoff;
+
+    // Apply strict safe trace redaction (no full message or raw keys in technical traces)
+    steps.push({
+      tool: "create_support_handoff",
+      input: {
+        intent,
+        risk,
+        escalationReasonCode: escalationReason ? escalationReason.slice(0, 30) : "Escalation",
+        locale: multilingual.language,
+        sourceCount: groundingEvidence.length,
+        messageLength: message.length,
+        redactedIdempotencyIdentifier: `idemp-sha-${idempotencyKey.slice(-8)}`
+      },
+      outputSummary: `Simulated case handoff finished. Status: ${resultHandoff.status}. Handoff ID: ${resultHandoff.handoffId ?? "NONE"}`,
+      resultCount: resultHandoff.success ? 1 : 0
+    });
   }
-  if (multilingual.language !== "en" && live) modelCallCount += 1;
+
+  // Derive tone and compose natural conversational customer reply using the Response Composer layer
+  const tone = deriveTone(message, risk, intent);
+  const safeAnswer = await composeCustomerResponse({
+    message,
+    intent,
+    risk,
+    decision,
+    escalationReason,
+    evidence: decision === "AUTO_RESPOND" ? answer : "",
+    locale: multilingual.language,
+    tone,
+    handoffId: handoff?.handoffId ?? null
+  });
 
   return {
     answer: safeAnswer,
+    handoff,
     trace: {
       intent,
       risk,
@@ -177,7 +217,7 @@ export async function runSupportAgent(message: string): Promise<SupportResult> {
       escalationReason,
       latencyMs: Date.now() - start,
       toolCallCount: steps.length,
-      modelCallCount,
+      modelCallCount: modelCallCount + (multilingual.language !== "en" && live ? 1 : 0),
       estimatedUsage: sawUsage ? { promptTokens, totalTokens } : null,
       mode: live ? "live" : "deterministic",
       language: multilingual.language,

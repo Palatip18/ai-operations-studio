@@ -127,6 +127,39 @@ export const uiCopy = {
         "This is unacceptable and I will report this publicly.",
       ],
     ],
+    sourceCatalog: "Source catalog",
+    ofWord: "of",
+    emptySearch: "Run a query to search 26 sample documents and retrieve a grounded, cited answer.",
+    insufficientAlert: "No document meets the relevance threshold for this query. Showing the closest matches for review — this would escalate rather than auto-respond.",
+    errorAlert: "Couldn't reach the retrieval service. This is a safe, non-technical error message — no internals are shown.",
+    retry: "Retry",
+    mobileCatalogNote: "On mobile, the source catalog collapses into an accordion above the answer panel — the answer is never pushed below all 26 documents.",
+    scoreComponentsWord: "Score components",
+    technicalTrace: "Technical execution trace",
+    guidedScenarios: "Guided demo scenarios",
+    vector: "vector",
+    lexical: "lexical",
+    topic: "topic",
+    hybrid: "hybrid",
+    noDocsMatch: "No documents match this filter.",
+    sessionExpired: "Session expired. Redirecting to login...",
+    rateLimitError: "Too many requests. Please try again later.",
+    documentPreview: "Document preview",
+    handoffCreated: "Demo case created",
+    simulated: "Simulated",
+    handoffStatus: "Status",
+    reference: "Demo reference",
+    destination: "Destination",
+    createdAt: "Created at",
+    customerSupportQueue: "Customer Support Queue",
+    categoriesList: {
+      "all": "All",
+      "People Operations": "People Ops",
+      "Finance Operations": "Finance",
+      "IT Operations": "IT Ops",
+      "Customer Support Copilot": "Support Copilot",
+      "Customer Support FAQ": "FAQ"
+    }
   },
   th: {
     subtitle: "ต้นแบบผลงานส่วนตัว",
@@ -222,9 +255,9 @@ export const uiCopy = {
     run: "เรียกใช้ผู้ช่วย CS",
     running: "กำลังทำงาน…",
     trace: "รายละเอียดการทำงาน",
-    intent: "เจตนา",
+    intent: "ประเภทคำถาม",
     risk: "ความเสี่ยง",
-    reason: "เหตุผลที่ส่งต่อ",
+    reason: "เหตุผลที่ต้องตรวจสอบเพิ่มเติม",
     tools: "เครื่องมือที่ใช้",
     sources: "แหล่งข้อมูล",
     verifier: "ผลตรวจหลักฐาน",
@@ -240,6 +273,39 @@ export const uiCopy = {
       ["ข้อพิพาททางการเงิน", "ฉันต้องการโต้แย้งรายการที่ไม่ได้ทำ"],
       ["ลูกค้าโกรธ", "เรื่องนี้รับไม่ได้ ฉันจะร้องเรียนต่อสาธารณะ"],
     ],
+    sourceCatalog: "รายการเอกสาร",
+    ofWord: "จาก",
+    emptySearch: "พิมพ์คำค้นหาเพื่อค้นหาจากเอกสารตัวอย่าง 26 ฉบับและรับคำตอบที่มีหลักฐานอ้างอิง",
+    insufficientAlert: "ไม่มีเอกสารใดผ่านเกณฑ์ความเกี่ยวข้องสำหรับคำค้นหานี้ กำลังแสดงเอกสารที่ใกล้เคียงที่สุดเพื่อตรวจสอบ — กรณีนี้จะส่งต่อให้เจ้าหน้าที่แทนการตอบอัตโนมัติ",
+    errorAlert: "ไม่สามารถเชื่อมต่อบริการค้นคืนข้อมูลได้ นี่คือข้อความแจ้งเตือนที่ปลอดภัยและไม่แสดงรายละเอียดทางเทคนิคใดๆ",
+    retry: "ลองใหม่",
+    mobileCatalogNote: "บนมือถือ แคตตาล็อกแหล่งข้อมูลจะย่อลงเป็นแถบพับด้านบนกล่องคำตอบ เพื่อไม่ให้กล่องคำตอบถูกเบียดลงไปอยู่ล่างสุด",
+    scoreComponentsWord: "รายละเอียดคะแนน",
+    technicalTrace: "รายละเอียดการทำงานทางเทคนิค",
+    guidedScenarios: "ทดลองสถานการณ์ตัวอย่าง",
+    vector: "เวกเตอร์",
+    lexical: "คะแนนเชิงคำศัพท์",
+    topic: "หัวข้อ",
+    hybrid: "ไฮบริด",
+    noDocsMatch: "ไม่พบเอกสารที่ตรงกับตัวกรองนี้",
+    sessionExpired: "เซสชันหมดอายุ กำลังนำคุณไปยังหน้าเข้าสู่ระบบ...",
+    rateLimitError: "ทำรายการบ่อยเกินไป กรุณาลองใหม่ในภายหลัง",
+    documentPreview: "ตัวอย่างเอกสาร",
+    handoffCreated: "สร้างเคสจำลองแล้ว",
+    simulated: "ระบบจำลอง",
+    handoffStatus: "สถานะ",
+    reference: "หมายเลขอ้างอิงสำหรับเดโม",
+    destination: "คิวปลายทาง",
+    createdAt: "เวลาที่สร้าง",
+    customerSupportQueue: "คิวบริการลูกค้า",
+    categoriesList: {
+      "all": "ทั้งหมด",
+      "People Operations": "ฝ่ายบุคคล",
+      "Finance Operations": "การเงิน",
+      "IT Operations": "ฝ่ายไอที",
+      "Customer Support Copilot": "ผู้ช่วย CS",
+      "Customer Support FAQ": "คำถามพบบ่อย"
+    }
   },
   zh: {
     subtitle: "个人作品集原型",
@@ -350,6 +416,39 @@ export const uiCopy = {
       ["财务争议", "这是未经授权的交易，我要提出争议。"],
       ["愤怒投诉", "这不可接受，我会公开投诉。"],
     ],
+    sourceCatalog: "源文档目录",
+    ofWord: "的",
+    emptySearch: "运行查询以检索 26 份示例文档并获取有依据且引用的回答。",
+    insufficientAlert: "没有符合该查询相关性阈值的文档。显示最接近的匹配项以供人工审核 — 此操作将转人工，而非自动回复。",
+    errorAlert: "无法连接到检索服务。这是经过脱敏的安全错误信息，不包含系统内部细节。",
+    retry: "重试",
+    mobileCatalogNote: "在移动端，源文档目录会折叠到回答面板上方，以保证回答面板不会被推到底部。",
+    scoreComponentsWord: "评分细则",
+    technicalTrace: "技术执行轨迹",
+    guidedScenarios: "引导式演示场景",
+    vector: "向量",
+    lexical: "词法",
+    topic: "主题",
+    hybrid: "混合",
+    noDocsMatch: "没有符合该过滤条件的文档。",
+    sessionExpired: "会话已过期。正在跳转至登录页面...",
+    rateLimitError: "请求过多。请稍后重试。",
+    documentPreview: "文档预览",
+    handoffCreated: "已创建模拟客服工单",
+    simulated: "模拟",
+    handoffStatus: "状态",
+    reference: "演示编号",
+    destination: "目标队列",
+    createdAt: "创建时间",
+    customerSupportQueue: "客户服务队列",
+    categoriesList: {
+      "all": "全部",
+      "People Operations": "人事运营",
+      "Finance Operations": "财务运营",
+      "IT Operations": "IT运营",
+      "Customer Support Copilot": "客服助手",
+      "Customer Support FAQ": "常见问题"
+    }
   },
 } as const;
 
@@ -390,14 +489,17 @@ export function LanguageSwitcher({
   return (
     <div
       className="flex rounded-full border border-white/10 bg-white/[.03] p-0.5"
+      role="radiogroup"
       aria-label="Language"
     >
       {(["en", "th", "zh"] as UiLocale[]).map((item) => (
         <button
           key={item}
           type="button"
+          role="radio"
+          aria-checked={locale === item}
           onClick={() => onChange(item)}
-          className={`rounded-full px-2.5 py-1 text-[11px] transition ${locale === item ? "bg-green-300 text-[#07100f]" : "text-[#90a9a0] hover:text-green-200"}`}
+          className={`kb-focusable rounded-full px-2.5 py-1 text-[11px] transition min-h-[28px] ${locale === item ? "bg-accent text-[#07101F] font-semibold" : "text-[#90a9a0] hover:text-accent"}`}
         >
           {item === "en" ? "EN" : item === "th" ? "ไทย" : "中文"}
         </button>

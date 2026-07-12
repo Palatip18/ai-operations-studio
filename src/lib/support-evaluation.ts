@@ -156,16 +156,15 @@ export async function evaluateEscalation() {
 export async function evaluateResponsePolicyCompliance() {
   const runs = await runAll();
   const results = runs.map(({ testCase, result }) => {
-    // Check the exact escalation-response prefix, not a generic substring: some knowledge-base
-    // documents (e.g. complaints-escalation-policy) legitimately contain the phrase "escalated to
-    // a human agent" as policy text, which would false-positive a naive substring match on an
-    // AUTO_RESPOND answer that happens to quote that document.
-    const isEscalationFormat = result.answer.startsWith("This request has been escalated to a human agent.");
-    const compliant = result.trace.decision === "ESCALATE" ? isEscalationFormat : !isEscalationFormat;
+    const cleanAnswer = result.answer.replace(/\[[a-zA-Z0-9_-]+\]\s*/g, "").trim();
+    const hasInternalTerms = /human agent|เจ้าหน้าที่มนุษย์|mandatory escalation|insufficient evidence|policy decision|high-risk complaint|escalation required|转交人工客服审核/i.test(cleanAnswer);
+    const hasFalsePromise = /will contact you|callback within|ติดต่อกลับ|จะรีบติดต่อ|会与您联系|尽快联系您/i.test(cleanAnswer);
+    const hasInternalDocumentId = /\[[a-zA-Z0-9_-]+\]/.test(result.answer);
+    const compliant = !hasInternalTerms && !hasFalsePromise && !hasInternalDocumentId;
     return { message: testCase.message, decision: result.trace.decision, compliant };
   });
   const passed = results.filter((r) => r.compliant).length;
-  return { total: results.length, passed, complianceRate: passed / results.length };
+  return { total: results.length, passed, complianceRate: passed / results.length, results };
 }
 
 /**

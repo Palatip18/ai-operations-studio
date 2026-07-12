@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-158_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-150_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
@@ -37,34 +37,27 @@ The Support Copilot module combines six pieces, each earning its place for a spe
 
 The default `mock` mode is deterministic, free to run, and requires no credentials. An optional OpenAI-compatible provider can perform model-driven tool selection (chat) and semantic retrieval (RAG, agent, support) behind the same API boundary. If the provider is unavailable, every route falls back safely to deterministic behavior.
 
-### Language support
-
-The interface and Customer Support Copilot support **English, Thai, and Simplified Chinese**. The login page, application shell, module navigation, core controls, empty/loading states, workflow labels, agent/support scenarios, and support trace labels use the selected language, which persists in the browser. The support pipeline detects the input language, translates or locally normalizes it into English for intent/risk/retrieval, and returns the response in the user's language when the live provider is available. See [`docs/localization-qa.md`](docs/localization-qa.md) for the retained QA matrix.
-
-English remains the canonical knowledge and evaluation language. Thai and Chinese support is an implemented multilingual adapter, **not yet production-grade multilingual RAG**: there is no fully translated document corpus, locale-specific policy ownership, or large native-language evaluation set. Those are required before claiming equal accuracy across all three languages.
-
 ### Measured prototype quality
 
 - 10/10 semantic retrieval cases pass at top-1 with `text-embedding-3-small`, including paraphrased questions and one negative/no-answer case (original 3-document Agentic Copilot dataset).
 - 3/3 deterministic local-vector checks remain available as the no-key fallback baseline (same dataset).
 - The following 35-case results are a **historical pre-hybrid baseline** on this repository's fictional data. They demonstrate the evaluation method, not the current checkpoint's live-provider performance; live metrics must be re-run after retrieval-policy changes:
 
-  | Metric                                        | Deterministic (no-key) | Live embeddings |
-  | --------------------------------------------- | ---------------------- | --------------- |
-  | Intent classification accuracy                | 100%                   | 100%            |
-  | Risk classification accuracy                  | 100%                   | 100%            |
-  | Tool-routing accuracy                         | 100%                   | 100%            |
-  | Retrieval top-1 accuracy                      | 24%                    | 72%             |
-  | Groundedness accuracy                         | 48%                    | 76%             |
-  | No-answer detection                           | 80%                    | 80%             |
-  | Escalation precision / recall                 | 54% / 93%              | 72% / 93%       |
-  | Response-format compliance                    | 100%                   | 100%            |
-  | Automation coverage (low-risk eligible cases) | 50%                    | 90%             |
-  | Mean latency                                  | ~1ms                   | ~296ms          |
+  | Metric | Deterministic (no-key) | Live embeddings |
+  |---|---|---|
+  | Intent classification accuracy | 100% | 100% |
+  | Risk classification accuracy | 100% | 100% |
+  | Tool-routing accuracy | 100% | 100% |
+  | Retrieval top-1 accuracy | 24% | 72% |
+  | Groundedness accuracy | 48% | 76% |
+  | No-answer detection | 80% | 80% |
+  | Escalation precision / recall | 54% / 93% | 72% / 93% |
+  | Response-format compliance | 100% | 100% |
+  | Automation coverage (low-risk eligible cases) | 50% | 90% |
+  | Mean latency | ~1ms | ~296ms |
 
   These numbers are not the 80-90% target — see [Knowledge-quality model](#knowledge-quality-model) for why, and [Evaluation methodology](#evaluation-methodology) for full definitions.
-
-- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, UI catalogs, multilingual normalization, intent/risk classification, mandatory escalation, and API auth — 158 tests, see `npm test`.
+- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual normalization, response composition, intent/risk classification, simulated handoff, and API auth — **164 tests**, see `npm test`.
 - Results are exposed through `GET /api/evaluation`, `GET /api/agent-evaluation`, `GET /api/support-evaluation`, and displayed in the UI.
 
 These figures validate only the included fictional sample set and documented thresholds; they are not claims of production accuracy.
@@ -79,13 +72,13 @@ These figures validate only the included fictional sample set and documented thr
 
 **Measurable business value this pattern targets in a real deployment:**
 
-| Metric                             | What it would tell an operations team                                                                                          |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Grounded-answer rate               | Share of answers backed by a real document, vs. unsupported claims caught before reaching a user                               |
-| No-answer precision                | Whether the system correctly says "I don't know" instead of guessing — directly reduces support escalations from wrong answers |
-| Tool-routing accuracy              | Whether requests reach the right automation path the first time, cutting manual triage                                         |
-| Workflow decision accuracy         | Whether policy automation matches what a human reviewer would decide, a proxy for time saved per request                       |
-| Latency and token/cost per request | What a rollout would cost and how it would feel to end users at scale                                                          |
+| Metric | What it would tell an operations team |
+|---|---|
+| Grounded-answer rate | Share of answers backed by a real document, vs. unsupported claims caught before reaching a user |
+| No-answer precision | Whether the system correctly says "I don't know" instead of guessing — directly reduces support escalations from wrong answers |
+| Tool-routing accuracy | Whether requests reach the right automation path the first time, cutting manual triage |
+| Workflow decision accuracy | Whether policy automation matches what a human reviewer would decide, a proxy for time saved per request |
+| Latency and token/cost per request | What a rollout would cost and how it would feel to end users at scale |
 
 **What I would measure next in production:** grounded-answer accuracy against a larger labeled set, retrieval precision/recall, workflow completion and exception rates, time saved per request vs. a manual baseline, and live cost/latency under real traffic.
 
@@ -220,19 +213,22 @@ sequenceDiagram
   Verifier-->>API: grounded, score, warning
   API->>Policy: decideSupportPolicy(mandatory, verifier, risk, intent)
   Policy-->>API: AUTO_RESPOND | ESCALATE (+ reason)
-  API-->>UI: { answer, trace }
-  UI-->>Customer: Safe response, or "escalated to a human agent" + reason
+  API->>Composer: Compose a locale-aware customer reply
+  API->>Handoff: Create an idempotent simulated case when ESCALATE
+  Handoff-->>API: Structured demo reference, status, destination, timestamp
+  API-->>UI: { answer, handoff, trace }
+  UI-->>Customer: Natural reply + clearly labeled demo-case reference when applicable
 ```
 
 ## Knowledge-quality model
 
-Automation coverage is presented as a function of conditions, not a fixed number, because this repository's own measurements show why: retrieval quality alone moved the _same_ decision logic from 50% automation coverage (deterministic local-vector retrieval) to 90% (live embeddings) on the identical 35-case dataset (see the table above). The conditions this repository documents (`automation-coverage-conditions` in the knowledge base, and enforced nowhere else — this is intentionally not a numeric formula) are:
+Automation coverage is presented as a function of conditions, not a fixed number, because this repository's own measurements show why: retrieval quality alone moved the *same* decision logic from 50% automation coverage (deterministic local-vector retrieval) to 90% (live embeddings) on the identical 35-case dataset (see the table above). The conditions this repository documents (`automation-coverage-conditions` in the knowledge base, and enforced nowhere else — this is intentionally not a numeric formula) are:
 
 - **Knowledge completeness** — every intent the system should auto-answer needs a document.
 - **Document accuracy** — an out-of-date document produces a confidently-wrong grounded answer just as easily as a correct one.
 - **Freshness** — policy changes (pricing, refund windows, exceptions) must reach the knowledge base before they reach customers.
 - **Exception coverage** — undocumented edge cases are exactly where an automated answer is most likely to be wrong.
-- **Retrieval quality** — measured directly in this repository: the same policy logic, same dataset, same threshold _type_, produced a 3x difference in automation coverage purely from retrieval method.
+- **Retrieval quality** — measured directly in this repository: the same policy logic, same dataset, same threshold *type*, produced a 3x difference in automation coverage purely from retrieval method.
 - **Escalation thresholds** — set too loose, unsafe answers get auto-sent; set too strict, coverage drops (also measured directly above).
 - **Channel and language coverage** — this prototype only implements one web-chat demo UI in English; real coverage claims must specify which channels/languages they cover.
 - **Continuous evaluation and maintenance** — a knowledge base and threshold that are correct today drift as products, policies, and phrasing change.
@@ -376,7 +372,7 @@ src/
     ├── support-classification.ts  # Deterministic intent/risk/mandatory-escalation logic
     ├── support-agent.ts           # Support Copilot orchestrator + decideSupportPolicy
     ├── support-evaluation.ts      # 35-case Customer Support Copilot evaluation suite
-    └── *.test.ts                  # Unit tests (158)
+    └── *.test.ts                  # Unit tests (150)
 ```
 
 **Files an AI Engineer should inspect first:** `src/lib/support-agent.ts` (the orchestration flow and the pure `decideSupportPolicy` function), `src/lib/support-classification.ts` (deterministic policy logic), `src/lib/verifier.ts` (the groundedness heuristic and its documented limits), `src/lib/agent.ts` (the mode-aware retrieval threshold and why it exists), `src/lib/support-evaluation.ts` (how the honest, non-cherry-picked metrics table above was produced).
@@ -395,17 +391,18 @@ It does **not** claim: production RAG, learned semantic embeddings at scale, an 
 
 ### Implementation status
 
-| Capability                                                                                                       | Status                                                                                                |
-| ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Intent classification, risk classification, mandatory-escalation rules                                           | **IMPLEMENTED** (deterministic)                                                                       |
-| Knowledge retrieval with citations, groundedness verifier                                                        | **IMPLEMENTED**                                                                                       |
-| AUTO_RESPOND / ESCALATE decision, redacted execution trace                                                       | **IMPLEMENTED**                                                                                       |
-| Evaluation suite (routing, groundedness, escalation precision/recall, coverage, latency)                         | **IMPLEMENTED**                                                                                       |
-| Workflow "status check" step for request-status/onboarding intents                                               | **SIMULATED / MOCKED** — no real ticketing system                                                     |
-| Human-agent handoff                                                                                              | **SIMULATED / MOCKED** — represented only as a decision + reason, nothing is actually routed anywhere |
-| CRM, ticketing, email, web chat widget, LINE/Telegram/WhatsApp/Slack, Google Drive/Notion/SharePoint integration | **ROADMAP** — not present in this codebase                                                            |
-| Persisted vector database, model-based (entailment) groundedness                                                 | **ROADMAP**                                                                                           |
-| Multi-language support, role-based access, audit log                                                             | **ROADMAP**                                                                                           |
+| Capability | Status |
+|---|---|
+| Intent classification, risk classification, mandatory-escalation rules | **IMPLEMENTED** (deterministic) |
+| Knowledge retrieval with citations, groundedness verifier | **IMPLEMENTED** |
+| AUTO_RESPOND / ESCALATE decision, redacted execution trace | **IMPLEMENTED** |
+| Evaluation suite (routing, groundedness, escalation precision/recall, coverage, latency) | **IMPLEMENTED** |
+| Workflow "status check" step for request-status/onboarding intents | **SIMULATED / MOCKED** — no real ticketing system |
+| Support handoff adapter | **IMPLEMENTED AS A SIMULATION** — creates an idempotent in-memory demo case with a structured reference; no real employee or external system is notified |
+| CRM, ticketing, email, web chat widget, LINE/Telegram/WhatsApp/Slack, Google Drive/Notion/SharePoint integration | **ROADMAP** — not present in this codebase |
+| Persisted vector database, model-based (entailment) groundedness | **ROADMAP** |
+| English/Thai/Chinese UI, input normalization, and response localization | **IMPLEMENTED** — live translation is provider-assisted; offline localization is intentionally limited |
+| Role-based access and persisted audit log | **ROADMAP** |
 
 ## Interview talking points
 
@@ -414,7 +411,7 @@ It does **not** claim: production RAG, learned semantic embeddings at scale, an 
 - **How do you decide what a bot should never answer on its own?** Separate policy from retrieval: mandatory-escalation triggers (fraud, disputes, sensitive data, policy exceptions, angry complaints) are deterministic keyword rules checked independently of whether the answer would otherwise be grounded — a well-cited answer to a question that should never be automated still escalates (see recruiter scenario 7).
 - **Why did retrieval accuracy matter so much here?** I measured it directly rather than assuming it: the exact same policy logic on the exact same 35-case dataset went from 50% to 90% automation coverage purely by swapping the retrieval method (deterministic hashing vs. live embeddings). That's the single clearest piece of evidence in this repo for why "knowledge quality/retrieval quality" is listed as a precondition for the 80-90% target, not a guarantee.
 - **How would you extend this to a real team's documents?** Swap `embedText`/`searchKnowledge` for a managed embedding model and a persisted vector store (already isolated behind `knowledge.ts`), add document-level access control, and replace the lexical verifier with an entailment-model-based check — the Planner/Verifier/trace architecture does not need to change.
-- **How do you show value to a non-engineering stakeholder?** The trace panel and evaluation suite are deliberately non-technical-readable: intent/risk → tools → sources → grounded/not-grounded → AUTO_RESPOND/ESCALATE → latency/cost, in one screen, so a hiring manager or ops lead can see _why_ a decision was made without reading code.
+- **How do you show value to a non-engineering stakeholder?** The trace panel and evaluation suite are deliberately non-technical-readable: intent/risk → tools → sources → grounded/not-grounded → AUTO_RESPOND/ESCALATE → latency/cost, in one screen, so a hiring manager or ops lead can see *why* a decision was made without reading code.
 - **What would you change before shipping this to real users?** See [Roadmap](#roadmap) and [Current scope and honest claims](#current-scope-and-honest-claims) — persisted vector store, real authentication, shared rate-limit store, model-based (not lexical) groundedness, a real human-agent queue, and a much larger labeled evaluation set validated against real traffic.
 
 ## Roadmap
@@ -423,7 +420,7 @@ It does **not** claim: production RAG, learned semantic embeddings at scale, an 
 - Replace the local feature-hashing embedding adapter with learned embeddings and a persisted vector database; expand the evaluation dataset.
 - Replace the lexical-overlap verifier with a model-based entailment check for stronger groundedness detection.
 - Connect CRM, ticketing, email, web chat, and messaging channels (LINE, Telegram, WhatsApp, Slack) plus document sources (Google Drive, Notion, SharePoint) for a continuously synced knowledge base.
-- Add a real human-agent handoff queue with an immutable audit log, in place of the current decision-and-reason-only escalation.
+- Replace the simulated in-memory handoff adapter with an authenticated CRM/helpdesk queue and immutable audit log.
 - Add multi-language intent/risk classification and role-based access for support supervisors.
 - Add file ingestion for safe sample PDF/Markdown documents.
 - Persist workflow runs with authentication, role-based access, and an immutable audit log.
@@ -436,7 +433,7 @@ It does **not** claim: production RAG, learned semantic embeddings at scale, an 
 - `.env*` is ignored; `.env.example` contains placeholders only.
 - Public AI endpoints (including `/api/agent`, `/api/agent-evaluation`, `/api/support`, and `/api/support-evaluation`) apply per-client request limits, 500-character input limits, provider timeouts, and a 350-token chat output cap as basic cost guards. Both agent planners additionally cap every request to at most 2-3 tool calls.
 - The execution trace shown in the UI is built only from a fixed set of safe, summarized fields (plan/intent/risk, tool name, summarized input/output, sources, verifier result, decision + escalation reason, latency, call counts, token usage) — it never includes prompts, hidden system instructions, secrets, API keys, passwords, or cookies. As defense in depth, any text derived from user input or tool output that lands in a trace field is also passed through a secret-pattern redactor (`trace-redaction.ts`) before being returned; this is tested directly (`auth-flow.test.ts`, `support-agent.test.ts`) by embedding a fake secret pattern in a request and asserting it never appears in the response.
-- The Support Copilot's escalation decisions are policy simulations only: no case is actually routed to a human agent or a real ticketing system in this codebase (see [Implementation status](#implementation-status)).
+- An ESCALATE decision creates a **simulated** in-memory support case and structured demo reference. No real employee, CRM, or external ticketing platform is notified (see [Implementation status](#implementation-status)).
 - Never upload private documents, production credentials, or real personal/transaction data to this demo.
 
 The in-memory request limiter is appropriate only as a lightweight portfolio guard. A production deployment should use a shared rate-limit store, authentication, quotas, abuse monitoring, and budget alerts.

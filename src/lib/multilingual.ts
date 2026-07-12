@@ -94,11 +94,7 @@ export async function localizeSupportAnswer(text: string, language: SupportedLan
   if (language === "en") return text;
   const translated = await translate(text, language === "th" ? "Translate this grounded support response into natural Thai." : "Translate this grounded support response into Simplified Chinese.");
   if (translated) return translated;
-  return language === "th" ? `คำตอบอ้างอิงภาษาอังกฤษ: ${text}` : `英文参考答复：${text}`;
-}
-
-export function localizedEscalation(language: SupportedLanguage, reason: string): string {
-  if (language === "th") return `คำขอนี้ถูกส่งต่อให้เจ้าหน้าที่ตรวจสอบ เหตุผล: ${reason}`;
-  if (language === "zh") return `此请求已转交人工客服审核。原因：${reason}`;
-  return `This request has been escalated to a human agent. ${reason}`;
+  return language === "th"
+    ? `ขณะนี้เดโมแบบออฟไลน์ยังใช้เอกสารอ้างอิงภาษาอังกฤษ: ${text}`
+    : `当前离线演示仍使用英文参考资料：${text}`;
 }

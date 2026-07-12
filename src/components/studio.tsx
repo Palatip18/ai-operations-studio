@@ -52,7 +52,16 @@ type SupportTrace = {
   estimatedUsage: { promptTokens: number; totalTokens: number } | null;
   mode: string;
 };
-type SupportResult = { answer: string; trace: SupportTrace };
+type HandoffResult = {
+  success: boolean;
+  simulated: boolean;
+  handoffId?: string;
+  status: "QUEUED" | "FAILED" | "RETRYABLE";
+  destination?: string;
+  createdAt?: string;
+  idempotent?: boolean;
+};
+type SupportResult = { answer: string; handoff?: HandoffResult | null; trace: SupportTrace };
 
 const moduleIds: Module[] = [
   "chat",
@@ -86,26 +95,26 @@ export function Studio() {
     <div className="mx-auto min-h-screen max-w-[1500px] px-5 py-5 sm:px-8 lg:px-12">
       <header className="flex items-center justify-between border-b border-white/10 pb-5">
         <div className="flex items-center gap-3">
-          <div className="grid h-9 w-9 place-items-center rounded-lg border border-green-300/30 bg-green-300/10 font-mono text-sm text-green-300">
+          <div className="grid h-9 w-9 place-items-center rounded-lg border border-accent/35 bg-accent/10 font-mono text-sm text-accent">
             AI
           </div>
           <div>
             <p className="text-sm font-semibold tracking-tight">
               AI Operations Studio
             </p>
-            <p className="text-xs text-[#90a9a0]">{copy.subtitle}</p>
+            <p className="text-xs text-muted">{copy.subtitle}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <LanguageSwitcher locale={locale} onChange={setLocale} />
-          <div className="hidden items-center gap-2 rounded-full border border-green-300/20 bg-green-300/5 px-3 py-1.5 text-xs text-green-200 sm:flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-green-300" />
+          <div className="hidden items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-1.5 text-xs text-accent-secondary sm:flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
             {liveAI ? copy.live : copy.safe}
           </div>
           <button
             type="button"
             onClick={signOut}
-            className="rounded-full border border-white/10 bg-white/[.03] px-3 py-1.5 text-xs text-[#90a9a0] transition hover:border-green-300/30 hover:text-green-200"
+            className="kb-focusable rounded-full border border-white/10 bg-white/[.03] px-3 py-1.5 text-xs text-muted transition hover:border-accent/30 hover:text-accent min-h-[32px]"
           >
             {copy.signOut}
           </button>
@@ -114,37 +123,46 @@ export function Studio() {
 
       <main className="grid gap-10 py-10 lg:grid-cols-[340px_1fr] lg:py-16">
         <section>
-          <p className="mb-4 font-mono text-xs uppercase tracking-[.22em] text-green-300">
+          <p className="mb-4 font-mono text-xs uppercase tracking-[.22em] text-accent">
             {copy.eyebrow}
           </p>
-          <h1 className="max-w-sm text-4xl font-semibold leading-[1.05] tracking-[-.05em] sm:text-5xl">
+          <h1 className="max-w-sm text-4xl font-semibold leading-[1.05] tracking-[-.05em] sm:text-5xl text-foreground">
             {copy.hero}
           </h1>
-          <p className="mt-5 max-w-sm text-sm leading-6 text-[#90a9a0]">
+          <p className="mt-5 max-w-sm text-sm leading-6 text-muted">
             {copy.intro}
           </p>
           <div className="mt-9 space-y-2">
             {modules.map((module) => (
               <button
                 key={module.id}
+                type="button"
                 onClick={() => setActive(module.id)}
-                className={`group flex w-full items-center gap-4 rounded-xl border px-4 py-3 text-left transition ${active === module.id ? "border-green-300/30 bg-green-300/10" : "border-transparent hover:border-white/10 hover:bg-white/[.03]"}`}
+                className={`kb-focusable group flex w-full items-center gap-4 rounded-xl border px-4 py-3 text-left transition min-h-[56px] ${
+                  active === module.id
+                    ? "border-accent/30 bg-accent/10"
+                    : "border-transparent hover:border-white/10 hover:bg-white/[.03]"
+                }`}
               >
                 <span
-                  className={`font-mono text-xs ${active === module.id ? "text-green-300" : "text-[#60776f]"}`}
+                  className={`font-mono text-xs ${
+                    active === module.id ? "text-accent font-semibold" : "text-muted/60"
+                  }`}
                 >
                   {module.number}
                 </span>
                 <span className="flex-1">
-                  <span className="block text-sm font-medium">
+                  <span className="block text-sm font-medium text-foreground">
                     {module.label}
                   </span>
-                  <span className="block text-xs text-[#718a81]">
+                  <span className="block text-xs text-muted">
                     {module.description}
                   </span>
                 </span>
                 <span
-                  className={`text-lg ${active === module.id ? "text-green-300" : "text-[#456057]"}`}
+                  className={`text-lg transition ${
+                    active === module.id ? "text-accent translate-x-1" : "text-muted/40"
+                  }`}
                 >
                   →
                 </span>
@@ -154,8 +172,8 @@ export function Studio() {
           <div className="mt-9 grid grid-cols-3 gap-2 border-t border-white/10 pt-5 text-center">
             {copy.stats.map(([value, label]) => (
               <div key={label}>
-                <p className="font-mono text-lg text-green-200">{value}</p>
-                <p className="text-[10px] uppercase tracking-wider text-[#60776f]">
+                <p className="font-mono text-lg text-accent-secondary font-semibold">{value}</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted">
                   {label}
                 </p>
               </div>
@@ -163,15 +181,15 @@ export function Studio() {
           </div>
         </section>
 
-        <section className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[#0c1917]/90 shadow-2xl shadow-black/30">
+        <section className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[#0B1426]/90 shadow-2xl shadow-black/35">
           <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
             <div>
-              <p className="text-sm font-medium">
+              <p className="text-sm font-medium text-foreground">
                 {modules.find((m) => m.id === active)?.label}
               </p>
-              <p className="text-xs text-[#718a81]">{copy.interactive}</p>
+              <p className="text-xs text-muted">{copy.interactive}</p>
             </div>
-            <span className="rounded-md bg-white/5 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-[#718a81]">
+            <span className="rounded-md bg-white/5 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-muted">
               {copy.prototype}
             </span>
           </div>
@@ -190,7 +208,7 @@ export function Studio() {
           </div>
         </section>
       </main>
-      <footer className="flex flex-col gap-2 border-t border-white/10 py-5 text-xs text-[#60776f] sm:flex-row sm:items-center sm:justify-between">
+      <footer className="flex flex-col gap-2 border-t border-white/10 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
         <p>{copy.footer}</p>
         <p className="font-mono">Next.js · TypeScript · Tailwind CSS</p>
       </footer>
@@ -208,74 +226,110 @@ function ChatDemo({ locale }: { locale: UiLocale }) {
     mode: string;
   } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [errorText, setErrorText] = useState("");
   const suggestions = copy.chatSuggestions;
+
   useEffect(() => {
     if (!submittedMessage) queueMicrotask(() => setMessage(copy.chatDefault));
   }, [copy.chatDefault, submittedMessage]);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     const prompt = message.trim();
-    if (!prompt) return;
+    if (!prompt || loading) return;
     setSubmittedMessage(prompt);
     setMessage("");
     setLoading(true);
     setResult(null);
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: prompt }),
-    });
-    setResult(await response.json());
-    setLoading(false);
+    setErrorText("");
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: prompt }),
+      });
+
+      if (response.status === 401) {
+        setErrorText(copy.sessionExpired);
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
+        return;
+      }
+
+      if (response.status === 429) {
+        const retryAfter = response.headers.get("Retry-After");
+        setErrorText(copy.rateLimitError + (retryAfter ? ` (${retryAfter}s)` : ""));
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      setResult(await response.json());
+    } catch {
+      setErrorText(copy.errorAlert || "An error occurred.");
+    } finally {
+      setLoading(false);
+    }
   }
+
   return (
     <div className="flex min-h-[510px] flex-col">
-      <div className="mb-5 rounded-xl border border-white/10 bg-[#07100f] p-4">
-        <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-green-300">
+      <div className="mb-5 rounded-xl border border-white/10 bg-[#07101F] p-4">
+        <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-accent">
           {copy.chatTitle}
         </p>
-        <p className="text-sm leading-5 text-[#b7cbc3]">{copy.chatIntro}</p>
+        <p className="text-sm leading-5 text-muted">{copy.chatIntro}</p>
       </div>
       <div className="mb-6 flex flex-wrap gap-2">
         {suggestions.map((suggestion) => (
           <button
             key={suggestion}
             type="button"
+            disabled={loading}
             onClick={() => setMessage(suggestion)}
-            className="rounded-full border border-white/10 bg-white/[.025] px-3 py-1.5 text-left text-xs text-[#90a9a0] transition hover:border-green-300/30 hover:text-green-200"
+            className="kb-focusable rounded-full border border-white/10 bg-white/[.025] px-3 py-1.5 text-left text-xs text-muted transition hover:border-accent/30 hover:text-accent hover:bg-accent/5 disabled:opacity-50 min-h-[32px]"
           >
             {suggestion}
           </button>
         ))}
       </div>
       <div className="flex-1 space-y-4" aria-live="polite">
-        {!submittedMessage && (
+        {!submittedMessage && !errorText && (
           <div className="rounded-xl border border-dashed border-white/10 px-5 py-10 text-center">
-            <p className="text-sm text-[#90a9a0]">{copy.empty}</p>
-            <p className="mt-2 text-xs text-[#60776f]">
+            <p className="text-sm text-muted">{copy.empty}</p>
+            <p className="mt-2 text-xs text-muted/60">
               {copy.documentsFictional}
             </p>
           </div>
         )}
         {submittedMessage && (
-          <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-green-300 px-4 py-3 text-sm text-[#07100f]">
+          <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-accent px-4 py-3 text-sm text-[#07101F] font-medium">
             {submittedMessage}
           </div>
         )}
         {loading && (
-          <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm text-[#90a9a0]">
+          <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm text-muted">
             {copy.reviewing}
+          </div>
+        )}
+        {errorText && (
+          <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-error/35 bg-error/5 px-4 py-3 text-sm text-error">
+            {errorText}
           </div>
         )}
         {result && (
           <div className="max-w-[90%] space-y-3">
-            <div className="rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm leading-6 text-[#d9e8e2]">
+            <div className="rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm leading-6 text-foreground">
               {result.answer}
             </div>
             {result.toolCalls.length > 0 && (
-              <details className="rounded-xl border border-white/10 bg-[#07100f] p-3">
-                <summary className="cursor-pointer text-xs font-medium text-green-300">
-                  {copy.traceLink}
+              <details className="group rounded-xl border border-white/10 bg-[#0B1426] p-3">
+                <summary className="kb-focusable cursor-pointer text-xs font-semibold text-accent select-none list-none outline-none focus-visible:ring-1 focus-visible:ring-accent">
+                  ▸ {copy.traceLink}
                 </summary>
                 <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
                   {result.toolCalls.map((tool, index) => (
@@ -283,16 +337,16 @@ function ChatDemo({ locale }: { locale: UiLocale }) {
                       key={`${tool.name}-${index}`}
                       className="font-mono text-xs"
                     >
-                      <div className="flex flex-wrap justify-between gap-2 text-[#b7cbc3]">
+                      <div className="flex flex-wrap justify-between gap-2 text-[#E6EEF8]/80 font-medium">
                         <span>{tool.name}</span>
-                        <span>
+                        <span className="text-accent-secondary">
                           {tool.resultCount} {copy.itemsReviewed}
                         </span>
                       </div>
-                      <p className="mt-1 text-[#718a81]">{tool.summary}</p>
+                      <p className="mt-1 text-muted">{tool.summary}</p>
                     </div>
                   ))}
-                  <p className="font-mono text-[10px] uppercase tracking-wider text-[#60776f]">
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-muted/60">
                     {copy.executionMode}: {result.mode}
                   </p>
                 </div>
@@ -303,18 +357,20 @@ function ChatDemo({ locale }: { locale: UiLocale }) {
       </div>
       <form
         onSubmit={submit}
-        className="mt-6 flex gap-2 rounded-xl border border-white/10 bg-[#07100f] p-2"
+        className="mt-6 flex gap-2 rounded-xl border border-white/10 bg-[#07101F] p-2"
       >
         <input
           aria-label="Chat message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder={copy.askPlaceholder}
-          className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-[#456057]"
+          disabled={loading}
+          className="kb-focusable min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted/50 text-foreground"
         />
         <button
+          type="submit"
           disabled={loading || !message.trim()}
-          className="rounded-lg bg-green-300 px-4 py-2 text-sm font-medium text-[#07100f] disabled:opacity-50"
+          className="kb-focusable rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#07101F] hover:bg-accent-strong disabled:opacity-50 min-h-[36px]"
         >
           {loading ? copy.running : copy.ask}
         </button>
@@ -325,114 +381,482 @@ function ChatDemo({ locale }: { locale: UiLocale }) {
 
 function KnowledgeDemo({ locale }: { locale: UiLocale }) {
   const copy = uiCopy[locale];
-  const [query, setQuery] = useState<string>(copy.knowledgeQuery);
-  useEffect(() => {
-    queueMicrotask(() => setQuery(copy.knowledgeQuery));
-  }, [copy.knowledgeQuery]);
+  const [query, setQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [demoState, setDemoState] = useState<"empty" | "loading" | "success" | "insufficient" | "error">("empty");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+
   const [result, setResult] = useState<{
     answer: string;
-    sources: { id: string; title: string; score: number }[];
+    sources: {
+      id: string;
+      title: string;
+      score: number;
+      scoreComponents?: {
+        vectorScore: number;
+        lexicalScore: number;
+        topicScore: number;
+        hybridScore: number;
+        matchedTopics: string[];
+        matchedKeywords: string[];
+      };
+    }[];
     retrievalMode: string;
     embeddingModel: string;
   } | null>(null);
+
   const [metrics, setMetrics] = useState<{
     passed: number;
     total: number;
     top1Accuracy: number;
   } | null>(null);
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    const [response, evaluation] = await Promise.all([
-      fetch("/api/rag", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      }),
-      fetch("/api/evaluation"),
-    ]);
-    setResult(await response.json());
-    setMetrics(await evaluation.json());
+
+  // Set default query placeholder on load/locale change
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      setQuery(copy.knowledgeQuery);
+      setDemoState("empty");
+      setResult(null);
+      setSelectedDocId(null);
+    });
+    return () => {
+      active = false;
+    };
+  }, [copy.knowledgeQuery]);
+
+  // Dynamic category calculations
+  const categories = ["all", ...Array.from(new Set(knowledgeDocuments.map((d) => d.category)))];
+
+  // Client-side filtering of source catalog
+  const q = query.trim().toLowerCase();
+  const filteredDocs = knowledgeDocuments.filter((d) => {
+    const matchesCat = selectedCategory === "all" || d.category === selectedCategory;
+    const matchesQuery =
+      !q ||
+      d.title.toLowerCase().includes(q) ||
+      d.category.toLowerCase().includes(q);
+    return matchesCat && matchesQuery;
+  });
+
+  const toggleDocSelect = (docId: string) => {
+    setSelectedDocId((prev) => (prev === docId ? null : docId));
+  };
+
+  const handleDocKeyDown = (e: React.KeyboardEvent, docId: string) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggleDocSelect(docId);
+    }
+  };
+
+  async function submit(event?: FormEvent) {
+    if (event) event.preventDefault();
+    const prompt = query.trim();
+    if (!prompt) return;
+
+    setDemoState("loading");
+    setResult(null);
+    setErrorMessage("");
+
+    try {
+      const [response, evaluation] = await Promise.all([
+        fetch("/api/rag", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: prompt }),
+        }),
+        fetch("/api/evaluation"),
+      ]);
+
+      if (response.status === 401) {
+        setErrorMessage(copy.sessionExpired);
+        setDemoState("error");
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 2000);
+        return;
+      }
+
+      if (response.status === 429) {
+        const retryAfter = response.headers.get("Retry-After");
+        setErrorMessage(copy.rateLimitError + (retryAfter ? ` (${retryAfter}s)` : ""));
+        setDemoState("error");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      const data = await response.json();
+      const evalData = await evaluation.json();
+
+      // Check threshold for insufficient evidence state
+      const threshold = data.retrievalMode?.includes("local") ? 0.22 : 0.30;
+      const isInsufficient =
+        !data.sources || data.sources.length === 0 || data.sources[0].score < threshold;
+
+      setResult(data);
+      setMetrics(evalData);
+      setDemoState(isInsufficient ? "insufficient" : "success");
+    } catch {
+      setErrorMessage(copy.errorAlert);
+      setDemoState("error");
+    }
   }
+
+  const selectedDoc = knowledgeDocuments.find((d) => d.id === selectedDocId);
+
+  // Render Category Label helper
+  const getCategoryLabel = (cat: string) => {
+    return copy.categoriesList[cat as keyof typeof copy.categoriesList] || cat;
+  };
+
+  const getDocCount = (cat: string) => {
+    if (cat === "all") return knowledgeDocuments.length;
+    return knowledgeDocuments.filter((d) => d.category === cat).length;
+  };
+
   return (
-    <div>
-      <form onSubmit={submit} className="flex gap-2">
+    <div className="flex flex-col gap-6">
+      {/* Full-width Search query */}
+      <form onSubmit={submit} className="flex gap-2 w-full">
         <input
           aria-label="Knowledge query"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#07100f] px-4 py-3 text-sm outline-none focus:border-green-300/40"
+          placeholder={copy.askPlaceholder}
+          disabled={demoState === "loading"}
+          className="kb-focusable min-w-0 flex-1 rounded-xl border border-white/10 bg-[#07101F] px-4 py-3 text-sm outline-none placeholder:text-muted focus:border-accent/40"
         />
-        <button className="rounded-lg bg-green-300 px-4 text-sm font-medium text-[#07100f]">
-          {copy.search}
+        <button
+          type="submit"
+          disabled={demoState === "loading"}
+          className="kb-focusable rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-[#07101F] transition hover:bg-accent-strong disabled:opacity-50 min-h-[44px]"
+        >
+          {demoState === "loading" ? copy.running : copy.search}
         </button>
       </form>
-      <div className="mt-7 grid gap-5 xl:grid-cols-[.9fr_1.1fr]">
-        <div>
-          <p className="mb-3 font-mono text-[10px] uppercase tracking-wider text-[#718a81]">
-            {copy.sampleDocuments}
+
+      {/* Category Chips Scrollbar */}
+      <div
+        className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin"
+        role="group"
+        aria-label="Filter by category"
+      >
+        {categories.map((cat) => {
+          const active = selectedCategory === cat;
+          return (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setSelectedCategory(cat)}
+              className={`kb-focusable shrink-0 rounded-full border px-4 py-1.5 text-xs transition min-h-[36px] ${
+                active
+                  ? "border-accent/40 bg-accent text-[#07101F] font-semibold"
+                  : "border-white/10 bg-white/[.02] text-muted hover:text-[#E6EEF8]"
+              }`}
+            >
+              {getCategoryLabel(cat)}{" "}
+              <span className="opacity-60 font-mono text-[10px] ml-1">
+                {getDocCount(cat)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Responsive two-column catalog + answer layout */}
+      <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
+        
+        {/* Source Catalog Accordion (on mobile) / Static Panel (on desktop) */}
+        <div className="block lg:hidden">
+          <details className="group border border-white/10 bg-[#0B1426] rounded-xl p-3">
+            <summary className="kb-focusable cursor-pointer text-xs font-semibold text-accent uppercase select-none list-none outline-none">
+              {copy.sourceCatalog} ({filteredDocs.length} {copy.ofWord} {knowledgeDocuments.length})
+            </summary>
+            <div className="mt-3 max-h-[300px] overflow-y-auto border border-white/10 bg-[#07101F] rounded-lg">
+              {filteredDocs.map((doc) => {
+                const selected = doc.id === selectedDocId;
+                return (
+                  <div
+                    key={doc.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => toggleDocSelect(doc.id)}
+                    onKeyDown={(e) => handleDocKeyDown(e, doc.id)}
+                    className={`kb-focusable flex items-center justify-between border-b border-white/5 p-3 text-left transition ${
+                      selected ? "bg-accent/10" : "hover:bg-white/[.02]"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-medium text-foreground">{doc.title}</p>
+                      <p className="mt-1 text-[10px] text-muted">
+                        {getCategoryLabel(doc.category)} · {doc.updated}
+                      </p>
+                    </div>
+                    <span
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full ml-2 ${
+                        selected ? "bg-accent" : "bg-white/20"
+                      }`}
+                    />
+                  </div>
+                );
+              })}
+              {filteredDocs.length === 0 && (
+                <p className="p-4 text-center text-xs text-muted">{copy.noDocsMatch}</p>
+              )}
+            </div>
+          </details>
+        </div>
+
+        {/* Source Catalog (Desktop static layout) */}
+        <div className="hidden lg:flex flex-col">
+          <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-muted">
+            {copy.sourceCatalog} · {filteredDocs.length} {copy.ofWord} {knowledgeDocuments.length}
           </p>
-          <p className="mb-3 text-xs text-[#60776f]">{copy.sourceLanguage}</p>
-          <div className="space-y-2">
-            {knowledgeDocuments.map((doc) => (
-              <div
-                key={doc.id}
-                className="rounded-xl border border-white/10 bg-white/[.025] p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-medium">{doc.title}</p>
-                  <span className="text-green-300">◇</span>
+          <div className="flex-1 max-h-[440px] overflow-y-auto rounded-xl border border-white/10 bg-[#07101F]">
+            {filteredDocs.map((doc) => {
+              const selected = doc.id === selectedDocId;
+              return (
+                <div
+                  key={doc.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => toggleDocSelect(doc.id)}
+                  onKeyDown={(e) => handleDocKeyDown(e, doc.id)}
+                  className={`kb-focusable flex items-start justify-between border-b border-white/5 p-3 text-left transition ${
+                    selected ? "bg-accent/10" : "hover:bg-white/[.02]"
+                  }`}
+                >
+                  <div className="min-w-0 flex-1 pr-2">
+                    <p className="text-xs font-medium text-foreground leading-normal line-clamp-2">
+                      {doc.title}
+                    </p>
+                    <p className="mt-1.5 text-[10px] text-muted">
+                      {getCategoryLabel(doc.category)} · {doc.updated}
+                    </p>
+                  </div>
+                  <span
+                    className={`h-1.5 w-1.5 shrink-0 rounded-full mt-1.5 ${
+                      selected ? "bg-accent" : "bg-white/20"
+                    }`}
+                  />
                 </div>
-                <p className="mt-2 text-xs text-[#718a81]">
-                  {doc.category} · {doc.updated}
-                </p>
-              </div>
-            ))}
+              );
+            })}
+            {filteredDocs.length === 0 && (
+              <p className="p-4 text-center text-xs text-muted">{copy.noDocsMatch}</p>
+            )}
           </div>
         </div>
-        <div>
-          <p className="mb-3 font-mono text-[10px] uppercase tracking-wider text-[#718a81]">
+
+        {/* Answer panel column */}
+        <div className="flex flex-col">
+          <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-muted">
             {copy.groundedAnswer}
           </p>
-          <div className="min-h-56 rounded-xl border border-white/10 bg-[#07100f] p-5">
-            {result ? (
-              <>
-                <p className="text-sm leading-6 text-[#d9e8e2]">
-                  {result.answer}
+          <div className="flex-grow min-h-[300px] lg:min-h-[440px] rounded-xl border border-white/10 bg-[#07101F] p-5 flex flex-col justify-start">
+            
+            {/* Empty state */}
+            {demoState === "empty" && (
+              <div className="my-auto text-center max-w-[320px] mx-auto">
+                <p className="text-xs leading-5 text-muted">{copy.emptySearch}</p>
+              </div>
+            )}
+
+            {/* Loading state */}
+            {demoState === "loading" && (
+              <div className="my-auto w-full flex flex-col gap-3 animate-pulse-slow">
+                <div className="h-4 w-[75%] rounded bg-white/10" />
+                <div className="h-4 w-[90%] rounded bg-white/10" />
+                <div className="h-4 w-[60%] rounded bg-white/10" />
+              </div>
+            )}
+
+            {/* Error state */}
+            {demoState === "error" && (
+              <div className="rounded-xl border border-error/30 bg-error/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-error">
+                <p className="text-xs">{errorMessage || copy.errorAlert}</p>
+                {errorMessage !== copy.sessionExpired && (
+                  <button
+                    type="button"
+                    onClick={() => submit()}
+                    className="kb-focusable shrink-0 rounded-lg border border-error/40 bg-transparent px-3 py-1 text-xs text-error font-medium transition hover:bg-error/10 min-h-[32px]"
+                  >
+                    {copy.retry}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Insufficient Evidence state */}
+            {demoState === "insufficient" && (
+              <div className="mb-4 rounded-xl border border-warning/30 bg-warning/5 p-4 text-warning">
+                <p className="text-xs leading-relaxed">
+                  ⚠ {copy.insufficientAlert}
                 </p>
-                <div className="mt-5 border-t border-white/10 pt-4">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-[10px] uppercase tracking-wider text-[#60776f]">
+              </div>
+            )}
+
+            {/* Answer text & Citations */}
+            {(demoState === "success" || demoState === "insufficient") && result && (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-white/10 bg-white/[.015] p-4">
+                  <p className="text-sm leading-6 text-foreground">
+                    {result.answer}
+                  </p>
+                </div>
+
+                {/* Citations bars */}
+                {result.sources.length > 0 && (
+                  <div className="pt-3 border-t border-white/10">
+                    <p className="mb-3 font-mono text-[10px] uppercase tracking-wider text-muted">
                       {copy.citations}
                     </p>
-                    <span className="rounded bg-green-300/10 px-2 py-1 font-mono text-[9px] text-green-300">
-                      {result.retrievalMode} · {result.embeddingModel}
-                    </span>
+                    <div className="space-y-3">
+                      {result.sources.map((source) => {
+                        const pct = Math.max(0, Math.min(100, Math.round(source.score * 100)));
+                        return (
+                          <div key={source.id} className="text-xs">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-medium text-accent-secondary">
+                                [{source.title}]
+                              </span>
+                              <span className="font-mono text-[10px] text-muted">
+                                {copy.hybrid}: {source.score.toFixed(3)}
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full rounded-full bg-white/5 mt-1.5 overflow-hidden">
+                              <div
+                                style={{ width: `${pct}%` }}
+                                className="h-full bg-accent-secondary rounded-full transition-all duration-500"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                  {result.sources.map((source) => (
-                    <p key={source.id} className="mb-1 text-xs text-green-300">
-                      [{source.title}] · cosine {source.score.toFixed(3)}
+                )}
+
+                {/* Collapsible Technical execution trace */}
+                <details className="group mt-4 border border-white/10 bg-[#0B1426] p-4 rounded-xl">
+                  <summary className="kb-focusable cursor-pointer font-mono text-xs text-accent select-none list-none outline-none focus-visible:ring-1 focus-visible:ring-accent">
+                    ▸ {copy.technicalTrace}
+                  </summary>
+                  <div className="mt-4 border-t border-white/10 pt-4 space-y-3">
+                    <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
+                      {copy.scoreComponentsWord}
                     </p>
-                  ))}
-                </div>
+                    <div className="space-y-2">
+                      {result.sources.map((source) => {
+                        const sc = source.scoreComponents;
+                        return (
+                          <div
+                            key={source.id}
+                            className="font-mono text-xs text-accent-secondary/90 leading-relaxed bg-black/20 p-2.5 rounded-lg border border-white/5"
+                          >
+                            <p className="font-sans font-semibold text-foreground mb-1">
+                              {source.title}
+                            </p>
+                            {sc ? (
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                                <span>
+                                  {copy.vector}: {sc.vectorScore.toFixed(3)}
+                                </span>
+                                <span>
+                                  {copy.lexical}: {sc.lexicalScore.toFixed(3)}
+                                </span>
+                                <span>
+                                  {copy.topic}: {sc.topicScore.toFixed(3)}
+                                </span>
+                                <span className="text-accent font-semibold">
+                                  {copy.hybrid}: {sc.hybridScore.toFixed(3)}
+                                </span>
+                                {sc.matchedTopics.length > 0 && (
+                                  <span className="col-span-2 text-muted">
+                                    Topics: {sc.matchedTopics.join(", ")}
+                                  </span>
+                                )}
+                                {sc.matchedKeywords.length > 0 && (
+                                  <span className="col-span-2 text-muted">
+                                    Keywords: {sc.matchedKeywords.slice(0, 4).join(", ")}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-muted">
+                                {copy.hybrid}: {source.score.toFixed(3)} (Components N/A)
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-muted font-mono pt-2 border-t border-white/5">
+                      <span>
+                        {copy.executionMode}: {result.retrievalMode}
+                      </span>
+                      <span>
+                        Model: {result.embeddingModel}
+                      </span>
+                    </div>
+                  </div>
+                </details>
+
                 {metrics && (
-                  <div className="mt-4 rounded-lg border border-green-300/20 bg-green-300/5 p-3">
-                    <p className="font-mono text-[10px] uppercase tracking-wider text-green-300">
+                  <div className="rounded-xl border border-success/20 bg-success/5 p-3.5 text-xs text-foreground">
+                    <p className="font-mono text-[10px] uppercase tracking-wider text-success font-semibold">
                       {copy.evaluation}
                     </p>
-                    <p className="mt-1 text-xs text-[#d9e8e2]">
+                    <p className="mt-1 text-muted">
                       {copy.topAccuracy}:{" "}
-                      {Math.round(metrics.top1Accuracy * 100)}% (
-                      {metrics.passed}/{metrics.total} documented cases)
+                      <span className="text-success font-semibold">
+                        {Math.round(metrics.top1Accuracy * 100)}%
+                      </span>{" "}
+                      ({metrics.passed}/{metrics.total} {copy.itemsReviewed})
                     </p>
                   </div>
                 )}
-              </>
-            ) : (
-              <p className="text-sm text-[#60776f]">{copy.runQuery}</p>
+              </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Selected Document Preview Panel */}
+      {selectedDoc && (
+        <div className="rounded-xl border border-accent/30 bg-accent/5 p-4 text-xs transition duration-300">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-semibold text-accent leading-relaxed text-sm">
+              {copy.documentPreview}: {selectedDoc.title}
+            </h4>
+            <button
+              type="button"
+              onClick={() => setSelectedDocId(null)}
+              aria-label="Close document preview"
+              className="kb-focusable h-6 w-6 rounded-full flex items-center justify-center bg-white/5 text-muted hover:text-foreground text-sm"
+            >
+              ×
+            </button>
+          </div>
+          <p className="text-[10px] text-muted mb-3">
+            {getCategoryLabel(selectedDoc.category)} · updated {selectedDoc.updated}
+          </p>
+          <div className="text-foreground leading-relaxed text-sm bg-black/25 p-3 rounded-lg border border-white/5 whitespace-pre-wrap">
+            {selectedDoc.content}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile note */}
+      <p className="font-mono text-[10px] text-muted mt-2 leading-relaxed">
+        * {copy.mobileCatalogNote}
+      </p>
     </div>
   );
 }
@@ -441,39 +865,76 @@ function WorkflowDemo({ locale }: { locale: UiLocale }) {
   const copy = uiCopy[locale];
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [runId, setRunId] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorText, setErrorText] = useState("");
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/workflow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(Object.fromEntries(form)),
-    });
-    const data = await response.json();
-    setSteps(data.steps);
-    setRunId(data.runId);
+    if (loading) return;
+    setLoading(true);
+    setErrorText("");
+    setSteps([]);
+    setRunId("");
+
+    try {
+      const form = new FormData(event.currentTarget);
+      const response = await fetch("/api/workflow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.fromEntries(form)),
+      });
+
+      if (response.status === 401) {
+        setErrorText(copy.sessionExpired);
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
+        return;
+      }
+
+      if (response.status === 429) {
+        const retryAfter = response.headers.get("Retry-After");
+        setErrorText(copy.rateLimitError + (retryAfter ? ` (${retryAfter}s)` : ""));
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      const data = await response.json();
+      setSteps(data.steps);
+      setRunId(data.runId);
+    } catch {
+      setErrorText(copy.errorAlert || "An error occurred.");
+    } finally {
+      setLoading(false);
+    }
   }
+
   return (
     <div className="grid gap-7 xl:grid-cols-[.9fr_1.1fr]">
       <form key={locale} onSubmit={submit} className="space-y-4">
         <div>
-          <label className="mb-1.5 block text-xs text-[#90a9a0]">
+          <label className="mb-1.5 block text-xs text-muted">
             {copy.requester}
           </label>
           <input
             name="requester"
             required
+            disabled={loading}
             defaultValue="Maya Chen"
-            className="w-full rounded-lg border border-white/10 bg-[#07100f] px-3 py-2.5 text-sm outline-none"
+            className="kb-focusable w-full rounded-lg border border-white/10 bg-[#07101F] px-3 py-2.5 text-sm outline-none text-foreground focus:border-accent/40 focus:ring-1 focus:ring-accent min-h-[44px]"
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-xs text-[#90a9a0]">
+          <label className="mb-1.5 block text-xs text-muted">
             {copy.requestType}
           </label>
           <select
             name="type"
-            className="w-full rounded-lg border border-white/10 bg-[#07100f] px-3 py-2.5 text-sm"
+            disabled={loading}
+            className="kb-focusable w-full rounded-lg border border-white/10 bg-[#07101F] px-3 py-2.5 text-sm text-foreground focus:border-accent/40 focus:ring-1 focus:ring-accent min-h-[44px]"
           >
             <option value="Software access">
               {locale === "th"
@@ -499,12 +960,13 @@ function WorkflowDemo({ locale }: { locale: UiLocale }) {
           </select>
         </div>
         <div>
-          <label className="mb-1.5 block text-xs text-[#90a9a0]">
+          <label className="mb-1.5 block text-xs text-muted">
             {copy.priority}
           </label>
           <select
             name="priority"
-            className="w-full rounded-lg border border-white/10 bg-[#07100f] px-3 py-2.5 text-sm"
+            disabled={loading}
+            className="kb-focusable w-full rounded-lg border border-white/10 bg-[#07101F] px-3 py-2.5 text-sm text-foreground focus:border-accent/40 focus:ring-1 focus:ring-accent min-h-[44px]"
           >
             <option value="Normal">
               {locale === "th" ? "ปกติ" : locale === "zh" ? "普通" : "Normal"}
@@ -515,54 +977,73 @@ function WorkflowDemo({ locale }: { locale: UiLocale }) {
           </select>
         </div>
         <div>
-          <label className="mb-1.5 block text-xs text-[#90a9a0]">
+          <label className="mb-1.5 block text-xs text-muted">
             {copy.justification}
           </label>
           <textarea
             name="details"
             required
+            disabled={loading}
             defaultValue={copy.workflowDetails}
             rows={4}
-            className="w-full resize-none rounded-lg border border-white/10 bg-[#07100f] px-3 py-2.5 text-sm outline-none"
+            className="kb-focusable w-full resize-none rounded-lg border border-white/10 bg-[#07101F] px-3 py-2.5 text-sm outline-none text-foreground focus:border-accent/40 focus:ring-1 focus:ring-accent"
           />
         </div>
-        <button className="w-full rounded-lg bg-green-300 py-2.5 text-sm font-medium text-[#07100f]">
-          {copy.runWorkflow}
+        <button
+          type="submit"
+          disabled={loading}
+          className="kb-focusable w-full rounded-lg bg-accent py-2.5 text-sm font-semibold text-[#07101F] hover:bg-accent-strong disabled:opacity-50 min-h-[44px]"
+        >
+          {loading ? copy.running : copy.runWorkflow}
         </button>
       </form>
-      <div>
+      <div aria-live="polite">
         <div className="mb-4 flex items-center justify-between">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-[#718a81]">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
             {copy.executionTrace}
           </p>
           {runId && (
-            <span className="font-mono text-[10px] text-green-300">
+            <span className="font-mono text-[10px] text-accent font-semibold">
               {runId}
             </span>
           )}
         </div>
         <div className="space-y-2">
-          {steps.length ? (
-            steps.map((item, index) => (
-              <div
-                key={item.step}
-                className="flex gap-4 rounded-xl border border-white/10 bg-white/[.025] p-4"
-              >
-                <div
-                  className={`grid h-7 w-7 shrink-0 place-items-center rounded-full font-mono text-xs ${item.status === "review" ? "bg-amber-300/15 text-amber-200" : "bg-green-300/15 text-green-300"}`}
-                >
-                  {index + 1}
-                </div>
-                <div>
-                  <p className="text-sm font-medium">{item.step}</p>
-                  <p className="mt-1 text-xs text-[#718a81]">{item.detail}</p>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-[#60776f]">
-              {copy.submitWorkflow}
+          {errorText && (
+            <div className="rounded-xl border border-error/35 bg-error/5 px-4 py-3 text-sm text-error">
+              {errorText}
             </div>
+          )}
+          {steps.length ? (
+            steps.map((item, index) => {
+              const isReview = item.status === "review";
+              return (
+                <div
+                  key={item.step}
+                  className="flex gap-4 rounded-xl border border-white/10 bg-white/[.015] p-4"
+                >
+                  <div
+                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-full font-mono text-xs font-semibold ${
+                      isReview
+                        ? "bg-warning/10 text-warning"
+                        : "bg-success/10 text-success"
+                    }`}
+                  >
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{item.step}</p>
+                    <p className="mt-1 text-xs text-muted">{item.detail}</p>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            !errorText && (
+              <div className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-muted/60">
+                {copy.submitWorkflow}
+              </div>
+            )
           )}
         </div>
       </div>
@@ -619,26 +1100,55 @@ function AgentDemo({ locale }: { locale: UiLocale }) {
             { label: "3 · 证据不足", message: "员工每年有多少天年假？" },
           ]
         : agentScenarios;
+
   const [message, setMessage] = useState("");
   const [submittedMessage, setSubmittedMessage] = useState("");
   const [result, setResult] = useState<AgentResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [errorText, setErrorText] = useState("");
 
   async function run(prompt: string) {
     const trimmed = prompt.trim();
-    if (!trimmed) return;
+    if (!trimmed || loading) return;
     setSubmittedMessage(trimmed);
     setMessage("");
     setLoading(true);
     setResult(null);
-    const response = await fetch("/api/agent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: trimmed }),
-    });
-    setResult(await response.json());
-    setLoading(false);
+    setErrorText("");
+
+    try {
+      const response = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmed }),
+      });
+
+      if (response.status === 401) {
+        setErrorText(copy.sessionExpired);
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
+        return;
+      }
+
+      if (response.status === 429) {
+        const retryAfter = response.headers.get("Retry-After");
+        setErrorText(copy.rateLimitError + (retryAfter ? ` (${retryAfter}s)` : ""));
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      setResult(await response.json());
+    } catch {
+      setErrorText(copy.errorAlert || "An error occurred.");
+    } finally {
+      setLoading(false);
+    }
   }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     await run(message);
@@ -646,197 +1156,241 @@ function AgentDemo({ locale }: { locale: UiLocale }) {
 
   return (
     <div className="flex min-h-[510px] flex-col">
-      <div className="mb-5 rounded-xl border border-white/10 bg-[#07100f] p-4">
-        <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-green-300">
+      <div className="mb-5 rounded-xl border border-white/10 bg-[#07101F] p-4">
+        <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-accent">
           {copy.agentTitle}
         </p>
-        <p className="text-sm leading-5 text-[#b7cbc3]">{copy.agentIntro}</p>
+        <p className="text-sm leading-5 text-muted">{copy.agentIntro}</p>
       </div>
-      <div className="mb-6 flex flex-wrap gap-2">
-        {scenarios.map((scenario) => (
-          <button
-            key={scenario.label}
-            type="button"
-            disabled={loading}
-            onClick={() => run(scenario.message)}
-            className="rounded-full border border-green-300/20 bg-green-300/5 px-3 py-1.5 text-left text-xs text-green-200 transition hover:border-green-300/40 disabled:opacity-50"
-          >
-            {scenario.label}
-          </button>
-        ))}
+
+      {/* Guided demo scenarios cards */}
+      <div className="mb-6">
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">
+          {copy.guidedScenarios}
+        </h3>
+        <div className="grid gap-2.5 sm:grid-cols-3">
+          {scenarios.map((scenario) => {
+            const parts = scenario.label.split(" · ");
+            const num = parts[0];
+            const desc = parts[1];
+            return (
+              <button
+                key={scenario.label}
+                type="button"
+                disabled={loading}
+                onClick={() => run(scenario.message)}
+                className="kb-focusable flex flex-col items-start rounded-xl border border-white/5 bg-[#0B1426] p-3 text-left transition hover:border-accent/40 disabled:opacity-50 min-h-[72px]"
+              >
+                <span className="mb-1 font-mono text-[10px] text-accent font-semibold">
+                  {num}
+                </span>
+                <span className="text-xs font-medium text-foreground leading-snug line-clamp-2">
+                  {desc}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex-1 space-y-4" aria-live="polite">
-        {!submittedMessage && (
+        {!submittedMessage && !errorText && (
           <div className="rounded-xl border border-dashed border-white/10 px-5 py-10 text-center">
-            <p className="text-sm text-[#90a9a0]">{copy.agentEmpty}</p>
-            <p className="mt-2 text-xs text-[#60776f]">
+            <p className="text-sm text-muted">{copy.agentEmpty}</p>
+            <p className="mt-2 text-xs text-muted/60">
               {copy.documentsFictional}
             </p>
           </div>
         )}
         {submittedMessage && (
-          <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-green-300 px-4 py-3 text-sm text-[#07100f]">
+          <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-accent px-4 py-3 text-sm text-[#07101F] font-medium">
             {submittedMessage}
           </div>
         )}
         {loading && (
-          <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm text-[#90a9a0]">
+          <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm text-muted">
             {copy.planning}
+          </div>
+        )}
+        {errorText && (
+          <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-error/35 bg-error/5 px-4 py-3 text-sm text-error">
+            {errorText}
           </div>
         )}
         {result && (
           <div className="max-w-full space-y-3">
-            <div className="rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm leading-6 text-[#d9e8e2]">
+            <div className="rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm leading-6 text-foreground">
               {result.answer}
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-[#07100f] p-4">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-green-300">
-                  {copy.trace}
-                </p>
-                <span className="rounded bg-green-300/10 px-2 py-1 font-mono text-[9px] text-green-300">
-                  {result.trace.mode} · {result.trace.latencyMs}ms ·{" "}
-                  {result.trace.toolCallCount} tool call
-                  {result.trace.toolCallCount === 1 ? "" : "s"} ·{" "}
-                  {result.trace.modelCallCount} model call
-                  {result.trace.modelCallCount === 1 ? "" : "s"}
-                </span>
-              </div>
-
-              <p className="mb-1 text-[10px] uppercase tracking-wider text-[#60776f]">
-                {copy.plan}
-              </p>
-              {result.trace.plan.length ? (
-                <div className="mb-4 space-y-1">
-                  {result.trace.plan.map((step, index) => (
-                    <p
-                      key={`${step.tool}-${index}`}
-                      className="font-mono text-xs text-[#b7cbc3]"
-                    >
-                      {index + 1}.{" "}
-                      <span className="text-green-300">{step.tool}</span> —{" "}
-                      {step.reason}
-                    </p>
-                  ))}
-                </div>
-              ) : (
-                <p className="mb-4 text-xs text-[#718a81]">{copy.noTool}</p>
-              )}
-
-              <p className="mb-1 text-[10px] uppercase tracking-wider text-[#60776f]">
-                {copy.tools}
-              </p>
-              <div className="mb-4 space-y-2">
-                {result.trace.steps.map((step, index) => (
-                  <div
-                    key={`${step.tool}-${index}`}
-                    className="font-mono text-xs"
-                  >
-                    <div className="flex flex-wrap justify-between gap-2 text-[#b7cbc3]">
-                      <span>{step.tool}</span>
-                      <span>
-                        {step.resultCount}{" "}
-                        {step.resultCount === 1 ? "item" : "items"}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[#718a81]">
-                      in: {JSON.stringify(step.input)}
-                    </p>
-                    <p className="text-[#718a81]">out: {step.outputSummary}</p>
-                  </div>
-                ))}
-              </div>
-
-              {result.trace.sources.length > 0 && (
-                <>
-                  <p className="mb-1 text-[10px] uppercase tracking-wider text-[#60776f]">
-                    {copy.sources}
+            {/* Bounded agent trace - Collapsed by default */}
+            <details className="group border border-white/10 bg-[#0B1426] p-4 rounded-xl">
+              <summary className="kb-focusable cursor-pointer font-mono text-xs text-accent select-none list-none outline-none focus-visible:ring-1 focus-visible:ring-accent">
+                ▸ {copy.technicalTrace}
+              </summary>
+              <div className="mt-4 border-t border-white/10 pt-4 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
+                    {copy.trace}
                   </p>
-                  <div className="mb-4 space-y-1">
-                    {result.trace.sources.map((source) => (
-                      <p key={source.id} className="text-xs text-green-300">
-                        [{source.title}] · cosine {source.score.toFixed(3)}
-                      </p>
+                  <span className="rounded bg-accent/15 px-2 py-1 font-mono text-[9px] text-accent font-semibold">
+                    {result.trace.mode} · {result.trace.latencyMs}ms ·{" "}
+                    {result.trace.toolCallCount} tool call
+                    {result.trace.toolCallCount === 1 ? "" : "s"} ·{" "}
+                    {result.trace.modelCallCount} model call
+                    {result.trace.modelCallCount === 1 ? "" : "s"}
+                  </span>
+                </div>
+
+                <div>
+                  <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-muted">
+                    {copy.plan}
+                  </p>
+                  {result.trace.plan.length ? (
+                    <div className="space-y-1 bg-black/20 p-2.5 rounded-lg border border-white/5">
+                      {result.trace.plan.map((step, index) => (
+                        <p
+                          key={`${step.tool}-${index}`}
+                          className="font-mono text-xs text-[#E6EEF8]/80 leading-relaxed"
+                        >
+                          {index + 1}.{" "}
+                          <span className="text-accent font-semibold">{step.tool}</span> —{" "}
+                          {step.reason}
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted/60">{copy.noTool}</p>
+                  )}
+                </div>
+
+                <div>
+                  <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-muted">
+                    {copy.tools}
+                  </p>
+                  <div className="space-y-2">
+                    {result.trace.steps.map((step, index) => (
+                      <div
+                        key={`${step.tool}-${index}`}
+                        className="font-mono text-[11px] bg-black/20 p-2.5 rounded-lg border border-white/5 leading-relaxed"
+                      >
+                        <div className="flex flex-wrap justify-between gap-2 text-foreground font-medium mb-1">
+                          <span>{step.tool}</span>
+                          <span className="text-accent-secondary">
+                            {step.resultCount}{" "}
+                            {step.resultCount === 1 ? "item" : "items"}
+                          </span>
+                        </div>
+                        <p className="text-muted">
+                          in: <span className="text-muted/80">{JSON.stringify(step.input)}</span>
+                        </p>
+                        <p className="text-muted">
+                          out: <span className="text-muted/80">{step.outputSummary}</span>
+                        </p>
+                      </div>
                     ))}
                   </div>
-                </>
-              )}
+                </div>
 
-              <p className="mb-1 text-[10px] uppercase tracking-wider text-[#60776f]">
-                {copy.verifier}
-              </p>
-              <div
-                className={`mb-4 rounded-lg border p-3 ${!result.trace.verifier.applicable ? "border-white/10 bg-white/[.02]" : result.trace.verifier.grounded ? "border-green-300/20 bg-green-300/5" : "border-amber-300/30 bg-amber-300/10"}`}
-              >
-                {result.trace.verifier.applicable ? (
-                  <>
-                    <p className="text-xs text-[#d9e8e2]">
-                      Grounded:{" "}
-                      <span
-                        className={
-                          result.trace.verifier.grounded
-                            ? "text-green-300"
-                            : "text-amber-200"
-                        }
-                      >
-                        {String(result.trace.verifier.grounded)}
-                      </span>{" "}
-                      · score{" "}
-                      {result.trace.verifier.groundednessScore.toFixed(2)}
+                {result.trace.sources.length > 0 && (
+                  <div>
+                    <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-muted">
+                      {copy.sources}
                     </p>
-                    {result.trace.verifier.supportingSourceIds.length > 0 && (
-                      <p className="mt-1 text-xs text-[#90a9a0]">
-                        {copy.supportingSources}:{" "}
-                        {result.trace.verifier.supportingSourceIds.join(", ")}
-                      </p>
-                    )}
-                    {result.trace.verifier.warning && (
-                      <p className="mt-1 text-xs text-amber-200">
-                        ⚠ {result.trace.verifier.warning}
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-xs text-[#718a81]">{copy.notApplicable}</p>
+                    <div className="space-y-1 bg-black/20 p-2.5 rounded-lg border border-white/5">
+                      {result.trace.sources.map((source) => (
+                        <p key={source.id} className="font-mono text-xs text-accent-secondary">
+                          [{source.title}] · cosine {source.score.toFixed(3)}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
                 )}
-              </div>
 
-              <p className="text-[10px] uppercase tracking-wider text-[#60776f]">
-                {copy.heuristic}
-              </p>
-              {result.trace.estimatedUsage ? (
-                <p className="mt-2 font-mono text-[10px] text-[#60776f]">
-                  Estimated usage: {result.trace.estimatedUsage.promptTokens}{" "}
-                  prompt / {result.trace.estimatedUsage.totalTokens} total
-                  tokens (embedding call)
-                </p>
-              ) : (
-                <p className="mt-2 font-mono text-[10px] text-[#60776f]">
-                  Estimated usage: not available (deterministic mode has no
-                  provider usage data)
-                </p>
-              )}
-            </div>
+                <div>
+                  <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-muted">
+                    {copy.verifier}
+                  </p>
+                  <div
+                    className={`rounded-lg border p-3 ${
+                      !result.trace.verifier.applicable
+                        ? "border-white/10 bg-white/[.02]"
+                        : result.trace.verifier.grounded
+                          ? "border-success/20 bg-success/5 text-foreground"
+                          : "border-warning/30 bg-warning/10 text-foreground"
+                    }`}
+                  >
+                    {result.trace.verifier.applicable ? (
+                      <div className="text-xs space-y-1">
+                        <p className="font-semibold">
+                          Grounded:{" "}
+                          <span
+                            className={
+                              result.trace.verifier.grounded
+                                ? "text-success"
+                                : "text-warning"
+                            }
+                          >
+                            {String(result.trace.verifier.grounded)}
+                          </span>{" "}
+                          · score{" "}
+                          {result.trace.verifier.groundednessScore.toFixed(2)}
+                        </p>
+                        {result.trace.verifier.supportingSourceIds.length > 0 && (
+                          <p className="text-muted">
+                            {copy.supportingSources}:{" "}
+                            {result.trace.verifier.supportingSourceIds.join(", ")}
+                          </p>
+                        )}
+                        {result.trace.verifier.warning && (
+                          <p className="text-warning">
+                            ⚠ {result.trace.verifier.warning}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted/60">{copy.notApplicable}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex flex-wrap justify-between gap-2">
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-muted/60">
+                    {copy.heuristic}
+                  </p>
+                  {result.trace.estimatedUsage ? (
+                    <p className="font-mono text-[10px] text-muted/60">
+                      Usage: {result.trace.estimatedUsage.promptTokens} prompt /{" "}
+                      {result.trace.estimatedUsage.totalTokens} total tokens
+                    </p>
+                  ) : (
+                    <p className="font-mono text-[10px] text-muted/60 font-semibold">
+                      Usage: not available (deterministic mode)
+                    </p>
+                  )}
+                </div>
+              </div>
+            </details>
           </div>
         )}
       </div>
 
       <form
         onSubmit={submit}
-        className="mt-6 flex gap-2 rounded-xl border border-white/10 bg-[#07100f] p-2"
+        className="mt-6 flex gap-2 rounded-xl border border-white/10 bg-[#07101F] p-2"
       >
         <input
           aria-label="Agent message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder={copy.agentPlaceholder}
-          className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-[#456057]"
+          disabled={loading}
+          className="kb-focusable min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted/50 text-foreground"
         />
         <button
+          type="submit"
           disabled={loading || !message.trim()}
-          className="rounded-lg bg-green-300 px-4 py-2 text-sm font-medium text-[#07100f] disabled:opacity-50"
+          className="kb-focusable rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#07101F] hover:bg-accent-strong disabled:opacity-50 min-h-[36px]"
         >
           {loading ? copy.running : copy.runCopilot}
         </button>
@@ -855,22 +1409,50 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
   const [submittedMessage, setSubmittedMessage] = useState("");
   const [result, setResult] = useState<SupportResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [errorText, setErrorText] = useState("");
 
   async function run(prompt: string) {
     const trimmed = prompt.trim();
-    if (!trimmed) return;
+    if (!trimmed || loading) return;
     setSubmittedMessage(trimmed);
     setMessage("");
     setLoading(true);
     setResult(null);
-    const response = await fetch("/api/support", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: trimmed }),
-    });
-    setResult(await response.json());
-    setLoading(false);
+    setErrorText("");
+
+    try {
+      const response = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmed }),
+      });
+
+      if (response.status === 401) {
+        setErrorText(copy.sessionExpired);
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
+        return;
+      }
+
+      if (response.status === 429) {
+        const retryAfter = response.headers.get("Retry-After");
+        setErrorText(copy.rateLimitError + (retryAfter ? ` (${retryAfter}s)` : ""));
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      setResult(await response.json());
+    } catch {
+      setErrorText(copy.errorAlert || "An error occurred.");
+    } finally {
+      setLoading(false);
+    }
   }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     await run(message);
@@ -878,196 +1460,278 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
 
   return (
     <div className="flex min-h-[510px] flex-col">
-      <div className="mb-5 rounded-xl border border-white/10 bg-[#07100f] p-4">
-        <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-green-300">
+      <div className="mb-5 rounded-xl border border-white/10 bg-[#07101F] p-4">
+        <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-accent">
           {copy.supportTitle}
         </p>
-        <p className="text-sm leading-5 text-[#b7cbc3]">{copy.supportIntro}</p>
-        <p className="mt-2 text-xs text-[#718a81]">{copy.supportLimit}</p>
+        <p className="text-sm leading-5 text-muted">{copy.supportIntro}</p>
+        <p className="mt-2 text-xs text-muted/65 leading-relaxed">{copy.supportLimit}</p>
       </div>
-      <div className="mb-6 flex flex-wrap gap-2">
-        {localizedScenarios.map((scenario) => (
-          <button
-            key={scenario.label}
-            type="button"
-            disabled={loading}
-            onClick={() => run(scenario.message)}
-            className="rounded-full border border-green-300/20 bg-green-300/5 px-3 py-1.5 text-left text-xs text-green-200 transition hover:border-green-300/40 disabled:opacity-50"
-          >
-            {scenario.label}
-          </button>
-        ))}
+
+      {/* Guided demo scenarios cards */}
+      <div className="mb-6">
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">
+          {copy.guidedScenarios}
+        </h3>
+        <div className="grid gap-2 sm:grid-cols-4">
+          {localizedScenarios.map((scenario) => {
+            const parts = scenario.label.split(" · ");
+            const num = parts[0];
+            const desc = parts[1];
+            return (
+              <button
+                key={scenario.label}
+                type="button"
+                disabled={loading}
+                onClick={() => run(scenario.message)}
+                className="kb-focusable flex flex-col items-start rounded-xl border border-white/5 bg-[#0B1426] p-3 text-left transition hover:border-accent/40 disabled:opacity-50 min-h-[72px]"
+              >
+                <span className="mb-1 font-mono text-[10px] text-accent font-semibold">
+                  {num}
+                </span>
+                <span className="text-xs font-medium text-foreground leading-snug line-clamp-2">
+                  {desc}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex-1 space-y-4" aria-live="polite">
-        {!submittedMessage && (
+        {!submittedMessage && !errorText && (
           <div className="rounded-xl border border-dashed border-white/10 px-5 py-10 text-center">
-            <p className="text-sm text-[#90a9a0]">{copy.supportEmpty}</p>
-            <p className="mt-2 text-xs text-[#60776f]">{copy.fictional}</p>
+            <p className="text-sm text-muted">{copy.supportEmpty}</p>
+            <p className="mt-2 text-xs text-muted/60">{copy.fictional}</p>
           </div>
         )}
         {submittedMessage && (
-          <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-green-300 px-4 py-3 text-sm text-[#07100f]">
+          <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-accent px-4 py-3 text-sm text-[#07101F] font-medium">
             {submittedMessage}
           </div>
         )}
         {loading && (
-          <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm text-[#90a9a0]">
+          <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm text-muted">
             {copy.processing}
+          </div>
+        )}
+        {errorText && (
+          <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-error/35 bg-error/5 px-4 py-3 text-sm text-error">
+            {errorText}
           </div>
         )}
         {result && (
           <div className="max-w-full space-y-3">
             <div
-              className={`rounded-2xl rounded-bl-sm border px-4 py-3 text-sm leading-6 ${result.trace.decision === "ESCALATE" ? "border-amber-300/30 bg-amber-300/10 text-amber-100" : "border-white/10 bg-white/[.04] text-[#d9e8e2]"}`}
+              className={`rounded-2xl rounded-bl-sm border px-4 py-3 text-sm leading-6 ${
+                result.trace.decision === "ESCALATE"
+                  ? "border-warning/30 bg-warning/10 text-warning"
+                  : "border-white/10 bg-white/[.04] text-foreground"
+              }`}
             >
-              <span className="mr-2 rounded bg-black/20 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider">
-                {result.trace.decision}
+              <span
+                className={`mr-2 rounded px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider font-semibold ${
+                  result.trace.decision === "ESCALATE"
+                    ? "bg-warning/20 text-warning"
+                    : "bg-success/20 text-success"
+                }`}
+              >
+                {result.trace.decision === "ESCALATE" ? "ESCALATE" : "AUTO RESPOND"}
               </span>
               {result.answer}
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-[#07100f] p-4">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-green-300">
-                  Execution trace
-                </p>
-                <span className="rounded bg-green-300/10 px-2 py-1 font-mono text-[9px] text-green-300">
-                  {result.trace.mode} · {result.trace.latencyMs}ms ·{" "}
-                  {result.trace.toolCallCount} tool call
-                  {result.trace.toolCallCount === 1 ? "" : "s"} ·{" "}
-                  {result.trace.modelCallCount} model call
-                  {result.trace.modelCallCount === 1 ? "" : "s"}
-                </span>
-              </div>
-
-              <div className="mb-4 grid grid-cols-2 gap-2 text-xs">
-                <p className="text-[#b7cbc3]">
-                  {copy.intent}:{" "}
-                  <span className="text-green-300">{result.trace.intent}</span>
-                </p>
-                <p className="text-[#b7cbc3]">
-                  {copy.risk}:{" "}
-                  <span
-                    className={
-                      result.trace.risk === "HIGH"
-                        ? "text-amber-200"
-                        : "text-green-300"
-                    }
-                  >
-                    {result.trace.risk}
-                  </span>
-                </p>
-              </div>
-
-              {result.trace.escalationReason && (
-                <p className="mb-4 rounded-lg border border-amber-300/30 bg-amber-300/10 p-3 text-xs text-amber-100">
-                  {copy.reason}: {result.trace.escalationReason}
-                </p>
-              )}
-
-              <p className="mb-1 text-[10px] uppercase tracking-wider text-[#60776f]">
-                {copy.tools}
-              </p>
-              <div className="mb-4 space-y-2">
-                {result.trace.steps.map((step, index) => (
-                  <div
-                    key={`${step.tool}-${index}`}
-                    className="font-mono text-xs"
-                  >
-                    <div className="flex flex-wrap justify-between gap-2 text-[#b7cbc3]">
-                      <span>{step.tool}</span>
-                      <span>
-                        {step.resultCount}{" "}
-                        {step.resultCount === 1 ? "item" : "items"}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[#718a81]">
-                      out: {step.outputSummary}
-                    </p>
+            {/* Simulated Case Handoff UI card */}
+            {result.handoff && result.handoff.success && (
+              <div className="rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/10 p-4 text-sm text-[#93C5FD]">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-foreground">{copy.handoffCreated}</span>
+                    <span className="rounded bg-accent/20 px-2 py-0.5 font-mono text-[9px] text-accent font-semibold uppercase tracking-wider">
+                      {copy.simulated}
+                    </span>
                   </div>
-                ))}
-              </div>
-
-              {result.trace.sources.length > 0 && (
-                <>
-                  <p className="mb-1 text-[10px] uppercase tracking-wider text-[#60776f]">
-                    {copy.sources}
+                  <span className="font-mono text-xs bg-success/20 text-success px-2 py-0.5 rounded font-semibold">
+                    {result.handoff.status}
+                  </span>
+                </div>
+                <div className="space-y-1.5 text-xs text-muted leading-relaxed">
+                  <p>
+                    {copy.reference}:{" "}
+                    <span className="font-mono text-foreground font-semibold">
+                      {result.handoff.handoffId || "DEMO-CS-QUEUED"}
+                    </span>
                   </p>
-                  <div className="mb-4 space-y-1">
-                    {result.trace.sources.map((source) => (
-                      <p key={source.id} className="text-xs text-green-300">
-                        [{source.title}] · cosine {source.score.toFixed(3)}
-                      </p>
+                  <p>
+                    {copy.destination}: <span className="text-foreground font-semibold">{copy.customerSupportQueue}</span>
+                  </p>
+                  <p>
+                    {copy.createdAt}:{" "}
+                    <span className="text-foreground font-semibold">
+                      {result.handoff.createdAt || new Date().toISOString()}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Support Copilot Trace - Collapsed by default */}
+            <details className="group border border-white/10 bg-[#0B1426] p-4 rounded-xl">
+              <summary className="kb-focusable cursor-pointer font-mono text-xs text-accent select-none list-none outline-none focus-visible:ring-1 focus-visible:ring-accent">
+                ▸ {copy.technicalTrace}
+              </summary>
+              <div className="mt-4 border-t border-white/10 pt-4 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
+                    Execution trace
+                  </p>
+                  <span className="rounded bg-accent/15 px-2 py-1 font-mono text-[9px] text-accent font-semibold">
+                    {result.trace.mode} · {result.trace.latencyMs}ms ·{" "}
+                    {result.trace.toolCallCount} tool call
+                    {result.trace.toolCallCount === 1 ? "" : "s"} ·{" "}
+                    {result.trace.modelCallCount} model call
+                    {result.trace.modelCallCount === 1 ? "" : "s"}
+                  </span>
+                </div>
+
+                <div className="mb-4 grid grid-cols-2 gap-2 text-xs bg-black/20 p-2.5 rounded-lg border border-white/5">
+                  <p className="text-muted">
+                    {copy.intent}:{" "}
+                    <span className="text-accent font-semibold">{result.trace.intent}</span>
+                  </p>
+                  <p className="text-muted">
+                    {copy.risk}:{" "}
+                    <span
+                      className={`font-semibold ${
+                        result.trace.risk === "HIGH" ? "text-error" : "text-success"
+                      }`}
+                    >
+                      {result.trace.risk}
+                    </span>
+                  </p>
+                </div>
+
+                {result.trace.escalationReason && (
+                  <p className="mb-4 rounded-lg border border-warning/30 bg-warning/5 p-3 text-xs text-warning leading-relaxed font-semibold">
+                    {copy.reason}: {result.trace.escalationReason}
+                  </p>
+                )}
+
+                <div>
+                  <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-muted">
+                    {copy.tools}
+                  </p>
+                  <div className="space-y-2">
+                    {result.trace.steps.map((step, index) => (
+                      <div
+                        key={`${step.tool}-${index}`}
+                        className="font-mono text-[11px] bg-black/20 p-2.5 rounded-lg border border-white/5 leading-relaxed"
+                      >
+                        <div className="flex flex-wrap justify-between gap-2 text-foreground font-semibold mb-1">
+                          <span>{step.tool}</span>
+                          <span className="text-accent-secondary">
+                            {step.resultCount}{" "}
+                            {step.resultCount === 1 ? "item" : "items"}
+                          </span>
+                        </div>
+                        <p className="text-muted">
+                          out: <span className="text-muted/80">{step.outputSummary}</span>
+                        </p>
+                      </div>
                     ))}
                   </div>
-                </>
-              )}
+                </div>
 
-              <p className="mb-1 text-[10px] uppercase tracking-wider text-[#60776f]">
-                {copy.verifier}
-              </p>
-              <div
-                className={`mb-4 rounded-lg border p-3 ${!result.trace.verifier.applicable ? "border-white/10 bg-white/[.02]" : result.trace.verifier.grounded ? "border-green-300/20 bg-green-300/5" : "border-amber-300/30 bg-amber-300/10"}`}
-              >
-                {result.trace.verifier.applicable ? (
-                  <>
-                    <p className="text-xs text-[#d9e8e2]">
-                      Grounded:{" "}
-                      <span
-                        className={
-                          result.trace.verifier.grounded
-                            ? "text-green-300"
-                            : "text-amber-200"
-                        }
-                      >
-                        {String(result.trace.verifier.grounded)}
-                      </span>{" "}
-                      · score{" "}
-                      {result.trace.verifier.groundednessScore.toFixed(2)}
+                {result.trace.sources.length > 0 && (
+                  <div>
+                    <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-muted">
+                      {copy.sources}
                     </p>
-                    {result.trace.verifier.warning && (
-                      <p className="mt-1 text-xs text-amber-200">
-                        ⚠ {result.trace.verifier.warning}
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-xs text-[#718a81]">{copy.notApplicable}</p>
+                    <div className="space-y-1 bg-black/20 p-2.5 rounded-lg border border-white/5">
+                      {result.trace.sources.map((source) => (
+                        <p key={source.id} className="font-mono text-xs text-accent-secondary leading-normal">
+                          [{source.title}] · cosine {source.score.toFixed(3)}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
                 )}
-              </div>
 
-              {result.trace.estimatedUsage ? (
-                <p className="font-mono text-[10px] text-[#60776f]">
-                  Estimated usage: {result.trace.estimatedUsage.promptTokens}{" "}
-                  prompt / {result.trace.estimatedUsage.totalTokens} total
-                  tokens (embedding call)
-                </p>
-              ) : (
-                <p className="font-mono text-[10px] text-[#60776f]">
-                  Estimated usage: not available (deterministic mode has no
-                  provider usage data)
-                </p>
-              )}
-            </div>
+                <div>
+                  <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-muted">
+                    {copy.verifier}
+                  </p>
+                  <div
+                    className={`rounded-lg border p-3 ${
+                      !result.trace.verifier.applicable
+                        ? "border-white/10 bg-white/[.02]"
+                        : result.trace.verifier.grounded
+                          ? "border-success/20 bg-success/5 text-foreground"
+                          : "border-warning/30 bg-warning/10 text-foreground"
+                    }`}
+                  >
+                    {result.trace.verifier.applicable ? (
+                      <div className="text-xs space-y-1">
+                        <p className="font-semibold">
+                          Grounded:{" "}
+                          <span
+                            className={
+                              result.trace.verifier.grounded
+                                ? "text-success"
+                                : "text-warning"
+                            }
+                          >
+                            {String(result.trace.verifier.grounded)}
+                          </span>{" "}
+                          · score{" "}
+                          {result.trace.verifier.groundednessScore.toFixed(2)}
+                        </p>
+                        {result.trace.verifier.warning && (
+                          <p className="text-warning">
+                            ⚠ {result.trace.verifier.warning}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted/60">{copy.notApplicable}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex justify-end">
+                  {result.trace.estimatedUsage ? (
+                    <p className="font-mono text-[10px] text-muted/60">
+                      Usage: {result.trace.estimatedUsage.promptTokens} prompt /{" "}
+                      {result.trace.estimatedUsage.totalTokens} total tokens
+                    </p>
+                  ) : (
+                    <p className="font-mono text-[10px] text-muted/60 font-semibold">
+                      Usage: not available (deterministic mode)
+                    </p>
+                  )}
+                </div>
+              </div>
+            </details>
           </div>
         )}
       </div>
 
       <form
         onSubmit={submit}
-        className="mt-6 flex gap-2 rounded-xl border border-white/10 bg-[#07100f] p-2"
+        className="mt-6 flex gap-2 rounded-xl border border-white/10 bg-[#07101F] p-2"
       >
         <input
           aria-label="Support message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder={copy.placeholder}
-          className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-[#456057]"
+          disabled={loading}
+          className="kb-focusable min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted/50 text-foreground"
         />
         <button
+          type="submit"
           disabled={loading || !message.trim()}
-          className="rounded-lg bg-green-300 px-4 py-2 text-sm font-medium text-[#07100f] disabled:opacity-50"
+          className="kb-focusable rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#07101F] hover:bg-accent-strong disabled:opacity-50 min-h-[36px]"
         >
           {loading ? copy.running : copy.run}
         </button>

@@ -10,9 +10,13 @@ const SECRET_PATTERNS: RegExp[] = [
   /sk-[a-z0-9_-]{10,}/gi,
   /gh[pousr]_[a-z0-9]{20,}/gi,
   /bearer\s+[a-z0-9._-]{10,}/gi,
+  /bearer_[a-z0-9._-]{10,}/gi,
   /"?password"?\s*[:=]\s*"?[^"\s,}]{3,}"?/gi,
   /"?api[_-]?key"?\s*[:=]\s*"?[^"\s,}]{3,}"?/gi,
   /cookie:\s*[^\n;]+/gi,
+  /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, // email
+  /(\+?\d{1,4}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}/g, // phone
+  /\btxn_[a-zA-Z0-9]{5,}\b/g, // transaction reference
 ];
 
 export function redactSecrets(input: string): string {
