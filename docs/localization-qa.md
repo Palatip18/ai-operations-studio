@@ -74,3 +74,10 @@ Automated tests reproduce the exact Thai correction, verify `deposit_withdrawal`
 - The live Thai and Chinese localization instructions are built from that configuration.
 - Internal AI Operations exposes an inspectable behavior-settings panel with localized previews.
 - The panel is intentionally read-only in this prototype; behavior changes remain code-reviewed and versioned rather than being persisted from an unrestricted browser editor.
+
+## Customer-visible citation boundary
+
+- RAG document IDs and citations remain available in Internal AI Operations only.
+- The localization prompt prohibits bracketed source identifiers in customer-facing responses.
+- A post-generation sanitizer removes leaked identifiers such as `[AUSupport]` and normalizes literal Thai wording such as `แผงโปรโมชั่น` to `รายละเอียดของโปรโมชั่น`.
+- Regression tests cover both source-label leakage and the natural Thai promotion wording.

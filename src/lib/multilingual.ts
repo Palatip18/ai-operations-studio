@@ -101,7 +101,7 @@ async function translate(text: string, instruction: string): Promise<string | nu
         temperature: 0,
         max_tokens: 700,
         messages: [
-          { role: "system", content: `${instruction} Preserve source identifiers in square brackets exactly. Do not add facts, advice, promises, or policy.` },
+          { role: "system", content: `${instruction} Do not include source identifiers, citations, bracketed document codes, or internal labels in the customer-facing response. Do not add facts, advice, promises, or policy.` },
           { role: "user", content: text },
         ],
       }),

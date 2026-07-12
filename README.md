@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-191_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-193_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 

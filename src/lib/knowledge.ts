@@ -417,7 +417,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Welcome Bonus and Turnover Policy (Fictional)",
     category: "Online Gaming Support",
     updated: "2026-07-13",
-    content: "The fictional welcome offer is available once to a newly verified account. Example offer bands range from 20% to 100% of an eligible first deposit, with a fictional maximum bonus shown in the promotion panel. The turnover requirement may range from 3x to 20x of the deposit plus bonus, depending on the selected offer and game category. Some games may contribute partially or not at all. The offer expires if the required turnover is not completed during its validity period. Duplicate accounts, shared payment details, or attempts to claim the same welcome offer more than once require manual review.",
+    content: "The fictional welcome offer is available once to a newly verified account. Example offer bands range from 20% to 100% of an eligible first deposit, with a fictional maximum bonus shown in the promotion details. The turnover requirement may range from 3x to 20x of the deposit plus bonus, depending on the selected offer and game category. Some games may contribute partially or not at all. The offer expires if the required turnover is not completed during its validity period. Duplicate accounts, shared payment details, or attempts to claim the same welcome offer more than once require manual review.",
     metadata: {
       topics: ["customer_support_faq", "operational_policy"],
       capabilityStatus: "SIMULATED",
@@ -429,7 +429,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Daily Bonus, Cashback, and Referral Policy (Fictional)",
     category: "Online Gaming Support",
     updated: "2026-07-13",
-    content: "A fictional daily deposit offer may add 10% to 20% to the first eligible deposit of the day, subject to a maximum bonus and turnover requirement. Weekly cashback may return a small percentage of eligible net losses and normally has a lower turnover requirement than a deposit bonus. Referral and free-spin rewards are credited only after their stated verification conditions are met. Promotions cannot be stacked unless the promotion panel explicitly says otherwise, and settled or expired offers cannot be applied retroactively.",
+    content: "A fictional daily deposit offer may add 10% to 20% to the first eligible deposit of the day, subject to a maximum bonus and turnover requirement. Weekly cashback may return a small percentage of eligible net losses and normally has a lower turnover requirement than a deposit bonus. Referral and free-spin rewards are credited only after their stated verification conditions are met. Promotions cannot be stacked unless the promotion details explicitly say otherwise, and settled or expired offers cannot be applied retroactively.",
     metadata: {
       topics: ["customer_support_faq", "operational_policy"],
       capabilityStatus: "SIMULATED",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { composeCustomerResponse, deriveTone } from "./response-composer";
+import { composeCustomerResponse, deriveTone, sanitizeCustomerFacingResponse } from "./response-composer";
 
 describe("response composer", () => {
   it("derives empathetic tone for complaints", () => {
@@ -30,5 +30,15 @@ describe("response composer", () => {
   it("uses an empathetic lead for customer complaints", async () => {
     const reply = await composeCustomerResponse({ message: "This is upsetting", intent: "complaint", risk: "MEDIUM", decision: "AUTO_RESPOND", escalationReason: null, evidence: "The documented next step is to review the request.", locale: "en", tone: "empathetic", handoffId: null });
     expect(reply).toMatch(/^I understand your concern\./);
+  });
+
+  it("removes model-generated source labels from customer-facing text", () => {
+    expect(sanitizeCustomerFacingResponse("ตรวจสอบรายละเอียดได้ค่ะ [AUSupport]")).toBe("ตรวจสอบรายละเอียดได้ค่ะ");
+    expect(sanitizeCustomerFacingResponse("Terms apply [source promotion-policy].")).toBe("Terms apply.");
+  });
+
+  it("replaces unnatural Thai promotion-panel wording", () => {
+    expect(sanitizeCustomerFacingResponse("กรุณาตรวจสอบในแผงโปรโมชั่นนะคะ"))
+      .toBe("กรุณาตรวจสอบในรายละเอียดของโปรโมชั่นนะคะ");
   });
 });

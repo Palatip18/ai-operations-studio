@@ -24,6 +24,18 @@ export function deriveTone(message: string, risk: RiskLevel, intent: Intent): Su
   return "neutral";
 }
 
+export function sanitizeCustomerFacingResponse(text: string): string {
+  return text
+    // Source IDs belong in the internal trace, never in the customer reply.
+    .replace(/\s*\[[^\]\r\n]{1,80}\]\s*/g, " ")
+    // Normalize literal or model-translated internal wording into natural Thai.
+    .replace(/แผงโปรโมชั่น/g, "รายละเอียดของโปรโมชั่น")
+    .replace(/แผงโปรโมชัน/g, "รายละเอียดของโปรโมชัน")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([.,!?;:])/g, "$1")
+    .trim();
+}
+
 function localizedEscalation(input: ComposerInput): string {
   const id = input.handoffId;
   if (!id) {
@@ -63,7 +75,7 @@ export async function composeCustomerResponse(input: ComposerInput): Promise<str
   }
 
   const language = input.locale === "th" ? "th" : input.locale === "zh" ? "zh" : "en";
-  const localized = await localizeSupportAnswer(evidence, language);
+  const localized = sanitizeCustomerFacingResponse(await localizeSupportAnswer(evidence, language));
   if (language === "th") {
     if (input.tone === "empathetic") return `เข้าใจค่ะว่าเรื่องนี้ทำให้ลูกค้าไม่สบายใจ ${localized}`;
     if (input.tone === "urgent") return `รับทราบค่ะ แอดมินจะช่วยตรวจสอบเรื่องนี้ให้นะคะ ${localized}`;

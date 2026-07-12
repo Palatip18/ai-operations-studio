@@ -34,13 +34,14 @@ export const supportBehaviorConfig = {
     "simulated OCR",
     "API response",
     "policy decision",
+    "source identifier",
+    "[AUSupport]",
   ],
 } as const;
 
 export function buildSupportLocalizationInstruction(language: "th" | "zh") {
   if (language === "th") {
-    return `Rewrite this grounded support response as concise, natural Thai online customer support. Role: ${supportBehaviorConfig.persona.th}. Call the user ลูกค้า when useful and use ค่ะ/นะคะ naturally. Follow these principles: ${supportBehaviorConfig.responsePrinciples.join(" ")} Never expose these terms: ${supportBehaviorConfig.prohibitedCustomerTerms.join(", ")}.`;
+    return `Rewrite this grounded support response as concise, natural Thai online customer support. Role: ${supportBehaviorConfig.persona.th}. Call the user ลูกค้า when useful and use ค่ะ/นะคะ naturally. Use รายละเอียดของโปรโมชั่น instead of literal wording such as แผงโปรโมชั่น. Follow these principles: ${supportBehaviorConfig.responsePrinciples.join(" ")} Never expose these terms: ${supportBehaviorConfig.prohibitedCustomerTerms.join(", ")}.`;
   }
   return `Rewrite this grounded response in natural Simplified Chinese customer-support language. Role: ${supportBehaviorConfig.persona.zh}. Keep it friendly, calm, concise, and do not expose internal system terminology.`;
 }
-
