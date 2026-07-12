@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-188_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-191_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
@@ -39,9 +39,15 @@ The consolidated AI Support Chat combines six pieces, each earning its place for
 ## Product surfaces
 
 - **Live Chat (default)** — a customer-facing simulation containing only conversation history, natural responses, common-question shortcuts, and a demo case reference when review is required. Internal intent, risk, RAG scores, decision labels, and execution traces are hidden.
-- **Internal AI Operations** — a reviewer-facing workspace containing the Support AI monitor, Knowledge/RAG explorer, deterministic workflow automation, and bounded Agentic Copilot. This is where technical evidence and evaluation details remain inspectable.
+- **Internal AI Operations** — a reviewer-facing workspace containing the Support AI monitor, Knowledge/RAG explorer, deterministic workflow automation, bounded Agentic Copilot, and a versioned AI Behavior Settings panel. This is where technical evidence and evaluation details remain inspectable.
 
 This separation demonstrates that internal AI observability can remain available to operations and engineering teams without leaking implementation details into the customer experience.
+
+### Internal AI behavior control plane
+
+`src/lib/support-behavior.ts` is the version-controlled source of truth for the assistant role, locale-specific persona, tone, response principles, customer-data rules, escalation boundaries, and prohibited customer-visible terminology. The live multilingual response path consumes this configuration when composing localized replies, so the settings are part of runtime behavior rather than display-only documentation.
+
+The **AI Behavior Settings** module inside Internal AI Operations makes those controls and representative response previews inspectable for reviewers. This portfolio checkpoint intentionally keeps changes code-reviewed and versioned: the browser panel does not persist edits, and the prototype does not claim production RBAC, approval workflows, or remote prompt management.
 
 ### Simulated back-office status integration
 

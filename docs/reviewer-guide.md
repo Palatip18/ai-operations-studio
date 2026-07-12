@@ -32,6 +32,8 @@ Look for:
 
 Then switch to **Internal AI Operations → Support Copilot** to inspect the detected intent/risk, retrieved evidence, groundedness result, `AUTO_RESPOND`/`ESCALATE` decision, structured handoff, and redacted trace behind the same behavior. The customer-facing and reviewer-facing views are deliberately separated.
 
+Open **Internal AI Operations → AI Behavior Settings** to inspect the active role, persona, tone, response principles, customer-data rules, escalation boundaries, prohibited customer-visible terminology, and localized response previews. These controls are versioned in code and feed the live localization prompt; the panel is inspectable rather than an ungoverned production prompt editor.
+
 ### 3. Promotion and responsible-use boundaries
 
 Select the bonus-withdrawal and responsible-use scenarios.
@@ -67,6 +69,7 @@ Recommended files:
 | Topic classification | `src/lib/query-topics.ts` |
 | Groundedness heuristic | `src/lib/verifier.ts` |
 | Response composition | `src/lib/response-composer.ts` |
+| AI behavior policy | `src/lib/support-behavior.ts` |
 | Simulated integration | `src/lib/support-handoff.ts` |
 | Simulated transaction lookup | `src/lib/support-backoffice.ts` |
 | Signed customer context | `src/lib/support-customer.ts` |

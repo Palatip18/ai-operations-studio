@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { knowledgeDocuments } from "@/lib/knowledge";
+import { supportBehaviorConfig } from "@/lib/support-behavior";
 import {
   LanguageSwitcher,
   uiCopy,
@@ -9,7 +10,7 @@ import {
   type UiLocale,
 } from "@/lib/ui-i18n";
 
-type Module = "chat" | "knowledge" | "workflow" | "agent" | "support";
+type Module = "chat" | "knowledge" | "workflow" | "agent" | "support" | "settings";
 type WorkflowStep = { step: string; detail: string; status: string };
 type AgentPlanStep = { tool: string; reason: string };
 type AgentStepTrace = {
@@ -93,8 +94,9 @@ const moduleIds: Exclude<Module, "chat">[] = [
   "knowledge",
   "workflow",
   "agent",
+  "settings",
 ];
-const moduleCopyIndex: Record<Exclude<Module, "chat">, number> = {
+const moduleCopyIndex: Record<Exclude<Module, "chat" | "settings">, number> = {
   knowledge: 0,
   workflow: 1,
   agent: 2,
@@ -106,8 +108,8 @@ export function Studio() {
   const modules = moduleIds.map((id, index) => ({
     id,
     number: String(index + 1).padStart(2, "0"),
-    label: copy.modules[moduleCopyIndex[id]][0],
-    description: copy.modules[moduleCopyIndex[id]][1],
+    label: id === "settings" ? locale === "th" ? "ตั้งค่าพฤติกรรม AI" : locale === "zh" ? "AI 行为设置" : "AI Behavior Settings" : copy.modules[moduleCopyIndex[id]][0],
+    description: id === "settings" ? locale === "th" ? "บทบาท น้ำเสียง หลักคิด และกฎความปลอดภัย" : locale === "zh" ? "角色、语气、原则与安全规则" : "Role, tone, principles, and safety rules" : copy.modules[moduleCopyIndex[id]][1],
   }));
   const [active, setActive] = useState<Module>("support");
   const [view, setView] = useState<"customer" | "internal">("customer");
@@ -272,9 +274,9 @@ export function Studio() {
               <KnowledgeDemo locale={locale} />
             ) : active === "workflow" ? (
               <WorkflowDemo locale={locale} />
-            ) : (
+            ) : active === "agent" ? (
               <AgentDemo locale={locale} />
-            )}
+            ) : <BehaviorSettingsDemo locale={locale} />}
           </div>
         </section>
       </main>
@@ -1466,6 +1468,74 @@ function AgentDemo({ locale }: { locale: UiLocale }) {
           {loading ? copy.running : copy.runCopilot}
         </button>
       </form>
+    </div>
+  );
+}
+
+function BehaviorSettingsDemo({ locale }: { locale: UiLocale }) {
+  const [preview, setPreview] = useState<"general" | "delay" | "escalate">("general");
+  const previews = {
+    th: {
+      general: "สวัสดีค่ะ ลูกค้ามีอะไรให้แอดมินช่วย แจ้งได้เลยนะคะ",
+      delay: "จากการตรวจสอบ รายการถอนเงินของลูกค้าอยู่ในคิวแล้วนะคะ รายการอาจใช้เวลาสักครู่ ลูกค้าไม่ต้องกังวลค่ะ",
+      escalate: "แอดมินส่งรายการให้ตรวจสอบเพิ่มเติมเรียบร้อยแล้วค่ะ รบกวนลูกค้ารอสักครู่นะคะ",
+    },
+    en: {
+      general: "Hello. How can I help you today?",
+      delay: "Your withdrawal is already in the processing queue. It may take a little time, but no further action is needed right now.",
+      escalate: "I’ve submitted the transaction for additional review. Please allow a little time for the check.",
+    },
+    zh: {
+      general: "您好，请问有什么可以帮您？",
+      delay: "您的提款已进入处理队列，可能需要一点时间，请不用担心。",
+      escalate: "该交易已提交进一步审核，请稍候。",
+    },
+  } as const;
+  const labels = locale === "th"
+    ? { title: "การตั้งค่าพฤติกรรม AI", intro: "Control plane ภายในสำหรับกำหนดบทบาท น้ำเสียง หลักคิด และขอบเขตการตอบลูกค้า", role: "บทบาทที่ใช้งาน", principles: "หลักคิดก่อนตอบ", data: "กฎการใช้ข้อมูลลูกค้า", escalation: "กฎการส่งตรวจสอบ", prohibited: "คำที่ห้ามแสดงกับลูกค้า", preview: "ตัวอย่างคำตอบ", active: "ใช้งานอยู่" }
+    : locale === "zh"
+      ? { title: "AI 行为设置", intro: "用于定义角色、语气、响应原则和安全边界的内部控制面板", role: "当前角色", principles: "响应原则", data: "客户数据规则", escalation: "审核规则", prohibited: "客户不可见术语", preview: "响应预览", active: "启用" }
+      : { title: "AI Behavior Settings", intro: "Internal control plane for role, tone, response principles, and safety boundaries.", role: "Active role", principles: "Response principles", data: "Customer data rules", escalation: "Escalation rules", prohibited: "Customer-hidden terms", preview: "Response preview", active: "Active" };
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-xl border border-accent/20 bg-accent/5 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div><p className="text-lg font-semibold text-foreground">{labels.title}</p><p className="mt-1 text-sm leading-6 text-muted">{labels.intro}</p></div>
+          <span className="rounded-full border border-success/25 bg-success/10 px-3 py-1 font-mono text-[10px] font-semibold text-success">{supportBehaviorConfig.status} · {supportBehaviorConfig.version}</span>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="rounded-xl border border-white/10 bg-black/10 p-4">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-accent">{labels.role}</p>
+          <p className="mt-2 font-semibold text-foreground">{supportBehaviorConfig.role}</p>
+          <p className="mt-2 text-sm leading-6 text-muted">{supportBehaviorConfig.persona[locale]}</p>
+          <div className="mt-3 flex flex-wrap gap-2">{supportBehaviorConfig.tone.map((tone) => <span key={tone} className="rounded-full border border-white/10 bg-white/[.03] px-2.5 py-1 text-xs text-muted">{tone}</span>)}</div>
+        </section>
+        <section className="rounded-xl border border-white/10 bg-black/10 p-4">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-accent">{labels.principles}</p>
+          <ul className="mt-3 space-y-2 text-xs leading-5 text-muted">{supportBehaviorConfig.responsePrinciples.map((item) => <li key={item} className="flex gap-2"><span className="text-success">✓</span><span>{item}</span></li>)}</ul>
+        </section>
+        <section className="rounded-xl border border-white/10 bg-black/10 p-4">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-accent">{labels.data}</p>
+          <ul className="mt-3 space-y-2 text-xs leading-5 text-muted">{supportBehaviorConfig.customerDataRules.map((item) => <li key={item} className="flex gap-2"><span className="text-accent-secondary">•</span><span>{item}</span></li>)}</ul>
+        </section>
+        <section className="rounded-xl border border-white/10 bg-black/10 p-4">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-accent">{labels.escalation}</p>
+          <ul className="mt-3 space-y-2 text-xs leading-5 text-muted">{supportBehaviorConfig.escalationRules.map((item) => <li key={item} className="flex gap-2"><span className="text-warning">→</span><span>{item}</span></li>)}</ul>
+        </section>
+      </div>
+
+      <section className="rounded-xl border border-error/20 bg-error/5 p-4">
+        <p className="font-mono text-[10px] uppercase tracking-wider text-error">{labels.prohibited}</p>
+        <div className="mt-3 flex flex-wrap gap-2">{supportBehaviorConfig.prohibitedCustomerTerms.map((term) => <span key={term} className="rounded border border-error/20 bg-black/15 px-2 py-1 font-mono text-[10px] text-error">{term}</span>)}</div>
+      </section>
+
+      <section className="rounded-xl border border-white/10 bg-[#07101F] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3"><p className="font-mono text-[10px] uppercase tracking-wider text-accent">{labels.preview}</p><div className="flex gap-1">{(["general", "delay", "escalate"] as const).map((item) => <button key={item} type="button" onClick={() => setPreview(item)} className={`kb-focusable min-h-[34px] rounded-lg px-3 text-xs ${preview === item ? "bg-accent text-[#07101F] font-semibold" : "border border-white/10 text-muted"}`}>{item}</button>)}</div></div>
+        <div className="mt-4 max-w-xl rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm leading-6 text-foreground">{previews[locale][preview]}</div>
+      </section>
     </div>
   );
 }

@@ -67,3 +67,10 @@ Automated tests reproduce the exact Thai correction, verify `deposit_withdrawal`
 - Transaction replies are tailored to queued withdrawals, bank settlement periods, completed records, and promotion-turnover restrictions.
 - Customer-facing cards hide `simulated`, API, confidence, and internal back-office terminology; those details remain available in Internal AI Operations.
 - Tests prohibit rigid phrases such as `เจ้าหน้าที่มนุษย์` and internal system wording in customer replies.
+
+## Versioned AI behavior settings
+
+- `src/lib/support-behavior.ts` centralizes the role, Thai female-admin persona, tone, response principles, data-access rules, escalation boundaries, and prohibited customer-visible terms.
+- The live Thai and Chinese localization instructions are built from that configuration.
+- Internal AI Operations exposes an inspectable behavior-settings panel with localized previews.
+- The panel is intentionally read-only in this prototype; behavior changes remain code-reviewed and versioned rather than being persisted from an unrestricted browser editor.
