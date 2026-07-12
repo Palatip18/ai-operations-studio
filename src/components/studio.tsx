@@ -16,6 +16,7 @@ export function Studio() {
   const [active, setActive] = useState<Module>("chat");
   const [liveAI, setLiveAI] = useState(false);
   useEffect(() => { fetch("/api/status").then((response) => response.json()).then((data: { liveAI: boolean }) => setLiveAI(data.liveAI)).catch(() => setLiveAI(false)); }, []);
+  async function signOut() { await fetch("/api/logout", { method: "POST" }).catch(() => {}); window.location.href = "/login"; }
   return (
     <div className="mx-auto min-h-screen max-w-[1500px] px-5 py-5 sm:px-8 lg:px-12">
       <header className="flex items-center justify-between border-b border-white/10 pb-5">
@@ -23,7 +24,10 @@ export function Studio() {
           <div className="grid h-9 w-9 place-items-center rounded-lg border border-green-300/30 bg-green-300/10 font-mono text-sm text-green-300">AI</div>
           <div><p className="text-sm font-semibold tracking-tight">AI Operations Studio</p><p className="text-xs text-[#90a9a0]">Personal portfolio prototype</p></div>
         </div>
-        <div className="flex items-center gap-2 rounded-full border border-green-300/20 bg-green-300/5 px-3 py-1.5 text-xs text-green-200"><span className="h-1.5 w-1.5 rounded-full bg-green-300" />{liveAI ? "Live AI · server-side key" : "Safe demo · no key required"}</div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 rounded-full border border-green-300/20 bg-green-300/5 px-3 py-1.5 text-xs text-green-200"><span className="h-1.5 w-1.5 rounded-full bg-green-300" />{liveAI ? "Live AI · server-side key" : "Safe demo · no key required"}</div>
+          <button type="button" onClick={signOut} className="rounded-full border border-white/10 bg-white/[.03] px-3 py-1.5 text-xs text-[#90a9a0] transition hover:border-green-300/30 hover:text-green-200">Sign out</button>
+        </div>
       </header>
 
       <main className="grid gap-10 py-10 lg:grid-cols-[340px_1fr] lg:py-16">

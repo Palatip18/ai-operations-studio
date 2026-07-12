@@ -82,6 +82,8 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). On macOS/Linux, replace `copy` with `cp`.
 
+Set `DEMO_PASSWORD` in `.env.local` before opening the app — you will be prompted for it at `/login`. See [Demo access](#demo-access-password-gate).
+
 ### Optional live model mode
 
 The public demo does not need or expose a secret. To test model-driven tool selection locally, set these values in `.env.local`:
@@ -94,6 +96,25 @@ AI_BASE_URL=https://api.openai.com/v1
 ```
 
 `AI_BASE_URL` can point to another provider that implements the OpenAI chat-completions and tool-calling contract. Never commit `.env.local`.
+
+## Demo access (password gate)
+
+The demo is protected by a shared **demo password** so a public deployment is not left fully open. This is intentionally minimal: a single password, a signed session cookie, and per-client login-attempt limiting. It is **password-gated portfolio demo access, not production authentication** — there is no user database, account model, roles, or external identity provider.
+
+Set the password locally before running:
+
+```dotenv
+DEMO_PASSWORD=change-me-demo-password
+```
+
+Behavior:
+
+- Visiting any application page without a valid session redirects to `/login`.
+- All AI API routes (`/api/chat`, `/api/rag`, `/api/workflow`, `/api/evaluation`, `/api/status`) independently return `401` without a valid session.
+- A correct password issues a signed session cookie: `HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, and a 24-hour expiry.
+- After 5 failed attempts within 15 minutes, further attempts from that client are temporarily blocked (`429`).
+- **Sign out** clears the session cookie and returns to `/login`.
+- The password is read only from `DEMO_PASSWORD` and is never logged, printed, returned, or exposed in any response.
 
 ## Quality checks
 
@@ -143,6 +164,7 @@ This repository is a **personal portfolio prototype**. It demonstrates working U
 ## Privacy and security
 
 - Only mock/sample data is included.
+- Demo access is gated by a shared `DEMO_PASSWORD`; the value is read only from the environment and never committed, logged, or returned. This is a portfolio gate, not production authentication.
 - `.env*` is ignored; `.env.example` contains placeholders only.
 - Public AI endpoints apply per-client request limits, 500-character input limits, provider timeouts, and a 350-token chat output cap as basic cost guards.
 - Never upload private documents, production credentials, or real personal/transaction data to this demo.
