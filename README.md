@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-193_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-197_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
@@ -17,7 +17,7 @@ AI Operations Studio demonstrates how applied AI patterns can turn fictional onl
 3. Ask about a deposit or withdrawal. The assistant requests `USER-RAY01` only when an account-scoped lookup becomes necessary and then binds the signed customer context to the current browser chat session.
 4. Run the missing-deposit or missing-withdrawal scenario to see a customer-scoped status lookup, safe reply, and simulated transaction-review reference.
 5. Switch to **Internal AI Operations**, open Support Copilot, and expand **Technical execution trace** to inspect customer scope, intent, risk, retrieval sources, verifier result, tool calls, latency, and usage.
-6. Review the [recruiter and technical-review guide](docs/reviewer-guide.md), [domain research QA](docs/domain-research-qa.md), [localization QA](docs/localization-qa.md), and [repository recovery QA](docs/repository-recovery-qa.md).
+6. Review the [recruiter and technical-review guide](docs/reviewer-guide.md), [domain research QA](docs/domain-research-qa.md), [promotion research QA](docs/promotion-research-qa.md), [localization QA](docs/localization-qa.md), and [repository recovery QA](docs/repository-recovery-qa.md).
 
 Estimated review time: **3–5 minutes for the guided demo; 15–20 minutes for the technical review.**
 

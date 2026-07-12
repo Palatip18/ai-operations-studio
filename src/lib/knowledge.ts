@@ -402,15 +402,95 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
   },
   {
     id: "gaming-promotion-overview",
-    title: "Online Gaming Promotion Overview (Fictional)",
+    title: "Available Promotion Details — 10 Demo Offers (Fictional)",
     category: "Online Gaming Support",
     updated: "2026-07-13",
-    content: "This fictional platform offers four common promotion types: a first-deposit welcome bonus, a daily deposit bonus, weekly cashback on eligible net losses, and referral or free-spin rewards. Every offer has its own minimum deposit, maximum bonus, eligible games, validity period, and turnover requirement. Only one promotion can be active at a time. Promotional credit is not withdrawable as cash until the stated turnover requirement is complete. Customers should confirm the current terms before opting in; no promotion guarantees a profit or winning outcome.",
+    content: "Ten fictional offers are available in this demo knowledge base: Welcome Deposit 50%, New Member Sports Bonus, Daily Slot Reload, Weekly Slot Free Spins, Weekly Slot Cashback, Live Casino Rebate, Sports Accumulator Boost, Weekend Casino Reload, Verified Referral Reward, and Loyalty Points Exchange. The assistant should explain the relevant offer details and conditions, not recommend higher spending. Every offer has its own eligibility, minimum deposit or qualifying activity, maximum reward, eligible products, validity period, and turnover requirement. Only one deposit promotion can be active at a time unless the promotion details explicitly allow otherwise. Promotional credit is not withdrawable as cash until its stated conditions are complete. No offer guarantees a profit or winning outcome, and customers should never deposit or continue playing to recover losses.",
     metadata: {
       topics: ["customer_support_faq", "operational_policy"],
       capabilityStatus: "SIMULATED",
       keywords: ["promotion", "bonus", "welcome", "cashback", "referral", "free", "spin", "offer", "turnover", "wagering", "eligible", "validity"],
     },
+  },
+  {
+    id: "promo-welcome-deposit-50",
+    title: "Welcome Deposit 50% (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "A newly verified customer may choose a fictional 50% bonus on the first eligible deposit, up to 1,000 demo credits. The example minimum deposit is 100 credits. Eligible slot and selected live-casino bets contribute according to the promotion details; excluded games contribute zero. The example turnover is 8x the deposit plus bonus and must be completed within 7 days. The offer is limited to one customer, account, device, and payment source, cannot be combined with another deposit promotion, and does not guarantee a return.",
+    metadata: { topics: ["customer_support_faq", "operational_policy"], capabilityStatus: "SIMULATED", keywords: ["welcome", "new member", "first deposit", "50 percent", "1000", "slot", "live casino", "turnover", "7 days"] },
+  },
+  {
+    id: "promo-new-member-sports",
+    title: "New Member Sports Bonus (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "A newly verified customer may choose a fictional sports bonus equal to 100% of the first eligible sports-wallet deposit, up to 1,500 demo credits. The example minimum deposit is 200 credits. The bonus is limited to pre-match and live sports selections with decimal odds of at least 1.70; void, cashed-out, or opposing bets do not qualify. The example turnover is 5x the bonus within 10 days. This offer cannot be combined with the Welcome Deposit 50% offer and does not guarantee a winning bet.",
+    metadata: { topics: ["customer_support_faq", "operational_policy"], capabilityStatus: "SIMULATED", keywords: ["sports", "sport", "new member", "first deposit", "100 percent", "odds", "1.70", "turnover", "10 days"] },
+  },
+  {
+    id: "promo-daily-slot-reload",
+    title: "Daily Slot Reload 10% (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "A verified customer may receive a fictional 10% bonus on the first eligible slot-wallet deposit of the day, up to 500 demo credits. The example minimum deposit is 100 credits and the example turnover is 5x the bonus within 24 hours. Only listed slot games contribute; table games, live casino, sports, and opposite-side bets are excluded. The offer is available once per calendar day and cannot be stacked with another active deposit promotion.",
+    metadata: { topics: ["customer_support_faq", "operational_policy"], capabilityStatus: "SIMULATED", keywords: ["daily", "slot", "reload", "deposit", "10 percent", "500", "24 hours", "turnover"] },
+  },
+  {
+    id: "promo-weekly-slot-free-spins",
+    title: "Weekly Slot Free Spins (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "A verified customer who completes the fictional weekly qualifying activity may receive 20 free spins on one listed demo slot. Free spins expire 48 hours after issue. Winnings from the spins are credited as promotional balance and carry an example 3x winnings turnover before withdrawal. The spins cannot be exchanged for cash, moved to another game, or restored after expiry. Availability and the qualifying game must be checked in the current promotion details.",
+    metadata: { topics: ["customer_support_faq", "operational_policy"], capabilityStatus: "SIMULATED", keywords: ["weekly", "slot", "free spins", "20 spins", "48 hours", "promotional balance", "3x"] },
+  },
+  {
+    id: "promo-weekly-slot-cashback",
+    title: "Weekly Slot Cashback 5% (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "A verified customer may receive fictional cashback equal to 5% of eligible weekly net slot losses, up to 1,000 demo credits. Net loss is calculated from settled eligible slot bets minus settled winnings and previously credited rewards during the stated weekly period. Void bets, excluded games, and promotional-credit bets do not count. The cashback carries an example 1x turnover and must be claimed within 3 days. Cashback is a limited rebate, not a guarantee of recovering losses, and should never be used as a reason to continue playing.",
+    metadata: { topics: ["customer_support_faq", "operational_policy"], capabilityStatus: "SIMULATED", keywords: ["weekly", "slot", "cashback", "net loss", "5 percent", "1000", "1x", "3 days"] },
+  },
+  {
+    id: "promo-live-casino-rebate",
+    title: "Live Casino Rebate 3% (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "A verified customer may receive a fictional 3% rebate on eligible weekly net losses from selected live-casino tables, up to 1,500 demo credits. Tie bets, opposite-side bets, void rounds, bonus-funded bets, and excluded tables do not qualify. The example turnover is 1x the rebate within 3 days. The rebate is calculated only after all included rounds settle and cannot be combined with another loss-rebate offer. It is not a promise to recover losses.",
+    metadata: { topics: ["customer_support_faq", "operational_policy"], capabilityStatus: "SIMULATED", keywords: ["live casino", "casino", "rebate", "cashback", "net loss", "3 percent", "1500", "table"] },
+  },
+  {
+    id: "promo-sports-accumulator-boost",
+    title: "Sports Accumulator Boost (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "A fictional bonus may add 10% to net winnings from an eligible settled sports accumulator, up to 500 demo credits. The example accumulator requires at least 5 selections, each with decimal odds of at least 1.50. All selections must win; void legs, cashed-out bets, system bets, and opposite outcomes are excluded. The boost applies to the calculated net winnings, not the stake, and does not change the underlying odds or guarantee that the accumulator will win.",
+    metadata: { topics: ["customer_support_faq", "operational_policy"], capabilityStatus: "SIMULATED", keywords: ["sports", "accumulator", "parlay", "boost", "5 selections", "odds", "10 percent", "500"] },
+  },
+  {
+    id: "promo-weekend-casino-reload",
+    title: "Weekend Casino Reload 15% (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "A verified customer may choose a fictional 15% weekend reload bonus on one eligible casino-wallet deposit, up to 800 demo credits. The example minimum deposit is 200 credits and the example turnover is 8x the deposit plus bonus within 3 days. Selected slots and live-casino tables contribute at different rates shown in the promotion details. The offer is available once during the stated weekend window and cannot be combined with another deposit bonus.",
+    metadata: { topics: ["customer_support_faq", "operational_policy"], capabilityStatus: "SIMULATED", keywords: ["weekend", "casino", "reload", "15 percent", "800", "deposit", "turnover", "3 days"] },
+  },
+  {
+    id: "promo-verified-referral",
+    title: "Verified Referral Reward (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "A verified customer may receive a fictional 200-credit referral reward after the referred customer completes account verification, makes an eligible deposit from their own payment source, and completes the stated qualifying activity. Self-referrals, duplicate accounts, shared devices, shared payment details, or misleading invitations are not eligible. The reward is fixed, is not based on the referred customer's losses, and does not guarantee a return. The example reward carries a 3x turnover and cannot be combined with another referral claim for the same person.",
+    metadata: { topics: ["customer_support_faq", "operational_policy"], capabilityStatus: "SIMULATED", keywords: ["referral", "refer friend", "invite", "verified", "200", "reward", "3x", "duplicate"] },
+  },
+  {
+    id: "promo-loyalty-points-exchange",
+    title: "Loyalty Points Exchange (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "Eligible settled activity in selected slots, live casino, and sports may earn fictional loyalty points at rates published in the current promotion details. Points may be exchanged for listed demo rewards after the minimum redemption threshold is met. Void, refunded, promotional-credit, and suspicious or opposite-side activity does not earn points. Points have no cash value before redemption, may expire after 90 days of inactivity, and should not be presented as a reason to increase spending or continue playing.",
+    metadata: { topics: ["customer_support_faq", "operational_policy"], capabilityStatus: "SIMULATED", keywords: ["loyalty", "points", "exchange", "redeem", "slot", "live casino", "sports", "90 days"] },
   },
   {
     id: "gaming-welcome-bonus-policy",
@@ -551,6 +631,13 @@ function hybridScore(vector: number, lexical: number, topic: number): number {
   return HYBRID_WEIGHTS.vector * vector + HYBRID_WEIGHTS.lexical * lexical + HYBRID_WEIGHTS.topic * topic;
 }
 
+function promotionCatalogBoost(query: string, documentId: string): number {
+  if (documentId !== "gaming-promotion-overview") return 0;
+  const asksForPromotions = /promotion|promotions|bonus|bonuses|offer|offers|โปรโมชั่น|โปรโมชัน|โบนัส|优惠|促销/i.test(query);
+  const asksForCatalog = /what|which|available|current|list|มีอะไร|อะไรบ้าง|แนะนำ|有哪些|目前/i.test(query);
+  return asksForPromotions && asksForCatalog ? 0.3 : 0;
+}
+
 // ---------------------------------------------------------------------------
 // Retrieval result type
 // ---------------------------------------------------------------------------
@@ -610,7 +697,7 @@ export function searchKnowledge(query: string, limit = 3): KnowledgeResult[] {
           queryTopics,
           document.metadata?.topics ?? [],
         );
-        const hybrid = hybridScore(vectorScore, lexicalScore, topicScore);
+        const hybrid = Math.min(1, hybridScore(vectorScore, lexicalScore, topicScore) + promotionCatalogBoost(query, document.id));
 
         return {
           document,
@@ -687,7 +774,7 @@ export async function searchKnowledgeSemanticBatch(queries: string[], limit = 3)
             queryTopics,
             item.document.metadata?.topics ?? [],
           );
-          const hybrid = hybridScore(vectorScore, lexicalScore, topicScore);
+          const hybrid = Math.min(1, hybridScore(vectorScore, lexicalScore, topicScore) + promotionCatalogBoost(query, item.document.id));
 
           return {
             document: item.document,
