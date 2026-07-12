@@ -13,7 +13,7 @@ const LOCAL_NORMALIZATIONS: Record<"th" | "zh", Array<[RegExp, string]>> = {
     [/ระบบนี้สร้าง(?:ขึ้น)?มาทำไม|สร้างระบบนี้ทำไม/gi, "why was this system built product purpose"],
     [/สมัครบัญชี|สร้างบัญชี|เปิดบัญชี/gi, "create a new account onboarding"],
     [/ใบแจ้งหนี้|ใบเสร็จ|การชำระเงิน|จ่ายเงิน/gi, "invoice billing payment"],
-    [/ฝากเงินแล้ว(?:เงิน|เครดิต)?ไม่เข้า|ฝากเงินไม่เข้า|เครดิตไม่เข้า/gi, "deposit not credited financial loss"],
+    [/ฝากเงิน.*(?:เงิน|เครดิต).*(?:ยัง)?ไม่เข้า|ฝากเงินแล้ว(?:เงิน|เครดิต)?ไม่เข้า|ฝากเงินไม่เข้า|เครดิต(?:ยัง)?ไม่เข้า/gi, "deposit not credited financial loss"],
     [/ถอนเงินนาน|ถอนเงินล่าช้า|ถอนเงินยังไม่สำเร็จ/gi, "withdrawal pending delayed status"],
     [/ถอนแล้วเงินไม่เข้า|ถอน(?:เงิน)?สำเร็จ(?:แล้ว)?(?:\s*แต่)?เงิน(?:ยัง)?ไม่เข้า(?:บัญชี)?|เงินถอนยังไม่เข้าบัญชี/gi, "withdrawal completed money not received financial loss"],
     [/โปรโมชั่น|โปรโมชัน|โบนัส|คืนยอดเสีย|เครดิตฟรี|ฟรีสปิน|เทิร์นโอเวอร์|ยอดหมุนเวียน/gi, "promotion bonus cashback free spin turnover wagering requirement"],

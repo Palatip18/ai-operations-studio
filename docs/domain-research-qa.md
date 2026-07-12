@@ -53,3 +53,14 @@ The sample knowledge base covers:
 - Payment and case state are simulated and stored in memory; there is no real bank, CRM, game-provider, or ticketing integration.
 - Promotion terms are illustrative and intentionally not tied to a real operator.
 - Production use would require legal/compliance review, operator-owned source documents, versioned policies, durable case storage, PII controls, and measured retrieval/evaluation on a larger labeled dataset.
+
+## Simulated back-office verification checkpoint
+
+The support flow now uses a protected external-style adapter at `POST /api/support/status` backed by `src/lib/support-backoffice.ts`.
+
+- Requests without a transaction reference ask for the reference first and do not create a case.
+- Known normal statuses return structured transaction data and do not create a case.
+- A completed/credited ledger status that conflicts with a missing-funds report creates an idempotent simulated review case.
+- A valid-looking reference absent from the fictional dataset also creates a simulated review case.
+- The UI reads transaction state from structured `result.transaction` fields rather than parsing customer-facing text.
+- The adapter is in-memory and fictional; it does not connect to a bank, payment gateway, game provider, or real operator database.

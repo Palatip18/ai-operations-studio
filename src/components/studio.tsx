@@ -61,7 +61,19 @@ type HandoffResult = {
   createdAt?: string;
   idempotent?: boolean;
 };
-type SupportResult = { answer: string; handoff?: HandoffResult | null; trace: SupportTrace };
+type TransactionResult = {
+  simulated: true;
+  found: boolean;
+  reference: string | null;
+  kind: "DEPOSIT" | "WITHDRAWAL" | null;
+  status: "PENDING" | "PROCESSING" | "CREDITED" | "COMPLETED" | "REJECTED" | "NOT_FOUND" | "NEEDS_REFERENCE";
+  amount?: number;
+  currency?: "THB";
+  updatedAt?: string;
+  safeReason?: string;
+  reviewRequired: boolean;
+};
+type SupportResult = { answer: string; transaction?: TransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
 type SupportHistoryEntry = {
   id: string;
   user: string;
@@ -1652,6 +1664,25 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
               </span>}
               {result.answer}
             </div>
+
+            {result.transaction && result.transaction.status !== "NEEDS_REFERENCE" && (
+              <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold text-foreground">
+                    {locale === "th" ? "สถานะรายการจากระบบหลังบ้าน" : locale === "zh" ? "后台交易状态" : "Back-office transaction status"}
+                  </p>
+                  <span className={`rounded px-2 py-1 font-mono text-[10px] font-semibold ${result.transaction.reviewRequired ? "bg-warning/15 text-warning" : "bg-success/15 text-success"}`}>
+                    {result.transaction.status}
+                  </span>
+                </div>
+                <div className="grid gap-2 text-xs text-muted sm:grid-cols-3">
+                  <p>{copy.reference}: <span className="font-mono text-foreground">{result.transaction.reference}</span></p>
+                  <p>{locale === "th" ? "ประเภท" : locale === "zh" ? "类型" : "Type"}: <span className="text-foreground">{result.transaction.kind}</span></p>
+                  {result.transaction.amount !== undefined && <p>{locale === "th" ? "ยอดเงิน" : locale === "zh" ? "金额" : "Amount"}: <span className="text-foreground">{result.transaction.amount.toLocaleString()} {result.transaction.currency}</span></p>}
+                </div>
+                <p className="mt-3 text-[11px] text-muted/60">{copy.simulated} · API response</p>
+              </div>
+            )}
 
             {/* Simulated Case Handoff UI card */}
             {result.handoff && result.handoff.success && (

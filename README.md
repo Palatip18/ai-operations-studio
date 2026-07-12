@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-168_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-174_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
@@ -42,6 +42,16 @@ The consolidated AI Support Chat combines six pieces, each earning its place for
 
 This separation demonstrates that internal AI observability can remain available to operations and engineering teams without leaking implementation details into the customer experience.
 
+### Simulated back-office status integration
+
+Deposit and withdrawal questions use a shared simulated back-office adapter exposed through the protected `POST /api/support/status` route. Demo references include `DEP-1001`, `DEP-1002`, `WDL-2001`, `WDL-2002`, and `WDL-2003`.
+
+- A normal `PENDING`, `PROCESSING`, or explained `REJECTED` status is returned directly without creating a case.
+- If no reference is supplied, the assistant requests the minimum required reference first and does not create a case.
+- A valid-looking unknown reference or a mismatch such as `COMPLETED` while the customer reports missing funds creates an idempotent simulated review case.
+- Promotion and game questions that are grounded in the knowledge base are answered without a handoff.
+- Customer-facing responses never request passwords, PINs, OTPs, or full bank-account details.
+
 ## What the MVP demonstrates
 
 1. **AI Gaming Support Chat (Conversation → Tools → Evidence → Decision)** — the primary conversational surface handles fictional promotion, deposit, withdrawal, and game-support conversations with knowledge retrieval, multilingual response composition, simulated case handoff, and safe escalation.
@@ -73,7 +83,7 @@ The default `mock` mode is deterministic, free to run, and requires no credentia
   | Mean latency | ~1ms | ~296ms |
 
   These numbers are not the 80-90% target — see [Knowledge-quality model](#knowledge-quality-model) for why, and [Evaluation methodology](#evaluation-methodology) for full definitions.
-- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual normalization, response composition, intent/risk classification, simulated handoff, and API auth — **168 tests**, see `npm test`.
+- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual normalization, response composition, intent/risk classification, simulated back-office lookup/handoff, and API auth — **174 tests**, see `npm test`.
 - Results are exposed through `GET /api/evaluation`, `GET /api/agent-evaluation`, `GET /api/support-evaluation`, and displayed in the UI.
 
 These figures validate only the included fictional sample set and documented thresholds; they are not claims of production accuracy.
@@ -388,7 +398,7 @@ src/
     ├── support-classification.ts  # Deterministic intent/risk/mandatory-escalation logic
     ├── support-agent.ts           # Support Copilot orchestrator + decideSupportPolicy
     ├── support-evaluation.ts      # 41-case Customer Support Copilot evaluation suite
-    └── *.test.ts                  # Unit and integration tests (168)
+    └── *.test.ts                  # Unit and integration tests (174)
 ```
 
 **Files an AI Engineer should inspect first:** `src/lib/support-agent.ts` (the orchestration flow and the pure `decideSupportPolicy` function), `src/lib/support-classification.ts` (deterministic policy logic), `src/lib/verifier.ts` (the groundedness heuristic and its documented limits), `src/lib/agent.ts` (the mode-aware retrieval threshold and why it exists), `src/lib/support-evaluation.ts` (how the honest, non-cherry-picked metrics table above was produced).

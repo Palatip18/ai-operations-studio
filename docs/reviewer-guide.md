@@ -68,7 +68,9 @@ Recommended files:
 | Groundedness heuristic | `src/lib/verifier.ts` |
 | Response composition | `src/lib/response-composer.ts` |
 | Simulated integration | `src/lib/support-handoff.ts` |
+| Simulated transaction lookup | `src/lib/support-backoffice.ts` |
 | API adapter | `src/app/api/support/handoff/route.ts` |
+| Status API adapter | `src/app/api/support/status/route.ts` |
 | Evaluation | `src/lib/support-evaluation.ts` and `src/lib/support-challenge.ts` |
 | Portfolio UI | `src/components/studio.tsx` |
 

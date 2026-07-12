@@ -10,6 +10,7 @@ import { classifyQueryTopics } from "./query-topics";
 import { normalizeSupportInput } from "./multilingual";
 import { deriveTone, composeCustomerResponse } from "./response-composer";
 import { handleSimulatedHandoff, type HandoffResult } from "./support-handoff";
+import { composeTransactionStatusReply, lookupSimulatedTransaction, type BackofficeTransactionResult } from "./support-backoffice";
 
 /**
  * Bounded customer-support agent:
@@ -23,8 +24,9 @@ import { handleSimulatedHandoff, type HandoffResult } from "./support-handoff";
  * rule-based logic (see support-classification.ts) — not model calls. The
  * only optional model-driven step is knowledge retrieval, which uses live
  * embeddings when configured and otherwise falls back to a deterministic
- * local vector search. At most 2 tools ever run (retrieval + optional
- * workflow), well within the same bounded-step philosophy as agent.ts.
+ * local vector search. At most 3 tools run (retrieval, an optional status or
+ * workflow lookup, and an optional simulated handoff), preserving the same
+ * bounded-step philosophy as agent.ts.
  */
 
 export type SupportDecision = "AUTO_RESPOND" | "ESCALATE";
@@ -56,7 +58,7 @@ export type SupportTrace = {
   normalizationMode: "original" | "local-map" | "live-translation";
 };
 
-export type SupportResult = { answer: string; handoff?: HandoffResult | null; trace: SupportTrace };
+export type SupportResult = { answer: string; transaction?: BackofficeTransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
 
 const WORKFLOW_INTENTS = new Set<Intent>(["request_status", "account_onboarding"]);
 
@@ -130,6 +132,20 @@ export async function runSupportAgent(message: string): Promise<SupportResult> {
     resultCount: results.length,
   });
 
+  // Step 2 for payment-status requests: call the shared simulated back-office
+  // adapter. A missing reference asks for the minimum information first; a
+  // normal status is answered directly; only an anomaly or unknown valid
+  // reference is eligible for a review case.
+  const transaction = intent === "deposit_withdrawal" ? lookupSimulatedTransaction(message) : null;
+  if (transaction) {
+    steps.push({
+      tool: "lookup_transaction_status",
+      input: { reference: transaction.reference ?? "[required]", kind: transaction.kind ?? "UNKNOWN" },
+      outputSummary: summarize(`Simulated back-office result: ${transaction.status}; review required: ${transaction.reviewRequired}`),
+      resultCount: transaction.found ? 1 : 0,
+    });
+  }
+
   // Use one source for ordinary questions and up to two independently ranked sources
   // for explicit multi-topic questions. Each section keeps its source id so the answer
   // does not imply that a single document supports every claim.
@@ -153,7 +169,21 @@ export async function runSupportAgent(message: string): Promise<SupportResult> {
   const answer = summarize(fragments.join(" "), 2000);
   const verifier = verifyGroundedness(answer, groundingEvidence, processingMessage);
   const mandatory = checkMandatoryEscalation(processingMessage, intent);
-  const { decision, escalationReason } = decideSupportPolicy(mandatory, verifier, risk, intent);
+  let { decision, escalationReason } = decideSupportPolicy(mandatory, verifier, risk, intent);
+  if (transaction) {
+    if (transaction.status === "NEEDS_REFERENCE") {
+      decision = "AUTO_RESPOND";
+      escalationReason = null;
+    } else if (transaction.reviewRequired) {
+      decision = "ESCALATE";
+      escalationReason = transaction.status === "NOT_FOUND"
+        ? "Valid-looking transaction reference was not found in the simulated back office."
+        : "Reported outcome conflicts with the simulated back-office transaction status.";
+    } else {
+      decision = "AUTO_RESPOND";
+      escalationReason = null;
+    }
+  }
 
   // If escalated, invoke the simulated support handoff tool
   let handoff: HandoffResult | null = null;
@@ -192,7 +222,7 @@ export async function runSupportAgent(message: string): Promise<SupportResult> {
 
   // Derive tone and compose natural conversational customer reply using the Response Composer layer
   const tone = deriveTone(message, risk, intent);
-  const safeAnswer = await composeCustomerResponse({
+  let safeAnswer = await composeCustomerResponse({
     message,
     intent,
     risk,
@@ -203,9 +233,20 @@ export async function runSupportAgent(message: string): Promise<SupportResult> {
     tone,
     handoffId: handoff?.handoffId ?? null
   });
+  if (transaction) {
+    safeAnswer = composeTransactionStatusReply(transaction, multilingual.language);
+    if (handoff?.handoffId) {
+      safeAnswer += multilingual.language === "th"
+        ? ` หมายเลขอ้างอิงเคสสำหรับเดโมคือ ${handoff.handoffId}`
+        : multilingual.language === "zh"
+          ? ` 演示工单编号为 ${handoff.handoffId}。`
+          : ` Your demo case reference is ${handoff.handoffId}.`;
+    }
+  }
 
   return {
     answer: safeAnswer,
+    transaction,
     handoff,
     trace: {
       intent,
