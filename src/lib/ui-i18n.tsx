@@ -31,6 +31,7 @@ export const uiCopy = {
       ["0", "real records"],
     ],
     chatTitle: "Operations assistant",
+    chatDefault: "What is the response target for a high-severity incident?",
     chatIntro:
       "Ask about sample policies, preview a request workflow, or check retrieval evaluation.",
     chatSuggestions: [
@@ -45,6 +46,7 @@ export const uiCopy = {
     askPlaceholder: "Ask about a sample policy or workflow…",
     ask: "Ask assistant",
     search: "Search",
+    knowledgeQuery: "When should an expense claim be submitted?",
     sampleDocuments: "Sample documents",
     groundedAnswer: "Grounded answer",
     runQuery: "Run a query to retrieve an answer with citations and metrics.",
@@ -58,6 +60,7 @@ export const uiCopy = {
     requestType: "Request type",
     priority: "Priority",
     justification: "Business justification",
+    workflowDetails: "Access required for the sample analytics project.",
     runWorkflow: "Run workflow",
     executionTrace: "Execution trace",
     submitWorkflow:
@@ -150,6 +153,7 @@ export const uiCopy = {
       ["0", "ข้อมูลจริง"],
     ],
     chatTitle: "ผู้ช่วยงานปฏิบัติการ",
+    chatDefault: "เหตุการณ์รุนแรงต้องได้รับการตอบสนองภายในเวลาเท่าไร",
     chatIntro:
       "ถามนโยบายตัวอย่าง ทดลองเวิร์กโฟลว์ หรือตรวจคะแนนการค้นคืนข้อมูล",
     chatSuggestions: [
@@ -164,6 +168,7 @@ export const uiCopy = {
     askPlaceholder: "ถามเกี่ยวกับนโยบายหรือเวิร์กโฟลว์ตัวอย่าง…",
     ask: "ถามผู้ช่วย",
     search: "ค้นหา",
+    knowledgeQuery: "ต้องส่งคำขอเบิกค่าใช้จ่ายภายในเมื่อไร",
     sampleDocuments: "เอกสารตัวอย่าง",
     groundedAnswer: "คำตอบที่มีหลักฐาน",
     runQuery: "ค้นเพื่อรับคำตอบพร้อมแหล่งอ้างอิงและผลประเมิน",
@@ -177,6 +182,7 @@ export const uiCopy = {
     requestType: "ประเภทคำขอ",
     priority: "ความสำคัญ",
     justification: "เหตุผลทางธุรกิจ",
+    workflowDetails: "ต้องการสิทธิ์สำหรับโครงการวิเคราะห์ข้อมูลตัวอย่าง",
     runWorkflow: "เรียกใช้เวิร์กโฟลว์",
     executionTrace: "รายละเอียดการทำงาน",
     submitWorkflow:
@@ -260,6 +266,7 @@ export const uiCopy = {
       ["0", "真实记录"],
     ],
     chatTitle: "运营助手",
+    chatDefault: "高严重性事件的响应目标时间是多少？",
     chatIntro: "询问示例政策、预览请求工作流或查看检索评估。",
     chatSuggestions: [
       "费用报销的截止时间是什么？",
@@ -273,6 +280,7 @@ export const uiCopy = {
     askPlaceholder: "询问示例政策或工作流…",
     ask: "询问助手",
     search: "搜索",
+    knowledgeQuery: "费用报销应在何时提交？",
     sampleDocuments: "示例文档",
     groundedAnswer: "有依据的答案",
     runQuery: "运行查询以获取带引用和指标的答案。",
@@ -286,6 +294,7 @@ export const uiCopy = {
     requestType: "请求类型",
     priority: "优先级",
     justification: "业务理由",
+    workflowDetails: "示例分析项目需要此访问权限。",
     runWorkflow: "运行工作流",
     executionTrace: "执行轨迹",
     submitWorkflow: "提交示例请求以查看验证、路由、策略和通知步骤。",

@@ -200,9 +200,7 @@ export function Studio() {
 
 function ChatDemo({ locale }: { locale: UiLocale }) {
   const copy = uiCopy[locale];
-  const [message, setMessage] = useState(
-    "What is the response target for a high-severity incident?",
-  );
+  const [message, setMessage] = useState<string>(copy.chatDefault);
   const [submittedMessage, setSubmittedMessage] = useState("");
   const [result, setResult] = useState<{
     answer: string;
@@ -211,6 +209,9 @@ function ChatDemo({ locale }: { locale: UiLocale }) {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const suggestions = copy.chatSuggestions;
+  useEffect(() => {
+    if (!submittedMessage) queueMicrotask(() => setMessage(copy.chatDefault));
+  }, [copy.chatDefault, submittedMessage]);
   async function submit(event: FormEvent) {
     event.preventDefault();
     const prompt = message.trim();
@@ -324,9 +325,10 @@ function ChatDemo({ locale }: { locale: UiLocale }) {
 
 function KnowledgeDemo({ locale }: { locale: UiLocale }) {
   const copy = uiCopy[locale];
-  const [query, setQuery] = useState(
-    "When should an expense claim be submitted?",
-  );
+  const [query, setQuery] = useState<string>(copy.knowledgeQuery);
+  useEffect(() => {
+    queueMicrotask(() => setQuery(copy.knowledgeQuery));
+  }, [copy.knowledgeQuery]);
   const [result, setResult] = useState<{
     answer: string;
     sources: { id: string; title: string; score: number }[];
@@ -453,7 +455,7 @@ function WorkflowDemo({ locale }: { locale: UiLocale }) {
   }
   return (
     <div className="grid gap-7 xl:grid-cols-[.9fr_1.1fr]">
-      <form onSubmit={submit} className="space-y-4">
+      <form key={locale} onSubmit={submit} className="space-y-4">
         <div>
           <label className="mb-1.5 block text-xs text-[#90a9a0]">
             {copy.requester}
@@ -519,7 +521,7 @@ function WorkflowDemo({ locale }: { locale: UiLocale }) {
           <textarea
             name="details"
             required
-            defaultValue="Access required for the sample analytics project."
+            defaultValue={copy.workflowDetails}
             rows={4}
             className="w-full resize-none rounded-lg border border-white/10 bg-[#07100f] px-3 py-2.5 text-sm outline-none"
           />
