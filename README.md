@@ -8,6 +8,8 @@
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
+![AI Operations Studio interface](docs/ai-operations-studio.png)
+
 AI Operations Studio demonstrates how applied AI patterns can turn operational requests into clear, traceable outcomes. It is intentionally domain-neutral and uses only fictional, general-purpose sample content. It contains no employer, client, transaction, or confidential data.
 
 ## What the MVP demonstrates
