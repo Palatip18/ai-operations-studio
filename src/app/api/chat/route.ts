@@ -1,26 +1,25 @@
 import { NextResponse } from "next/server";
-import { searchKnowledge } from "@/lib/knowledge";
+import { runLiveAssistant } from "@/lib/llm";
+import { executeTool, routeTool } from "@/lib/tools";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as { message?: string };
   const message = body.message?.trim();
   if (!message) return NextResponse.json({ error: "Message is required" }, { status: 400 });
 
-  const lower = message.toLowerCase();
-  if (lower.includes("policy") || lower.includes("onboard") || lower.includes("incident") || lower.includes("expense")) {
-    const results = searchKnowledge(message);
-    return NextResponse.json({
-      answer: results.length
-        ? `I searched the sample knowledge base and found: ${results[0].document.content}`
-        : "I searched the sample knowledge base but did not find a grounded answer.",
-      toolCall: { name: "search_knowledge", arguments: { query: message }, resultCount: results.length },
-      mode: "mock",
-    });
+  if (process.env.AI_PROVIDER === "openai") {
+    try {
+      const liveResult = await runLiveAssistant(message);
+      if (liveResult) return NextResponse.json(liveResult);
+    } catch (error) {
+      console.error("Live model failed; using deterministic fallback", error instanceof Error ? error.message : "Unknown error");
+    }
   }
 
-  return NextResponse.json({
-    answer: "This demo routes operational questions to safe, deterministic tools. Ask about onboarding, expenses, or incident handling to see a tool call.",
-    toolCall: null,
-    mode: "mock",
-  });
+  const routed = routeTool(message);
+  if (routed) {
+    const result = executeTool(routed.name, routed.arguments);
+    return NextResponse.json({ answer: result.answer, toolCalls: [result.trace], mode: "deterministic" });
+  }
+  return NextResponse.json({ answer: "This prototype can route requests to three tools. Ask about an expense or incident policy, request a workflow preview, or ask for retrieval evaluation metrics.", toolCalls: [], mode: "deterministic" });
 }

@@ -6,6 +6,8 @@ export type KnowledgeDocument = {
   content: string;
 };
 
+import { chunkText, cosineSimilarity, embedText } from "./retrieval";
+
 export const knowledgeDocuments: KnowledgeDocument[] = [
   {
     id: "remote-onboarding",
@@ -30,21 +32,20 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
   },
 ];
 
-const words = (value: string) =>
-  value.toLowerCase().match(/[a-z0-9]+|[\u0E00-\u0E7F]+/g) ?? [];
-
 export function searchKnowledge(query: string, limit = 3) {
-  const queryTerms = new Set(words(query).filter((word) => word.length > 2));
-  return knowledgeDocuments
-    .map((document) => {
-      const haystack = words(`${document.title} ${document.category} ${document.content}`);
-      const score = haystack.reduce(
-        (total, word) => total + (queryTerms.has(word) ? 1 : 0),
-        0,
-      );
-      return { document, score };
-    })
-    .filter((result) => result.score > 0)
+  const queryVector = embedText(query);
+  return knowledgeDocuments.flatMap((document) =>
+    chunkText(document.content).map((chunk, chunkIndex) => ({
+      document,
+      chunk,
+      chunkIndex,
+      score: cosineSimilarity(
+        queryVector,
+        embedText(`${document.title} ${document.category} ${chunk}`),
+      ),
+    })),
+  )
+    .filter((result) => result.score >= 0.1)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 }

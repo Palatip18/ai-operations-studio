@@ -14,11 +14,19 @@ AI Operations Studio demonstrates how applied AI patterns can turn operational r
 
 ## What the MVP demonstrates
 
-1. **AI Chat + Tool Calling** — classifies a question, routes it to a local knowledge-search tool, and exposes the tool trace.
-2. **RAG Knowledge Base** — retrieves relevant passages from three sample documents and returns a grounded answer with visible citations.
+1. **AI Chat + Multi-Tool Calling** — routes requests to knowledge search, workflow preview, or evaluation metrics and exposes every tool trace.
+2. **RAG Knowledge Base** — chunks sample documents, creates deterministic local feature-hashing embeddings, ranks passages with cosine similarity, and returns grounded answers with visible citations.
 3. **Workflow Automation** — validates a fictional internal request, applies deterministic policy rules, routes exceptions, and prepares a mock notification.
 
-The default `mock` mode is deterministic, free to run, and requires no credentials. This keeps the demo easy to review while making a clear distinction between implemented workflow logic and a future live-LLM integration.
+The default `mock` mode is deterministic, free to run, and requires no credentials. An optional OpenAI-compatible provider can perform model-driven tool selection behind the same API boundary. If the provider is unavailable, the route falls back safely to deterministic routing.
+
+### Measured prototype quality
+
+- 3/3 documented retrieval evaluation cases pass at top-1 on the intentionally small sample set.
+- 9 unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, and workflow policy behavior.
+- The evaluation result is exposed through `GET /api/evaluation` and displayed in the Knowledge Base interface.
+
+These figures validate only the included fictional sample set; they are not claims of production accuracy.
 
 ## Portfolio case study
 
@@ -38,8 +46,13 @@ flowchart LR
   UI --> C["POST /api/chat"]
   UI --> R["POST /api/rag"]
   UI --> W["POST /api/workflow"]
-  C --> T["Tool router"]
-  T --> K["Sample knowledge search"]
+  C --> L{"Live provider configured?"}
+  L -->|"Yes"| M["OpenAI-compatible model"]
+  L -->|"No / fallback"| T["Deterministic tool router"]
+  M --> T
+  T --> K["Chunk + local vector search"]
+  T --> V
+  T --> E["Evaluation metrics"]
   R --> K
   W --> V["Validation + policy engine"]
   K --> D[("Fictional sample documents")]
@@ -50,7 +63,7 @@ flowchart LR
 
 - Route Handlers provide clear API boundaries for external clients or a future model provider.
 - Interactive UI is isolated in a Client Component; the App Router page and layout remain Server Components.
-- Retrieval and policy logic live in framework-independent TypeScript modules and have unit tests.
+- Retrieval, embedding adapter, evaluation, tools, and policy logic live in framework-independent TypeScript modules and have unit tests.
 - Tool calls, sources, and workflow states are visible to support explainability and auditability.
 - No database or model SDK is initialized at build time.
 
@@ -67,6 +80,19 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000). On macOS/Linux, replace `copy` with `cp`.
+
+### Optional live model mode
+
+The public demo does not need or expose a secret. To test model-driven tool selection locally, set these values in `.env.local`:
+
+```dotenv
+AI_PROVIDER=openai
+OPENAI_API_KEY=your_key_here
+OPENAI_MODEL=gpt-4.1-mini
+AI_BASE_URL=https://api.openai.com/v1
+```
+
+`AI_BASE_URL` can point to another provider that implements the OpenAI chat-completions and tool-calling contract. Never commit `.env.local`.
 
 ## Quality checks
 
@@ -103,12 +129,12 @@ src/
 
 ## Current scope and honest claims
 
-This repository is a **personal portfolio prototype**. It demonstrates working UI, API boundaries, deterministic tool routing, lexical retrieval, source attribution, validation, and policy-based workflow orchestration. It does **not** claim production RAG, autonomous agents, model training, semantic vector search, enterprise security, or use with real customers.
+This repository is a **personal portfolio prototype**. It demonstrates working UI, API boundaries, multi-tool routing, local feature-hashing vector retrieval, chunking, cosine ranking, source attribution, evaluation, validation, and policy-based workflow orchestration. It does **not** claim production RAG, learned semantic embeddings, an autonomous multi-agent system, model training, enterprise security, or use with real customers.
 
 ## Roadmap
 
-- Add an optional OpenAI-compatible provider behind the existing chat boundary.
-- Replace lexical retrieval with chunking, embeddings, and a vector store; retain citations and add retrieval evaluation.
+- Add provider-specific integration tests and streaming for the optional OpenAI-compatible mode.
+- Replace the local feature-hashing embedding adapter with learned embeddings and a persisted vector database; expand the evaluation dataset.
 - Add file ingestion for safe sample PDF/Markdown documents.
 - Persist workflow runs with authentication, role-based access, and an immutable audit log.
 - Add integration tests, accessibility checks, request rate limits, and observability.
