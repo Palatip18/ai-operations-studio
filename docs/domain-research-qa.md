@@ -64,3 +64,13 @@ The support flow now uses a protected external-style adapter at `POST /api/suppo
 - A valid-looking reference absent from the fictional dataset also creates a simulated review case.
 - The UI reads transaction state from structured `result.transaction` fields rather than parsing customer-facing text.
 - The adapter is in-memory and fictional; it does not connect to a bank, payment gateway, game provider, or real operator database.
+
+## Customer identity and data-scope checkpoint
+
+- Live Chat requires a fictional User ID before the first message can be submitted.
+- Verification creates a signed HttpOnly customer-context cookie that expires after 30 minutes.
+- `/api/support` and `/api/support/status` return `403` when the customer context is absent or invalid.
+- Every transaction record has an internal owner User ID; lookup returns no transaction data when the verified user does not own that reference.
+- Token signatures and expiry are unit-tested, including tamper rejection.
+- The UI and trace never expose the signed token. The trace shows only the fictional customer scope used for the lookup.
+- This remains a portfolio simulation, not KYC or production identity verification.

@@ -102,7 +102,7 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
       "My deposit DEP-1002 was completed but the credit was not received.",
       "My withdrawal WDL-2002 says completed but the money was not received.",
     ]) {
-      const result = await runSupportAgent(message);
+      const result = await runSupportAgent(message, [], "USER-RAY01");
       expect(result.trace.intent).toBe("deposit_withdrawal");
       expect(result.trace.risk).toBe("HIGH");
       expect(result.trace.decision).toBe("ESCALATE");
@@ -112,18 +112,18 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
   });
 
   it("understands the core Thai deposit and withdrawal scenarios", async () => {
-    const deposit = await runSupportAgent("ฝากเงินรายการ DEP-1002 สำเร็จแล้ว แต่เครดิตยังไม่เข้า");
+    const deposit = await runSupportAgent("ฝากเงินรายการ DEP-1002 สำเร็จแล้ว แต่เครดิตยังไม่เข้า", [], "USER-RAY01");
     expect(deposit.trace.intent).toBe("deposit_withdrawal");
     expect(deposit.trace.decision).toBe("ESCALATE");
     expect(deposit.answer).toContain("ตรวจสอบธุรกรรม");
 
-    const withdrawal = await runSupportAgent("รายการ WDL-2002 แสดงว่าถอนเงินสำเร็จแล้ว แต่เงินยังไม่เข้าบัญชี");
+    const withdrawal = await runSupportAgent("รายการ WDL-2002 แสดงว่าถอนเงินสำเร็จแล้ว แต่เงินยังไม่เข้าบัญชี", [], "USER-RAY01");
     expect(withdrawal.trace.intent).toBe("deposit_withdrawal");
     expect(withdrawal.trace.decision).toBe("ESCALATE");
   });
 
   it("checks a normal back-office status without creating a support case", async () => {
-    const result = await runSupportAgent("Please check withdrawal WDL-2001; it is still pending.");
+    const result = await runSupportAgent("Please check withdrawal WDL-2001; it is still pending.", [], "USER-RAY01");
     expect(result.transaction?.status).toBe("PROCESSING");
     expect(result.trace.steps.some((step) => step.tool === "lookup_transaction_status")).toBe(true);
     expect(result.trace.decision).toBe("AUTO_RESPOND");
@@ -131,7 +131,7 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
   });
 
   it("requests a transaction reference before opening a case", async () => {
-    const result = await runSupportAgent("My deposit has not arrived.");
+    const result = await runSupportAgent("My deposit has not arrived.", [], "USER-RAY01");
     expect(result.transaction?.status).toBe("NEEDS_REFERENCE");
     expect(result.trace.decision).toBe("AUTO_RESPOND");
     expect(result.handoff).toBeNull();
@@ -142,6 +142,7 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     const result = await runSupportAgent(
       "ไม่ใช่ถอน ฝากไม่เข้า",
       ["ถอนเงินสำเร็จแล้วแต่บัญชีปลายทางยังไม่ได้รับเงิน"],
+      "USER-RAY01",
     );
     expect(result.trace.intent).toBe("deposit_withdrawal");
     expect(result.transaction).toMatchObject({ status: "NEEDS_REFERENCE", kind: "DEPOSIT", reviewRequired: false });

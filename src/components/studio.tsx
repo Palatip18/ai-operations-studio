@@ -51,6 +51,7 @@ type SupportTrace = {
   modelCallCount: number;
   estimatedUsage: { promptTokens: number; totalTokens: number } | null;
   mode: string;
+  customerScope?: string | null;
 };
 type HandoffResult = {
   success: boolean;
@@ -80,6 +81,7 @@ type SupportHistoryEntry = {
   answer: string;
   decision: "AUTO_RESPOND" | "ESCALATE";
 };
+type DemoCustomer = { userId: string; displayName: string; tier: "STANDARD" | "PLUS"; status: "ACTIVE" };
 
 const moduleIds: Exclude<Module, "chat">[] = [
   "support",
@@ -1476,6 +1478,20 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
   const [errorText, setErrorText] = useState("");
   const [history, setHistory] = useState<SupportHistoryEntry[]>([]);
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
+  const [customer, setCustomer] = useState<DemoCustomer | null>(null);
+  const [userId, setUserId] = useState("");
+  const [verificationLoading, setVerificationLoading] = useState(true);
+  const [verificationError, setVerificationError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/support/customer")
+      .then((response) => response.ok ? response.json() : { verified: false })
+      .then((data: { verified?: boolean; customer?: DemoCustomer }) => {
+        if (data.verified && data.customer) setCustomer(data.customer);
+      })
+      .catch(() => {})
+      .finally(() => setVerificationLoading(false));
+  }, []);
 
   useEffect(() => {
     conversationEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -1520,6 +1536,12 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
         return;
       }
 
+      if (response.status === 403) {
+        setCustomer(null);
+        setErrorText(locale === "th" ? "การยืนยันผู้ใช้หมดอายุ กรุณายืนยัน User ID ใหม่" : locale === "zh" ? "用户验证已过期，请重新验证 User ID。" : "Customer verification expired. Please verify the User ID again.");
+        return;
+      }
+
       if (response.status === 429) {
         const retryAfter = response.headers.get("Retry-After");
         setErrorText(copy.rateLimitError + (retryAfter ? ` (${retryAfter}s)` : ""));
@@ -1543,6 +1565,36 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
     await run(message);
   }
 
+  async function verifyCustomer(event: FormEvent) {
+    event.preventDefault();
+    const candidate = userId.trim().toUpperCase();
+    if (!candidate || verificationLoading) return;
+    setVerificationLoading(true);
+    setVerificationError("");
+    try {
+      const response = await fetch("/api/support/customer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: candidate }),
+      });
+      const data = await response.json() as { customer?: DemoCustomer; error?: string };
+      if (!response.ok || !data.customer) throw new Error(data.error || "Verification failed");
+      setCustomer(data.customer);
+      setUserId("");
+      clearConversation();
+    } catch (error) {
+      setVerificationError(error instanceof Error ? error.message : "Verification failed");
+    } finally {
+      setVerificationLoading(false);
+    }
+  }
+
+  async function changeCustomer() {
+    await fetch("/api/support/customer", { method: "DELETE" }).catch(() => {});
+    setCustomer(null);
+    clearConversation();
+  }
+
   function clearConversation() {
     setHistory([]);
     setSubmittedMessage("");
@@ -1551,8 +1603,43 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
     setMessage("");
   }
 
+  if (verificationLoading && !customer) {
+    return <div className={`grid min-h-[610px] place-items-center text-sm text-muted ${customerView ? "p-6" : ""}`}>{copy.checking}</div>;
+  }
+
+  if (!customer) {
+    return (
+      <div className={`grid min-h-[610px] place-items-center ${customerView ? "p-4 sm:p-6" : ""}`}>
+        <form onSubmit={verifyCustomer} className="w-full max-w-md rounded-2xl border border-white/10 bg-[#07101F] p-6 shadow-xl">
+          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-accent/30 bg-accent/10 text-accent">ID</div>
+          <h2 className="text-xl font-semibold text-foreground">{locale === "th" ? "ยืนยันผู้ใช้ก่อนเริ่มแชต" : locale === "zh" ? "开始对话前验证用户" : "Verify the user before chatting"}</h2>
+          <p className="mt-2 text-sm leading-6 text-muted">{locale === "th" ? "กรอก User ID ตัวอย่างเพื่อให้ระบบเรียกดูเฉพาะข้อมูลและรายการของผู้ใช้นั้น" : locale === "zh" ? "请输入演示 User ID，以便系统仅查询该用户的数据与交易。" : "Enter a demo User ID so the system can scope every lookup to that customer's data."}</p>
+          <label className="mt-5 block text-xs font-medium text-muted" htmlFor={`support-user-${customerView ? "customer" : "internal"}`}>User ID</label>
+          <input
+            id={`support-user-${customerView ? "customer" : "internal"}`}
+            value={userId}
+            onChange={(event) => setUserId(event.target.value)}
+            placeholder="USER-RAY01"
+            autoComplete="off"
+            className="kb-focusable mt-2 min-h-[46px] w-full rounded-xl border border-white/10 bg-black/20 px-4 font-mono text-sm uppercase text-foreground outline-none placeholder:text-muted/40"
+          />
+          <p className="mt-2 text-xs text-muted/60">Demo: USER-RAY01 · USER-MALI02</p>
+          {verificationError && <p className="mt-3 rounded-lg border border-error/30 bg-error/5 p-3 text-xs text-error">{verificationError}</p>}
+          <button type="submit" disabled={!userId.trim() || verificationLoading} className="kb-focusable mt-5 min-h-[44px] w-full rounded-xl bg-accent px-4 text-sm font-semibold text-[#07101F] disabled:opacity-50">
+            {verificationLoading ? copy.checking : locale === "th" ? "ยืนยันและเริ่มแชต" : locale === "zh" ? "验证并开始对话" : "Verify and start chat"}
+          </button>
+          <p className="mt-4 text-xs leading-5 text-muted/55">{locale === "th" ? "เดโมนี้ไม่ขอรหัสผ่าน OTP หรือเลขบัญชีธนาคาร" : locale === "zh" ? "本演示不会要求密码、OTP 或银行账号。" : "This demo never asks for a password, OTP, or bank-account number."}</p>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex min-h-[610px] flex-col ${customerView ? "p-4 sm:p-6" : ""}`}>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-success/20 bg-success/5 px-4 py-3 text-xs">
+        <div><span className="font-semibold text-success">{customer.displayName}</span><span className="ml-2 font-mono text-muted">{customer.userId} · {customer.tier}</span></div>
+        <button type="button" onClick={changeCustomer} className="kb-focusable min-h-[34px] rounded-lg border border-white/10 px-3 text-muted hover:text-foreground">{locale === "th" ? "เปลี่ยนผู้ใช้" : locale === "zh" ? "切换用户" : "Change user"}</button>
+      </div>
       <div className="mb-5 rounded-xl border border-white/10 bg-[#07101F] p-4">
         <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-accent">
           {copy.supportTitle}
@@ -1756,6 +1843,7 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
                       {result.trace.risk}
                     </span>
                   </p>
+                  {result.trace.customerScope && <p className="col-span-2 text-muted">Customer scope: <span className="font-mono text-accent-secondary">{result.trace.customerScope}</span></p>}
                 </div>
 
                 {result.trace.escalationReason && (

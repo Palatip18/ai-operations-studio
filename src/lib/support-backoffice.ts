@@ -14,19 +14,19 @@ export type BackofficeTransactionResult = {
   reviewRequired: boolean;
 };
 
-type TransactionRecord = Omit<BackofficeTransactionResult, "simulated" | "found" | "reviewRequired">;
+type TransactionRecord = Omit<BackofficeTransactionResult, "simulated" | "found" | "reviewRequired"> & { ownerUserId: string };
 
 const transactions = new Map<string, TransactionRecord>([
-  ["DEP-1001", { reference: "DEP-1001", kind: "DEPOSIT", status: "PENDING", amount: 500, currency: "THB", updatedAt: "2026-07-13T01:05:00.000Z", safeReason: "Payment gateway verification is still in progress." }],
-  ["DEP-1002", { reference: "DEP-1002", kind: "DEPOSIT", status: "CREDITED", amount: 1_000, currency: "THB", updatedAt: "2026-07-13T01:12:00.000Z", safeReason: "The back-office ledger shows the deposit as credited." }],
-  ["WDL-2001", { reference: "WDL-2001", kind: "WITHDRAWAL", status: "PROCESSING", amount: 800, currency: "THB", updatedAt: "2026-07-13T01:18:00.000Z", safeReason: "The withdrawal is still within the simulated processing queue." }],
-  ["WDL-2002", { reference: "WDL-2002", kind: "WITHDRAWAL", status: "COMPLETED", amount: 1_200, currency: "THB", updatedAt: "2026-07-13T01:22:00.000Z", safeReason: "The back-office ledger shows the withdrawal as completed." }],
-  ["WDL-2003", { reference: "WDL-2003", kind: "WITHDRAWAL", status: "REJECTED", amount: 600, currency: "THB", updatedAt: "2026-07-13T01:25:00.000Z", safeReason: "The fictional promotion turnover requirement is not complete." }],
+  ["DEP-1001", { ownerUserId: "USER-RAY01", reference: "DEP-1001", kind: "DEPOSIT", status: "PENDING", amount: 500, currency: "THB", updatedAt: "2026-07-13T01:05:00.000Z", safeReason: "Payment gateway verification is still in progress." }],
+  ["DEP-1002", { ownerUserId: "USER-RAY01", reference: "DEP-1002", kind: "DEPOSIT", status: "CREDITED", amount: 1_000, currency: "THB", updatedAt: "2026-07-13T01:12:00.000Z", safeReason: "The back-office ledger shows the deposit as credited." }],
+  ["WDL-2001", { ownerUserId: "USER-RAY01", reference: "WDL-2001", kind: "WITHDRAWAL", status: "PROCESSING", amount: 800, currency: "THB", updatedAt: "2026-07-13T01:18:00.000Z", safeReason: "The withdrawal is still within the simulated processing queue." }],
+  ["WDL-2002", { ownerUserId: "USER-RAY01", reference: "WDL-2002", kind: "WITHDRAWAL", status: "COMPLETED", amount: 1_200, currency: "THB", updatedAt: "2026-07-13T01:22:00.000Z", safeReason: "The back-office ledger shows the withdrawal as completed." }],
+  ["WDL-2003", { ownerUserId: "USER-MALI02", reference: "WDL-2003", kind: "WITHDRAWAL", status: "REJECTED", amount: 600, currency: "THB", updatedAt: "2026-07-13T01:25:00.000Z", safeReason: "The fictional promotion turnover requirement is not complete." }],
 ]);
 
 const MISSING_FUNDS = /not (?:arrived|received|credited)|missing|ไม่เข้า|ยังไม่เข้า|未到账|没有到账/i;
 
-export function lookupSimulatedTransaction(message: string): BackofficeTransactionResult {
+export function lookupSimulatedTransaction(message: string, customerUserId: string): BackofficeTransactionResult {
   const reference = message.toUpperCase().match(/\b(?:DEP|WDL)-\d{4}\b/)?.[0] ?? null;
   if (!reference) {
     const kind = /ฝาก|deposit|top ?up|存款|充值/i.test(message)
@@ -38,12 +38,14 @@ export function lookupSimulatedTransaction(message: string): BackofficeTransacti
   }
 
   const record = transactions.get(reference);
-  if (!record) {
+  if (!record || record.ownerUserId !== customerUserId) {
     return { simulated: true, found: false, reference, kind: reference.startsWith("DEP") ? "DEPOSIT" : "WITHDRAWAL", status: "NOT_FOUND", safeReason: "No matching transaction was found in the simulated back-office dataset.", reviewRequired: true };
   }
 
-  const ledgerSaysComplete = record.status === "CREDITED" || record.status === "COMPLETED";
-  return { simulated: true, found: true, ...record, reviewRequired: ledgerSaysComplete && MISSING_FUNDS.test(message) };
+  const { ownerUserId: _ownerUserId, ...safeRecord } = record;
+  void _ownerUserId;
+  const ledgerSaysComplete = safeRecord.status === "CREDITED" || safeRecord.status === "COMPLETED";
+  return { simulated: true, found: true, ...safeRecord, reviewRequired: ledgerSaysComplete && MISSING_FUNDS.test(message) };
 }
 
 export function composeTransactionStatusReply(result: BackofficeTransactionResult, locale: string): string {

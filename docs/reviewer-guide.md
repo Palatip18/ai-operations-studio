@@ -12,7 +12,7 @@ This guide provides a short evaluation path for recruiters, AI Engineers, engine
 
 ### 1. Routine customer question
 
-Stay in the default **Live Chat** view and select the promotion-details or game-issue scenario.
+Stay in the default **Live Chat**, verify `USER-RAY01`, and select the promotion-details or game-issue scenario.
 
 Look for:
 
@@ -69,8 +69,10 @@ Recommended files:
 | Response composition | `src/lib/response-composer.ts` |
 | Simulated integration | `src/lib/support-handoff.ts` |
 | Simulated transaction lookup | `src/lib/support-backoffice.ts` |
+| Signed customer context | `src/lib/support-customer.ts` |
 | API adapter | `src/app/api/support/handoff/route.ts` |
 | Status API adapter | `src/app/api/support/status/route.ts` |
+| Customer verification API | `src/app/api/support/customer/route.ts` |
 | Evaluation | `src/lib/support-evaluation.ts` and `src/lib/support-challenge.ts` |
 | Portfolio UI | `src/components/studio.tsx` |
 

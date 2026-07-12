@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-176_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-181_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
@@ -13,10 +13,11 @@ AI Operations Studio demonstrates how applied AI patterns can turn fictional onl
 ## Reviewer quick start
 
 1. Open the **[live demo](https://ai-operations-studio-black.vercel.app)** and enter the demo password supplied privately with the application.
-2. The default **Live Chat** view simulates the customer experience. Run the promotion or game-issue scenario to see a natural response without internal AI terminology.
-3. Run the missing-deposit or missing-withdrawal scenario to see a safe customer reply and simulated transaction-review reference.
-4. Switch to **Internal AI Operations**, open Support Copilot, and expand **Technical execution trace** to inspect intent, risk, retrieval sources, verifier result, tool calls, latency, and usage.
-5. Review the [recruiter and technical-review guide](docs/reviewer-guide.md), [domain research QA](docs/domain-research-qa.md), [localization QA](docs/localization-qa.md), and [repository recovery QA](docs/repository-recovery-qa.md).
+2. In the default **Live Chat**, verify the fictional customer with `USER-RAY01`. The system creates a signed, 30-minute customer context before chat becomes available.
+3. Run the promotion or game-issue scenario to see a natural response without internal AI terminology.
+4. Run the missing-deposit or missing-withdrawal scenario to see a customer-scoped status lookup, safe reply, and simulated transaction-review reference.
+5. Switch to **Internal AI Operations**, open Support Copilot, and expand **Technical execution trace** to inspect customer scope, intent, risk, retrieval sources, verifier result, tool calls, latency, and usage.
+6. Review the [recruiter and technical-review guide](docs/reviewer-guide.md), [domain research QA](docs/domain-research-qa.md), [localization QA](docs/localization-qa.md), and [repository recovery QA](docs/repository-recovery-qa.md).
 
 Estimated review time: **3–5 minutes for the guided demo; 15–20 minutes for the technical review.**
 
@@ -52,6 +53,10 @@ Deposit and withdrawal questions use a shared simulated back-office adapter expo
 - Promotion and game questions that are grounded in the knowledge base are answered without a handoff.
 - Customer-facing responses never request passwords, PINs, OTPs, or full bank-account details.
 
+### Customer-scoped chat verification
+
+Before Live Chat is enabled, the reviewer verifies a fictional User ID through `GET/POST/DELETE /api/support/customer`. The server stores the verified identity in a signed, HttpOnly, SameSite=Lax cookie with a 30-minute lifetime. Support and transaction-status routes reject requests without this customer context, and back-office records are filtered by their owner User ID before any status is returned. `USER-RAY01` owns the guided-scenario transactions; `USER-MALI02` is a second fictional account used to test cross-account isolation.
+
 ## What the MVP demonstrates
 
 1. **AI Gaming Support Chat (Conversation → Tools → Evidence → Decision)** — the primary conversational surface handles fictional promotion, deposit, withdrawal, and game-support conversations with knowledge retrieval, multilingual response composition, simulated case handoff, and safe escalation.
@@ -83,7 +88,7 @@ The default `mock` mode is deterministic, free to run, and requires no credentia
   | Mean latency | ~1ms | ~296ms |
 
   These numbers are not the 80-90% target — see [Knowledge-quality model](#knowledge-quality-model) for why, and [Evaluation methodology](#evaluation-methodology) for full definitions.
-- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual conversation correction, response composition, intent/risk classification, simulated back-office lookup/handoff, and API auth — **176 tests**, see `npm test`.
+- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual conversation correction, response composition, intent/risk classification, signed customer context, cross-account isolation, simulated back-office lookup/handoff, and API auth — **181 tests**, see `npm test`.
 - Results are exposed through `GET /api/evaluation`, `GET /api/agent-evaluation`, `GET /api/support-evaluation`, and displayed in the UI.
 
 These figures validate only the included fictional sample set and documented thresholds; they are not claims of production accuracy.
@@ -398,7 +403,7 @@ src/
     ├── support-classification.ts  # Deterministic intent/risk/mandatory-escalation logic
     ├── support-agent.ts           # Support Copilot orchestrator + decideSupportPolicy
     ├── support-evaluation.ts      # 41-case Customer Support Copilot evaluation suite
-    └── *.test.ts                  # Unit and integration tests (176)
+    └── *.test.ts                  # Unit and integration tests (181)
 ```
 
 **Files an AI Engineer should inspect first:** `src/lib/support-agent.ts` (the orchestration flow and the pure `decideSupportPolicy` function), `src/lib/support-classification.ts` (deterministic policy logic), `src/lib/verifier.ts` (the groundedness heuristic and its documented limits), `src/lib/agent.ts` (the mode-aware retrieval threshold and why it exists), `src/lib/support-evaluation.ts` (how the honest, non-cherry-picked metrics table above was produced).

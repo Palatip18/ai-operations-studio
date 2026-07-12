@@ -56,6 +56,7 @@ export type SupportTrace = {
   mode: "live" | "deterministic";
   language: string;
   normalizationMode: "original" | "local-map" | "live-translation";
+  customerScope: string | null;
 };
 
 export type SupportResult = { answer: string; transaction?: BackofficeTransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
@@ -87,7 +88,7 @@ export function decideSupportPolicy(
   return { decision: "AUTO_RESPOND", escalationReason: null };
 }
 
-export async function runSupportAgent(message: string, previousUserMessages: string[] = []): Promise<SupportResult> {
+export async function runSupportAgent(message: string, previousUserMessages: string[] = [], customerUserId: string | null = null): Promise<SupportResult> {
   const start = Date.now();
   const multilingual = await normalizeSupportInput(message);
   const processingMessage = applyConversationContext(message, multilingual.normalized, previousUserMessages.slice(-4));
@@ -136,7 +137,7 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   // adapter. A missing reference asks for the minimum information first; a
   // normal status is answered directly; only an anomaly or unknown valid
   // reference is eligible for a review case.
-  const transaction = intent === "deposit_withdrawal" ? lookupSimulatedTransaction(message) : null;
+  const transaction = intent === "deposit_withdrawal" && customerUserId ? lookupSimulatedTransaction(message, customerUserId) : null;
   if (transaction) {
     steps.push({
       tool: "lookup_transaction_status",
@@ -263,6 +264,7 @@ export async function runSupportAgent(message: string, previousUserMessages: str
       mode: live ? "live" : "deterministic",
       language: multilingual.language,
       normalizationMode: multilingual.mode,
+      customerScope: customerUserId,
     },
   };
 }

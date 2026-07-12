@@ -12,6 +12,7 @@ import { POST as supportRoute } from "@/app/api/support/route";
 import { GET as supportEvaluationRoute } from "@/app/api/support-evaluation/route";
 import { resetAttempts } from "./login-rate-limit";
 import { SESSION_COOKIE, createSessionToken } from "./auth";
+import { createCustomerContextToken, findDemoCustomer, SUPPORT_CUSTOMER_COOKIE } from "./support-customer";
 
 const PASSWORD = "test-demo-password";
 beforeAll(() => {
@@ -29,6 +30,11 @@ function loginRequest(password: string, ip: string) {
 
 function authedCookie() {
   return `${SESSION_COOKIE}=${createSessionToken()}`;
+}
+
+function supportAuthedCookie() {
+  const customer = findDemoCustomer("USER-RAY01")!;
+  return `${authedCookie()}; ${SUPPORT_CUSTOMER_COOKIE}=${createCustomerContextToken(customer)}`;
 }
 
 describe("login route", () => {
@@ -137,7 +143,7 @@ describe("AI routes still work with a valid session", () => {
   });
 
   it("support and support-evaluation respond", async () => {
-    const support = await supportRoute(new Request("http://localhost/api/support", { method: "POST", headers: { "content-type": "application/json", cookie: cookie(), "x-forwarded-for": "203.0.113.27" }, body: JSON.stringify({ message: "How do I create a new account?" }) }));
+    const support = await supportRoute(new Request("http://localhost/api/support", { method: "POST", headers: { "content-type": "application/json", cookie: supportAuthedCookie(), "x-forwarded-for": "203.0.113.27" }, body: JSON.stringify({ message: "How do I create a new account?" }) }));
     expect(support.status).toBe(200);
     const supportBody = await support.json();
     expect(typeof supportBody.answer).toBe("string");
@@ -168,6 +174,11 @@ describe("agent trace redaction", () => {
       delete process.env.OPENAI_API_KEY;
     }
   });
+
+  it("requires a verified customer context before support chat", async () => {
+    const response = await supportRoute(new Request("http://localhost/api/support", { method: "POST", headers: { "content-type": "application/json", cookie: cookie(), "x-forwarded-for": "203.0.113.29" }, body: JSON.stringify({ message: "hello" }) }));
+    expect(response.status).toBe(403);
+  });
 });
 
 describe("support agent trace redaction", () => {
@@ -178,7 +189,7 @@ describe("support agent trace redaction", () => {
     try {
       const response = await supportRoute(new Request("http://localhost/api/support", {
         method: "POST",
-        headers: { "content-type": "application/json", cookie: cookie(), "x-forwarded-for": "203.0.113.31" },
+        headers: { "content-type": "application/json", cookie: supportAuthedCookie(), "x-forwarded-for": "203.0.113.31" },
         body: JSON.stringify({ message: `My key is sk-shouldnotleak1234567890, how do I create a new account?` }),
       }));
       const raw = JSON.stringify(await response.json());
