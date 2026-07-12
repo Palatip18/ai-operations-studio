@@ -86,6 +86,41 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     expect(trace.estimatedUsage).toBeNull();
     expect(trace.mode).toBe("deterministic");
   });
+
+  it("handles promotion and game questions with the gaming knowledge base", async () => {
+    const promotion = await runSupportAgent("What are the turnover conditions for the welcome promotion?");
+    expect(promotion.trace.intent).toBe("promotion_bonus");
+    expect(promotion.trace.sources.some((s) => s.id.startsWith("gaming-") && /promotion|bonus/.test(s.id))).toBe(true);
+
+    const game = await runSupportAgent("The game round is frozen and my balance did not update.");
+    expect(game.trace.intent).toBe("game_support");
+    expect(game.trace.sources.some((s) => s.id === "gaming-game-issue-guide")).toBe(true);
+  });
+
+  it("creates a simulated transaction-review case for missing deposits and withdrawals", async () => {
+    for (const message of [
+      "My deposit was completed but the credit was not received.",
+      "My withdrawal says completed but the money was not received.",
+    ]) {
+      const result = await runSupportAgent(message);
+      expect(result.trace.intent).toBe("deposit_withdrawal");
+      expect(result.trace.risk).toBe("HIGH");
+      expect(result.trace.decision).toBe("ESCALATE");
+      expect(result.handoff?.success).toBe(true);
+      expect(result.answer).toContain("DEMO-CS-");
+    }
+  });
+
+  it("understands the core Thai deposit and withdrawal scenarios", async () => {
+    const deposit = await runSupportAgent("ฝากเงินแล้วเครดิตไม่เข้า ต้องทำอย่างไร");
+    expect(deposit.trace.intent).toBe("deposit_withdrawal");
+    expect(deposit.trace.decision).toBe("ESCALATE");
+    expect(deposit.answer).toContain("คิวตรวจสอบธุรกรรม");
+
+    const withdrawal = await runSupportAgent("สถานะถอนเงินสำเร็จแล้ว แต่เงินยังไม่เข้าบัญชี");
+    expect(withdrawal.trace.intent).toBe("deposit_withdrawal");
+    expect(withdrawal.trace.decision).toBe("ESCALATE");
+  });
 });
 
 describe("trace redaction for the support agent", () => {

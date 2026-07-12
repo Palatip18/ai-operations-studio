@@ -400,6 +400,102 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
       keywords: ["privacy", "data", "personal", "deletion", "request", "breach", "security", "compromise", "access"],
     },
   },
+  {
+    id: "gaming-promotion-overview",
+    title: "Online Gaming Promotion Overview (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "This fictional platform offers four common promotion types: a first-deposit welcome bonus, a daily deposit bonus, weekly cashback on eligible net losses, and referral or free-spin rewards. Every offer has its own minimum deposit, maximum bonus, eligible games, validity period, and turnover requirement. Only one promotion can be active at a time. Promotional credit is not withdrawable as cash until the stated turnover requirement is complete. Customers should confirm the current terms before opting in; no promotion guarantees a profit or winning outcome.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["promotion", "bonus", "welcome", "cashback", "referral", "free", "spin", "offer", "turnover", "wagering", "eligible", "validity"],
+    },
+  },
+  {
+    id: "gaming-welcome-bonus-policy",
+    title: "Welcome Bonus and Turnover Policy (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "The fictional welcome offer is available once to a newly verified account. Example offer bands range from 20% to 100% of an eligible first deposit, with a fictional maximum bonus shown in the promotion panel. The turnover requirement may range from 3x to 20x of the deposit plus bonus, depending on the selected offer and game category. Some games may contribute partially or not at all. The offer expires if the required turnover is not completed during its validity period. Duplicate accounts, shared payment details, or attempts to claim the same welcome offer more than once require manual review.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["welcome", "first", "deposit", "bonus", "percent", "maximum", "turnover", "wagering", "game", "expiry", "duplicate", "verified"],
+    },
+  },
+  {
+    id: "gaming-daily-cashback-policy",
+    title: "Daily Bonus, Cashback, and Referral Policy (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "A fictional daily deposit offer may add 10% to 20% to the first eligible deposit of the day, subject to a maximum bonus and turnover requirement. Weekly cashback may return a small percentage of eligible net losses and normally has a lower turnover requirement than a deposit bonus. Referral and free-spin rewards are credited only after their stated verification conditions are met. Promotions cannot be stacked unless the promotion panel explicitly says otherwise, and settled or expired offers cannot be applied retroactively.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["daily", "deposit", "cashback", "loss", "referral", "free", "spin", "stack", "retroactive", "turnover", "reward"],
+    },
+  },
+  {
+    id: "gaming-deposit-pending-guide",
+    title: "Deposit Pending or Credit Not Received (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "A bank transfer can appear as pending while the payment gateway verifies the transaction. Customers should first confirm the transfer status in their banking app and wait up to 5 minutes before retrying. Do not make a duplicate deposit for the same intended amount. If credit is still missing, collect only the deposit amount, transaction time, payment channel, and a masked transaction reference. Never request a password, PIN, OTP, full bank-account number, or unredacted financial document. A missing deposit creates a simulated high-priority review case in this demo.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["deposit", "pending", "credit", "missing", "not", "received", "bank", "transfer", "gateway", "transaction", "duplicate", "reference"],
+    },
+  },
+  {
+    id: "gaming-withdrawal-processing-guide",
+    title: "Withdrawal Pending or Delayed (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "Withdrawal statuses are Received, Under Review, Approved, Sent to Bank, and Completed. A normal fictional target is several minutes after approval, but bank maintenance, identity review, promotion turnover, mismatched account details, or risk checks can extend processing. Support must not promise an exact completion time. For a delayed withdrawal, confirm the current status, requested amount, request time, whether identity verification is complete, and whether an active promotion still has unmet turnover. Do not ask the customer to submit the same withdrawal repeatedly.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["withdrawal", "pending", "delayed", "slow", "review", "approved", "bank", "maintenance", "identity", "turnover", "status", "processing"],
+    },
+  },
+  {
+    id: "gaming-withdrawal-missing-guide",
+    title: "Withdrawal Completed but Funds Not Received (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "If a withdrawal is marked Completed but the destination account has not received the funds, do not tell the customer to create another withdrawal. Confirm the masked destination account, amount, completion timestamp, and demo withdrawal reference. Allow for the fictional bank-settlement window shown in the status panel. If the settlement window has passed, create a high-priority simulated review case. Support must not claim the funds are lost, guarantee a payment time, or request passwords, OTPs, or full banking credentials.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["withdrawal", "completed", "money", "funds", "not", "received", "missing", "destination", "settlement", "reference", "bank"],
+    },
+  },
+  {
+    id: "gaming-game-issue-guide",
+    title: "Game and Round Issue Support (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "For a game that will not open, freezes, disconnects, or shows an unexpected balance, first ask the customer to refresh once, confirm network stability, and check the service-status notice. If the problem concerns a settled game round, collect the fictional provider name, game title, round ID, approximate time, displayed balance, and a screenshot with personal data masked. Never change a game result manually or promise compensation before the provider review is complete. The assistant provides troubleshooting and case intake only; it does not recommend betting strategies or claim that any game can guarantee profit.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["game", "round", "provider", "freeze", "stuck", "disconnect", "balance", "result", "screenshot", "troubleshoot", "compensation"],
+    },
+  },
+  {
+    id: "gaming-responsible-use-guidance",
+    title: "Responsible Use and Support Boundary (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-13",
+    content: "The assistant explains account, payment, promotion, and technical-support procedures. It must not promise winnings, recommend a betting strategy, encourage a customer to recover losses by spending more, or describe promotional credit as guaranteed income. Requests involving self-exclusion, spending limits, or loss-of-control concerns should receive a supportive response and be directed to the platform's responsible-use controls in a production implementation.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["responsible", "limit", "self", "exclusion", "loss", "control", "strategy", "winning", "profit", "support"],
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------

@@ -2,8 +2,8 @@ import { classifyIntent, classifyRisk, type Intent, type RiskLevel } from "./sup
 import { runSupportAgent, type SupportDecision } from "./support-agent";
 
 /**
- * Fictional customer-support evaluation dataset (35 cases: 20 normal + 5
- * paraphrased + 5 insufficient-evidence + 5 mandatory-escalation). All
+ * Fictional customer-support evaluation dataset. The original 35 general
+ * cases are retained and extended with online-gaming support cases. All
  * figures below describe behavior on this included dataset only — they are
  * not a claim of accuracy on real customer traffic, and 80-90% automation is
  * a controlled-pilot target, not a measured result of this small dataset.
@@ -40,6 +40,10 @@ export const supportCases: SupportCase[] = [
   { message: "I'm not very happy with my recent experience, can you help?", expectedIntent: "complaint", expectedRisk: "MEDIUM", expectedDecision: "AUTO_RESPOND", expectedDocId: "complaints-escalation-policy", group: "normal" },
   { message: "Why was this system built?", expectedIntent: "unknown", expectedRisk: "MEDIUM", expectedDecision: "AUTO_RESPOND", expectedDocId: "product-vision", group: "normal" },
   { message: "How far could this platform be developed in the future?", expectedIntent: "unknown", expectedRisk: "MEDIUM", expectedDecision: "AUTO_RESPOND", expectedDocId: "enterprise-roadmap", group: "normal" },
+  { message: "My withdrawal has been pending for a long time.", expectedIntent: "deposit_withdrawal", expectedRisk: "MEDIUM", expectedDecision: "AUTO_RESPOND", expectedDocId: "gaming-withdrawal-processing-guide", group: "normal" },
+  { message: "The game round is frozen and my balance did not update.", expectedIntent: "game_support", expectedRisk: "LOW", expectedDecision: "AUTO_RESPOND", expectedDocId: "gaming-game-issue-guide", group: "normal" },
+  { message: "What are the conditions for the welcome promotion?", expectedIntent: "promotion_bonus", expectedRisk: "LOW", expectedDecision: "AUTO_RESPOND", expectedDocId: "gaming-welcome-bonus-policy", group: "normal" },
+  { message: "I accepted a bonus but cannot withdraw yet. What turnover rules should I check?", expectedIntent: "deposit_withdrawal", expectedRisk: "MEDIUM", expectedDecision: "AUTO_RESPOND", expectedDocId: "gaming-welcome-bonus-policy", group: "normal" },
 
   // -- paraphrased (5) --
   { message: "Can you show me how to use the reporting tool?", expectedIntent: "product_usage", expectedRisk: "LOW", expectedDecision: "AUTO_RESPOND", expectedDocId: "product-usage-guidance", group: "paraphrase" },
@@ -61,6 +65,8 @@ export const supportCases: SupportCase[] = [
   { message: "I need to submit my passport for identity verification, please process it now.", expectedIntent: "identity_documents", expectedRisk: "MEDIUM", expectedDecision: "ESCALATE", expectedDocId: null, group: "mandatory_escalation" },
   { message: "This is unacceptable, I'm furious and I will report you online if this isn't fixed.", expectedIntent: "complaint", expectedRisk: "HIGH", expectedDecision: "ESCALATE", expectedDocId: null, group: "mandatory_escalation" },
   { message: "Can you make an exception and waive your refund policy for me just this once?", expectedIntent: "refund_cancellation", expectedRisk: "HIGH", expectedDecision: "ESCALATE", expectedDocId: null, group: "mandatory_escalation" },
+  { message: "My deposit was completed but the credit was not received.", expectedIntent: "deposit_withdrawal", expectedRisk: "HIGH", expectedDecision: "ESCALATE", expectedDocId: null, group: "mandatory_escalation" },
+  { message: "My withdrawal says completed but the money was not received.", expectedIntent: "deposit_withdrawal", expectedRisk: "HIGH", expectedDecision: "ESCALATE", expectedDocId: null, group: "mandatory_escalation" },
 ];
 
 export function evaluateIntentAccuracy() {
@@ -216,7 +222,7 @@ export async function runSupportEvaluationSuite() {
     evaluateLatencySummary(),
   ]);
   return {
-    note: "All figures below describe behavior on this repository's small, fictional customer-support evaluation dataset (35 cases) only. They are not a measurement of real customer traffic, and 80-90% automation is a controlled-pilot target, not a result claimed here.",
+    note: `All figures below describe behavior on this repository's small, fictional customer-support evaluation dataset (${supportCases.length} cases) only. They are not a measurement of real customer traffic, and 80-90% automation is a controlled-pilot target, not a result claimed here.`,
     datasetSize: supportCases.length,
     intentAccuracy: intent,
     riskAccuracy: risk,

@@ -1,22 +1,22 @@
-# AI Operations Studio — Agentic Customer Support Copilot
+# AI Operations Studio — Agentic Online Gaming Support Copilot
 
 > Personal portfolio project / functional prototype — not a production system. Bounded agent workflow, not an autonomous production agent. Not enterprise-grade RAG.
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-164_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-168_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
-AI Operations Studio demonstrates how applied AI patterns can turn operational and customer-support requests into clear, traceable, safely-escalated outcomes. It is intentionally domain-neutral and uses only fictional, general-purpose sample content. It contains no employer, client, transaction, or confidential data.
+AI Operations Studio demonstrates how applied AI patterns can turn fictional online-gaming support requests into clear, traceable, safely escalated outcomes. The knowledge base covers promotions, deposits, withdrawals, game issues, and responsible-use support. It contains no real operator names, employer data, customer records, transactions, or confidential information.
 
 ## Reviewer quick start
 
 1. Open the **[live demo](https://ai-operations-studio-black.vercel.app)** and enter the demo password supplied privately with the application.
-2. Open **AI Support Chat** and run one routine FAQ scenario to see `AUTO_RESPOND` with evidence.
-3. Run the financial-dispute or angry-complaint scenario to see `ESCALATE`, a simulated case reference, and safe customer-facing wording.
+2. Open **AI Gaming Support Chat** and run the promotion or game-issue scenario to see `AUTO_RESPOND` with evidence.
+3. Run the missing-deposit or missing-withdrawal scenario to see `ESCALATE`, a simulated transaction-review reference, and safe customer-facing wording.
 4. Expand **Technical execution trace** to inspect intent, risk, retrieval sources, verifier result, tool calls, latency, and usage.
-5. Review the [recruiter and technical-review guide](docs/reviewer-guide.md), [localization QA](docs/localization-qa.md), and [repository recovery QA](docs/repository-recovery-qa.md).
+5. Review the [recruiter and technical-review guide](docs/reviewer-guide.md), [domain research QA](docs/domain-research-qa.md), [localization QA](docs/localization-qa.md), and [repository recovery QA](docs/repository-recovery-qa.md).
 
 Estimated review time: **3–5 minutes for the guided demo; 15–20 minutes for the technical review.**
 
@@ -37,7 +37,7 @@ The consolidated AI Support Chat combines six pieces, each earning its place for
 
 ## What the MVP demonstrates
 
-1. **AI Support Chat (Conversation → Tools → Evidence → Decision)** — the primary conversational surface combines customer-support chat, knowledge retrieval, workflow tools, multilingual response composition, and safe escalation instead of presenting a separate generic chatbot.
+1. **AI Gaming Support Chat (Conversation → Tools → Evidence → Decision)** — the primary conversational surface handles fictional promotion, deposit, withdrawal, and game-support conversations with knowledge retrieval, multilingual response composition, simulated case handoff, and safe escalation.
 2. **RAG Knowledge Base** — chunks sample documents, creates deterministic local feature-hashing embeddings, ranks passages with hybrid scoring, and returns grounded answers with visible citations.
 3. **Workflow Automation** — validates a fictional internal request, applies deterministic policy rules, routes exceptions, and prepares a mock notification.
 4. **Agentic Copilot (Planner → Tool Execution → Verifier)** — a bounded agent that plans up to 3 tool steps, executes them, and runs a groundedness verifier over the result. The full plan, tool inputs/outputs, retrieved sources, verifier result, latency, call counts, and provider usage (when available) are shown in the UI. See [Agent flow](#agent-flow).
@@ -66,7 +66,7 @@ The default `mock` mode is deterministic, free to run, and requires no credentia
   | Mean latency | ~1ms | ~296ms |
 
   These numbers are not the 80-90% target — see [Knowledge-quality model](#knowledge-quality-model) for why, and [Evaluation methodology](#evaluation-methodology) for full definitions.
-- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual normalization, response composition, intent/risk classification, simulated handoff, and API auth — **164 tests**, see `npm test`.
+- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual normalization, response composition, intent/risk classification, simulated handoff, and API auth — **168 tests**, see `npm test`.
 - Results are exposed through `GET /api/evaluation`, `GET /api/agent-evaluation`, `GET /api/support-evaluation`, and displayed in the UI.
 
 These figures validate only the included fictional sample set and documented thresholds; they are not claims of production accuracy.
@@ -254,7 +254,7 @@ Three endpoints expose evaluation results, all computed against the small, ficti
   - **Workflow decision accuracy** — does the policy engine's auto-approve/needs-review decision match the expected outcome for a labeled set of requests.
   - **Groundedness / no-answer detection** — does the verifier correctly mark on-topic questions as grounded and correctly mark out-of-scope questions as ungrounded (no-answer).
   - **Latency summary** — min/mean/max end-to-end latency across a fixed sample of agent runs.
-- `GET /api/support-evaluation` — the Customer Support Copilot suite (`src/lib/support-evaluation.ts`), a 35-case fictional dataset (20 normal + 5 paraphrased + 5 insufficient-evidence + 5 mandatory-escalation):
+- `GET /api/support-evaluation` — the Customer Support Copilot suite (`src/lib/support-evaluation.ts`), a 41-case fictional dataset: the original 35 general-support cases plus 6 online-gaming deposit, withdrawal, game, and promotion cases:
   - **Intent / risk classification accuracy** — deterministic classifier output vs. a labeled expected value.
   - **Retrieval top-1 accuracy** — top retrieved document ID vs. the labeled expected document, for cases where one exists.
   - **Groundedness accuracy** — share of answerable (normal/paraphrase) cases the verifier correctly marks grounded.
@@ -263,22 +263,22 @@ Three endpoints expose evaluation results, all computed against the small, ficti
   - **Escalation precision / recall** — of all cases the system escalated, how many should have been escalated (precision); of all cases that should have escalated, how many did (recall).
   - **Response-policy compliance** — does every response match the expected format for its decision (escalation phrasing present only when escalating).
   - **Automation coverage** — proportion of the dataset's LOW-risk, answerable cases safely handled by AUTO_RESPOND. Defined and measured only over this small fictional dataset; **not** presented as the 80-90% pilot target, and not extrapolated to real traffic.
-  - **Latency summary** — min/mean/max across all 35 cases.
+  - **Latency summary** — min/mean/max across all 41 cases.
 
   Automated tests (`support-evaluation.test.ts`) assert 100% on the metrics that are structurally deterministic (intent, risk, tool-routing, response-format compliance) and assert real, non-perfect bounds — not fabricated 100%s — on the retrieval-dependent metrics, consistent with the measured table earlier in this README.
 
 ## Recruiter scenarios
 
-The AI Support Chat tab has 8 one-click scenarios:
+The AI Gaming Support Chat tab has 8 one-click scenarios:
 
-1. FAQ resolved automatically (AUTO_RESPOND) — "How do I create a new account?"
-2. Troubleshooting resolved automatically (AUTO_RESPOND) — "The product won't load, what should I do?"
-3. Policy question answered with citations (AUTO_RESPOND, MEDIUM risk) — "Can I get a refund if I cancel this month?"
-4. Product-vision question (AUTO_RESPOND) — "Why was this system built?"
-5. Roadmap question (AUTO_RESPOND) — "How far could this platform be developed in the future?"
-6. Insufficient-evidence case (ESCALATE) — "Do you support hardware security key multi-factor authentication?"
-7. Financial-dispute mandatory escalation (ESCALATE, HIGH risk, even though billing/refund documents exist) — "I was charged twice, this is an unauthorized charge and I want it disputed immediately."
-8. Angry-complaint escalation (ESCALATE, HIGH risk) — "This is unacceptable, I'm furious and I will report you online if this isn't fixed."
+1. Deposit credit missing (ESCALATE, HIGH risk, simulated transaction-review case).
+2. Withdrawal delayed (evidence-grounded status and next-step guidance).
+3. Withdrawal completed but funds missing (ESCALATE, HIGH risk).
+4. Game freeze and balance issue (troubleshooting plus safe evidence intake).
+5. Welcome-promotion conditions (grounded answer with citations).
+6. Bonus turnover blocking withdrawal (explain conditions without promising release).
+7. Unknown gaming-account transaction (ESCALATE, HIGH risk).
+8. Responsible-use concern (supportive control guidance without encouraging further spending).
 
 The Agentic Copilot tab (the earlier, more general-purpose milestone) keeps its own 3 scenarios: a RAG policy question, a workflow analysis, and an insufficient-evidence case.
 
@@ -380,8 +380,8 @@ src/
     ├── agent-evaluation.ts        # Agentic Copilot evaluation suite
     ├── support-classification.ts  # Deterministic intent/risk/mandatory-escalation logic
     ├── support-agent.ts           # Support Copilot orchestrator + decideSupportPolicy
-    ├── support-evaluation.ts      # 35-case Customer Support Copilot evaluation suite
-    └── *.test.ts                  # Unit and integration tests (164)
+    ├── support-evaluation.ts      # 41-case Customer Support Copilot evaluation suite
+    └── *.test.ts                  # Unit and integration tests (168)
 ```
 
 **Files an AI Engineer should inspect first:** `src/lib/support-agent.ts` (the orchestration flow and the pure `decideSupportPolicy` function), `src/lib/support-classification.ts` (deterministic policy logic), `src/lib/verifier.ts` (the groundedness heuristic and its documented limits), `src/lib/agent.ts` (the mode-aware retrieval threshold and why it exists), `src/lib/support-evaluation.ts` (how the honest, non-cherry-picked metrics table above was produced).

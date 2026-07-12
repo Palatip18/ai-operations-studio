@@ -12,7 +12,7 @@ This guide provides a short evaluation path for recruiters, AI Engineers, engine
 
 ### 1. Routine customer question
 
-Open **AI Support Chat** and select the account-onboarding or troubleshooting scenario.
+Open **AI Gaming Support Chat** and select the promotion-details or game-issue scenario.
 
 Look for:
 
@@ -25,7 +25,7 @@ Look for:
 
 ### 2. High-risk customer case
 
-Select the financial-dispute or angry-complaint scenario.
+Select the deposit-missing or withdrawal-missing scenario.
 
 Look for:
 
@@ -35,15 +35,15 @@ Look for:
 - no promise that a real employee has received the case;
 - redacted technical trace.
 
-### 3. Insufficient evidence
+### 3. Promotion and responsible-use boundaries
 
-Select the hardware-security-key scenario.
+Select the bonus-withdrawal and responsible-use scenarios.
 
 Look for:
 
-- conservative no-answer behavior;
-- no fabricated policy answer;
-- safe escalation rather than an unsupported response.
+- answers grounded in fictional promotion-policy documents;
+- no promise of eligibility, winnings, or withdrawal release;
+- supportive responsible-use guidance without encouraging more spending.
 
 ## Technical architecture to inspect
 
@@ -87,6 +87,7 @@ Recommended files:
 - Groundedness/no-answer gate
 - English, Thai, and Chinese interface/input/response handling
 - Simulated, idempotent support-case creation with structured output
+- Fictional online-gaming support knowledge covering promotions, deposits, withdrawals, and game issues
 - Authentication, rate limits, timeouts, input limits, token caps, and trace redaction
 - Automated tests and production build validation
 

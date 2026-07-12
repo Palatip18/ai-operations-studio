@@ -87,9 +87,9 @@ export const uiCopy = {
     loginFooter: "Portfolio review access — not production authentication.",
     loginError: "Unable to sign in. Please try again.",
     networkError: "Network error. Please try again.",
-    supportTitle: "AI Support Chat",
+    supportTitle: "AI Gaming Support Chat",
     supportIntro:
-      "Designed to target up to 80–90% automation of repetitive, low-risk inquiries when the knowledge base is sufficiently complete, validated, and maintained.",
+      "Handles fictional online-gaming questions about deposits, withdrawals, games, and promotions, while routing missing-funds and high-risk cases for simulated review.",
     supportLimit:
       "A controlled-pilot target, not a production guarantee. Complex, sensitive, disputed, or high-risk cases remain with customer-support specialists.",
     supportEmpty: "Choose a scenario or ask your own support question.",
@@ -108,23 +108,14 @@ export const uiCopy = {
     usage: "Estimated usage",
     language: "Language",
     scenarios: [
-      ["FAQ", "How do I create a new account?"],
-      ["Troubleshooting", "The product won't load, what should I do?"],
-      ["Policy with citations", "Can I get a refund if I cancel this month?"],
-      ["Product vision", "Why was this system built?"],
-      ["Roadmap", "How far could this platform be developed in the future?"],
-      [
-        "Insufficient evidence",
-        "Do you support hardware security key multi-factor authentication?",
-      ],
-      [
-        "Financial dispute",
-        "I was charged twice and want to dispute the unauthorized charge.",
-      ],
-      [
-        "Angry complaint",
-        "This is unacceptable and I will report this publicly.",
-      ],
+      ["Deposit missing", "I made a deposit, but the credit has not arrived."],
+      ["Withdrawal delayed", "My withdrawal has been pending for a long time."],
+      ["Withdrawal missing", "The withdrawal says completed, but the money has not reached my account."],
+      ["Game issue", "The game froze and my balance did not update. What information do you need?"],
+      ["Promotion details", "What are the conditions for the welcome promotion?"],
+      ["Bonus withdrawal", "I accepted a bonus but cannot withdraw yet. What should I check?"],
+      ["Payment dispute", "My gaming account shows a transaction I did not make."],
+      ["Responsible support", "I am worried about spending too much. What controls should be available?"],
     ],
     sourceCatalog: "Source catalog",
     ofWord: "of",
@@ -159,7 +150,8 @@ export const uiCopy = {
       "Finance Operations": "Finance",
       "IT Operations": "IT Ops",
       "Customer Support Copilot": "Support Copilot",
-      "Customer Support FAQ": "FAQ"
+        "Customer Support FAQ": "FAQ",
+        "Online Gaming Support": "Gaming Support"
     }
   },
   th: {
@@ -243,9 +235,9 @@ export const uiCopy = {
     loginFooter: "ใช้สำหรับตรวจผลงาน ไม่ใช่ระบบยืนยันตัวตนระดับ Production",
     loginError: "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่",
     networkError: "เกิดปัญหาเครือข่าย กรุณาลองใหม่",
-    supportTitle: "AI แชตบริการลูกค้า",
+    supportTitle: "AI แชตบริการลูกค้าเกมออนไลน์",
     supportIntro:
-      "ออกแบบเพื่อมุ่งรองรับคำถามซ้ำและความเสี่ยงต่ำได้สูงสุด 80–90% เมื่อฐานความรู้ครบถ้วน ถูกตรวจสอบ และได้รับการดูแลต่อเนื่อง",
+      "ตอบคำถามตัวอย่างเกี่ยวกับฝากเงิน ถอนเงิน ปัญหาเกม และโปรโมชั่น พร้อมส่งเคสเงินไม่เข้าและเคสเสี่ยงเข้าสู่การตรวจสอบแบบจำลอง",
     supportLimit:
       "เป็นเป้าหมายสำหรับการทดลองแบบควบคุม ไม่ใช่คำรับรอง Production เคสซับซ้อน อ่อนไหว มีข้อพิพาท หรือเสี่ยงสูงยังต้องใช้เจ้าหน้าที่",
     supportEmpty: "เลือกสถานการณ์ตัวอย่างหรือถามคำถามบริการลูกค้า",
@@ -264,14 +256,14 @@ export const uiCopy = {
     usage: "การใช้งานโดยประมาณ",
     language: "ภาษา",
     scenarios: [
-      ["คำถามทั่วไป", "ฉันสมัครบัญชีอย่างไร"],
-      ["แก้ปัญหา", "เข้าใช้งานไม่ได้ ควรทำอย่างไร"],
-      ["นโยบายพร้อมอ้างอิง", "ถ้ายกเลิกเดือนนี้ ขอคืนเงินได้ไหม"],
-      ["เหตุผลที่สร้างระบบ", "ระบบนี้สร้างมาทำไม"],
-      ["แผนพัฒนาต่อ", "ระบบนี้พัฒนาต่อเป็นแพลตฟอร์มองค์กรได้อย่างไร"],
-      ["ข้อมูลไม่เพียงพอ", "รองรับกุญแจความปลอดภัยแบบฮาร์ดแวร์หรือไม่"],
-      ["ข้อพิพาททางการเงิน", "ฉันต้องการโต้แย้งรายการที่ไม่ได้ทำ"],
-      ["ลูกค้าโกรธ", "เรื่องนี้รับไม่ได้ ฉันจะร้องเรียนต่อสาธารณะ"],
+      ["ฝากเงินไม่เข้า", "ฝากเงินแล้วเครดิตไม่เข้า ต้องทำอย่างไร"],
+      ["ถอนเงินล่าช้า", "ถอนเงินนานมาก สถานะยังอยู่ระหว่างดำเนินการ"],
+      ["ถอนแล้วเงินไม่เข้า", "สถานะถอนเงินสำเร็จแล้ว แต่เงินยังไม่เข้าบัญชี"],
+      ["ปัญหาเกม", "เกมค้างและยอดเงินไม่อัปเดต ต้องใช้ข้อมูลอะไรตรวจสอบ"],
+      ["ข้อมูลโปรโมชั่น", "โปรโมชั่นสมาชิกใหม่มีเงื่อนไขอะไรบ้าง"],
+      ["ติดเงื่อนไขโบนัส", "รับโบนัสแล้วถอนเงินไม่ได้ ต้องตรวจสอบอะไร"],
+      ["รายการที่ไม่ได้ทำ", "บัญชีเกมมีรายการที่ฉันไม่ได้ทำ ต้องการให้ตรวจสอบ"],
+      ["ควบคุมการใช้งาน", "ฉันกังวลว่าใช้เงินมากเกินไป ควรมีเครื่องมืออะไรช่วยควบคุม"],
     ],
     sourceCatalog: "รายการเอกสาร",
     ofWord: "จาก",
@@ -306,7 +298,8 @@ export const uiCopy = {
       "Finance Operations": "การเงิน",
       "IT Operations": "ฝ่ายไอที",
       "Customer Support Copilot": "ผู้ช่วย CS",
-      "Customer Support FAQ": "คำถามพบบ่อย"
+        "Customer Support FAQ": "คำถามพบบ่อย",
+        "Online Gaming Support": "บริการลูกค้าเกมออนไลน์"
     }
   },
   zh: {
@@ -387,9 +380,9 @@ export const uiCopy = {
     loginFooter: "仅供作品集评审，不是生产级身份验证。",
     loginError: "登录失败，请重试。",
     networkError: "网络错误，请重试。",
-    supportTitle: "AI 客服对话",
+    supportTitle: "AI 在线游戏客服对话",
     supportIntro:
-      "当知识库足够完整、经过验证并持续维护时，目标是自动处理最多 80–90% 的重复、低风险咨询。",
+      "处理虚构的在线游戏存款、提款、游戏故障与促销问题，并将资金未到账及高风险事件送入模拟审核流程。",
     supportLimit:
       "这是受控试点目标，不是生产保证。复杂、敏感、有争议或高风险事件仍由人工客服处理。",
     supportEmpty: "请选择示例或输入客服问题。",
@@ -408,14 +401,14 @@ export const uiCopy = {
     usage: "预计用量",
     language: "语言",
     scenarios: [
-      ["常见问题", "如何创建账户？"],
-      ["故障排除", "页面无法加载，我该怎么办？"],
-      ["带引用的政策", "本月取消可以退款吗？"],
-      ["产品愿景", "为什么要创建这个系统？"],
-      ["发展路线", "这个平台未来可以发展到什么程度？"],
-      ["证据不足", "是否支持硬件安全密钥多重验证？"],
-      ["财务争议", "这是未经授权的交易，我要提出争议。"],
-      ["愤怒投诉", "这不可接受，我会公开投诉。"],
+      ["存款未到账", "我已存款，但游戏账户余额还没有增加。"],
+      ["提款延迟", "我的提款长时间处于处理中。"],
+      ["提款未到账", "提款显示已完成，但银行账户还没收到钱。"],
+      ["游戏故障", "游戏卡住且余额没有更新，需要提供哪些信息？"],
+      ["促销详情", "新会员促销有哪些条件？"],
+      ["奖金提款", "领取奖金后暂时无法提款，我应该检查什么？"],
+      ["异常交易", "游戏账户中出现了一笔不是我操作的交易。"],
+      ["负责任使用", "我担心花费过多，平台应提供哪些控制工具？"],
     ],
     sourceCatalog: "源文档目录",
     ofWord: "的",
@@ -450,7 +443,8 @@ export const uiCopy = {
       "Finance Operations": "财务运营",
       "IT Operations": "IT运营",
       "Customer Support Copilot": "客服助手",
-      "Customer Support FAQ": "常见问题"
+        "Customer Support FAQ": "常见问题",
+        "Online Gaming Support": "在线游戏客服"
     }
   },
 } as const;

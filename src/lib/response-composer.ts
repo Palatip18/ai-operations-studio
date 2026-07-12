@@ -20,7 +20,7 @@ export function deriveTone(message: string, risk: RiskLevel, intent: Intent): Su
   if (risk === "HIGH" || /urgent|immediately|ด่วน|紧急/i.test(message)) return "urgent";
   if (intent === "complaint" || /furious|unacceptable|ไม่พอใจ|โกรธ|投诉|生气/i.test(message)) return "empathetic";
   if (/sorry|apolog|ขอโทษ|抱歉/i.test(message)) return "apologetic";
-  if (intent === "troubleshooting" || intent === "product_usage") return "helpful";
+  if (intent === "troubleshooting" || intent === "product_usage" || intent === "game_support" || intent === "promotion_bonus") return "helpful";
   return "neutral";
 }
 
@@ -33,12 +33,17 @@ function localizedEscalation(input: ComposerInput): string {
   }
 
   if (input.locale === "th") {
+    if (input.intent === "deposit_withdrawal") return `เข้าใจครับว่าเรื่องฝากหรือถอนเงินนี้สำคัญ ระบบได้สร้างเคสจำลองไว้ในคิวตรวจสอบธุรกรรมแล้วครับ หมายเลขอ้างอิงสำหรับเดโมคือ ${id}`;
     if (input.intent === "billing_payment") return `เข้าใจครับว่าเรื่องยอดเงินนี้สำคัญและควรได้รับการตรวจสอบอย่างละเอียด ระบบได้สร้างเคสจำลองไว้ในคิวบริการลูกค้าแล้วครับ หมายเลขอ้างอิงสำหรับเดโมคือ ${id}`;
     if (input.intent === "complaint") return `เข้าใจครับว่าเรื่องนี้ทำให้คุณไม่พอใจมาก ระบบได้สร้างเคสจำลองไว้สำหรับการตรวจสอบเพิ่มเติมแล้วครับ หมายเลขอ้างอิงสำหรับเดโมคือ ${id}`;
     if (input.intent === "privacy_security") return `เนื่องจากเรื่องนี้เกี่ยวข้องกับความปลอดภัยของบัญชี ระบบได้สร้างเคสจำลองสำหรับการตรวจสอบเพิ่มเติมแล้วครับ หมายเลขอ้างอิงสำหรับเดโมคือ ${id}`;
     return `เพื่อให้ตรวจสอบรายละเอียดได้รอบคอบ ระบบได้สร้างเคสจำลองไว้ในคิวบริการลูกค้าแล้วครับ หมายเลขอ้างอิงสำหรับเดโมคือ ${id}`;
   }
-  if (input.locale === "zh") return `理解您的情况。系统已创建一个模拟客服工单以供进一步审核。演示编号为 ${id}。`;
+  if (input.locale === "zh") {
+    if (input.intent === "deposit_withdrawal") return `理解您对存款或提款状态的担忧。系统已创建一个模拟交易审核工单并加入队列。演示编号为 ${id}。`;
+    return `理解您的情况。系统已创建一个模拟客服工单以供进一步审核。演示编号为 ${id}。`;
+  }
+  if (input.intent === "deposit_withdrawal") return `I understand why the deposit or withdrawal status is concerning. A simulated transaction-review case has been created and queued. Your demo reference is ${id}.`;
   if (input.intent === "billing_payment") return `I understand why this billing issue is concerning. A demo support case has been created and queued for further review. Your demo reference is ${id}.`;
   if (input.intent === "complaint") return `I understand why this is frustrating. A demo support case has been created for further review. Your demo reference is ${id}.`;
   return `This needs additional review, so a demo support case has been created and queued. Your demo reference is ${id}.`;

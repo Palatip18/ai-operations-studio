@@ -7,6 +7,9 @@ describe("classifyIntent", () => {
     expect(classifyIntent("How do I use the reports feature in the dashboard?")).toBe("product_usage");
     expect(classifyIntent("Where is my support request right now?")).toBe("request_status");
     expect(classifyIntent("When is my invoice issued each month?")).toBe("billing_payment");
+    expect(classifyIntent("My deposit was not credited to my account.")).toBe("deposit_withdrawal");
+    expect(classifyIntent("What is the turnover requirement for the welcome bonus?")).toBe("promotion_bonus");
+    expect(classifyIntent("The game round is frozen and my balance did not update.")).toBe("game_support");
     expect(classifyIntent("How do I cancel my subscription?")).toBe("refund_cancellation");
     expect(classifyIntent("The product won't load, what should I do?")).toBe("troubleshooting");
     expect(classifyIntent("Do you need my passport for account recovery?")).toBe("identity_documents");
@@ -24,6 +27,7 @@ describe("classifyRisk", () => {
 
   it("classifies MEDIUM for money/identity/privacy/complaint intents and unknown intent", () => {
     expect(classifyRisk("When is my invoice issued?", "billing_payment")).toBe("MEDIUM");
+    expect(classifyRisk("My withdrawal is still pending", "deposit_withdrawal")).toBe("MEDIUM");
     expect(classifyRisk("What is today's weather?", "unknown")).toBe("MEDIUM");
   });
 
@@ -39,6 +43,15 @@ describe("checkMandatoryEscalation", () => {
     const result = checkMandatoryEscalation("This is an unauthorized charge, I want to dispute it.", "billing_payment");
     expect(result.escalate).toBe(true);
     expect(result.reason).not.toBeNull();
+  });
+
+  it("triggers when deposited or withdrawn funds are missing", () => {
+    const deposit = "My deposit was not credited.";
+    const withdrawal = "My withdrawal completed but the money was not received.";
+    expect(classifyRisk(deposit, classifyIntent(deposit))).toBe("HIGH");
+    expect(checkMandatoryEscalation(deposit, classifyIntent(deposit)).escalate).toBe(true);
+    expect(classifyRisk(withdrawal, classifyIntent(withdrawal))).toBe("HIGH");
+    expect(checkMandatoryEscalation(withdrawal, classifyIntent(withdrawal)).escalate).toBe(true);
   });
 
   it("triggers on personal/sensitive data requests", () => {

@@ -11,6 +11,9 @@ export type Intent =
   | "product_usage"
   | "request_status"
   | "billing_payment"
+  | "deposit_withdrawal"
+  | "promotion_bonus"
+  | "game_support"
   | "refund_cancellation"
   | "troubleshooting"
   | "identity_documents"
@@ -21,6 +24,9 @@ export type Intent =
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
 
 const INTENT_PATTERNS: { intent: Intent; pattern: RegExp }[] = [
+  { intent: "deposit_withdrawal", pattern: /deposit|withdraw(?:al|ing)?|cash ?out|top ?up|credit (?:has )?not (?:arrived|credited)|money (?:has )?not (?:arrived|received)|bank transfer pending/i },
+  { intent: "promotion_bonus", pattern: /promotion|bonus|cashback|free spin|welcome offer|turnover|wagering requirement|referral reward|promo code/i },
+  { intent: "game_support", pattern: /game round|game provider|slot|casino game|sportsbook|free spin|game (?:is )?(?:stuck|frozen|missing|error)|round id|bet history|balance.*game/i },
   { intent: "refund_cancellation", pattern: /refund|cancel(?:lation)?|money back|stop (?:my )?subscription|end (?:my )?subscription/i },
   { intent: "billing_payment", pattern: /bill(?:ing)?|invoice|payment|charge(?:d)?|subscription cost|pric\w*/i },
   { intent: "identity_documents", pattern: /passport|id card|identity document|verify my identity|proof of identity|national id/i },
@@ -40,13 +46,13 @@ export function classifyIntent(message: string): Intent {
 }
 
 const HIGH_RISK_KEYWORDS =
-  /disput\w*|unauthorized charge|chargeback|fraudulent|fraud|hacked|compromis\w*|security breach|lawsuit|legal action|compliance violation|gdpr complaint|lost money|financial loss|make an exception|waive (?:the|your) policy|bend the rules|special exception outside|social media|post this online|report you (?:publicly|online)|talk to (?:my )?lawyer|threaten(?:ing)? to/i;
+  /disput\w*|unauthorized charge|chargeback|fraudulent|fraud|hacked|compromis\w*|security breach|lawsuit|legal action|compliance violation|gdpr complaint|lost money|financial loss|deposit.*not (?:arrived|credited|received)|credit.*not (?:arrived|credited|received)|withdraw(?:al)?.*not (?:arrived|received)|cash ?out.*missing|make an exception|waive (?:the|your) policy|bend the rules|special exception outside|social media|post this online|report you (?:publicly|online)|talk to (?:my )?lawyer|threaten(?:ing)? to/i;
 
 function withoutSimpleNegatedRisk(message: string): string {
   return message.replace(/\b(?:not|no|never)\s+(?:reporting\s+|claiming\s+)?(?:fraud|a fraud|a dispute|disputing|hacked|compromised|a security breach)\b/gi, "");
 }
 
-const MEDIUM_RISK_INTENTS = new Set<Intent>(["billing_payment", "refund_cancellation", "identity_documents", "privacy_security", "complaint"]);
+const MEDIUM_RISK_INTENTS = new Set<Intent>(["billing_payment", "deposit_withdrawal", "refund_cancellation", "identity_documents", "privacy_security", "complaint"]);
 
 /** Deterministic risk classification. Mandatory-escalation keyword matches always classify as HIGH regardless of intent. */
 export function classifyRisk(message: string, intent: Intent): RiskLevel {
@@ -70,6 +76,9 @@ export function checkMandatoryEscalation(message: string, intent: Intent): Manda
   const riskMessage = withoutSimpleNegatedRisk(message);
   if (/disput\w*|unauthorized charge|chargeback|fraudulent charge|lost money|financial loss/i.test(riskMessage)) {
     return { escalate: true, reason: "Potential financial loss or transaction dispute requires human review." };
+  }
+  if (/deposit.*not (?:arrived|credited|received)|credit.*not (?:arrived|credited|received)|withdraw(?:al)?.*not (?:arrived|received)|cash ?out.*missing/i.test(riskMessage)) {
+    return { escalate: true, reason: "Deposit or withdrawal funds are missing and require transaction review." };
   }
   if (/passport|national id|social security|personal data|personal information|my data|identity document/i.test(message) && (intent === "identity_documents" || intent === "privacy_security")) {
     return { escalate: true, reason: "Request involves personal or sensitive identity/data handling." };
