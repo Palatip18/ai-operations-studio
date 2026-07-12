@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-154_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-155_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
@@ -63,7 +63,7 @@ English remains the canonical knowledge and evaluation language. Thai and Chines
   | Mean latency | ~1ms | ~296ms |
 
   These numbers are not the 80-90% target — see [Knowledge-quality model](#knowledge-quality-model) for why, and [Evaluation methodology](#evaluation-methodology) for full definitions.
-- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual normalization, intent/risk classification, mandatory escalation, and API auth — 154 tests, see `npm test`.
+- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual normalization, intent/risk classification, mandatory escalation, and API auth — 155 tests, see `npm test`.
 - Results are exposed through `GET /api/evaluation`, `GET /api/agent-evaluation`, `GET /api/support-evaluation`, and displayed in the UI.
 
 These figures validate only the included fictional sample set and documented thresholds; they are not claims of production accuracy.
@@ -375,7 +375,7 @@ src/
     ├── support-classification.ts  # Deterministic intent/risk/mandatory-escalation logic
     ├── support-agent.ts           # Support Copilot orchestrator + decideSupportPolicy
     ├── support-evaluation.ts      # 35-case Customer Support Copilot evaluation suite
-    └── *.test.ts                  # Unit tests (154)
+    └── *.test.ts                  # Unit tests (155)
 ```
 
 **Files an AI Engineer should inspect first:** `src/lib/support-agent.ts` (the orchestration flow and the pure `decideSupportPolicy` function), `src/lib/support-classification.ts` (deterministic policy logic), `src/lib/verifier.ts` (the groundedness heuristic and its documented limits), `src/lib/agent.ts` (the mode-aware retrieval threshold and why it exists), `src/lib/support-evaluation.ts` (how the honest, non-cherry-picked metrics table above was produced).

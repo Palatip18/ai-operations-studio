@@ -24,4 +24,9 @@ describe("multilingual support", () => {
     expect(localizedEscalation("th", "review")).toContain("ส่งต่อ");
     expect(localizedEscalation("zh", "review")).toContain("人工客服");
   });
+
+  it("keeps canonical product-purpose hints in Thai and Chinese local normalization", () => {
+    expect(normalizeLocally("ระบบนี้สร้างมาทำไม", "th")).toContain("product purpose");
+    expect(normalizeLocally("为什么要创建这个系统？", "zh")).toContain("product purpose");
+  });
 });

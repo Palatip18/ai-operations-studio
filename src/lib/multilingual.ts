@@ -80,10 +80,14 @@ async function translate(text: string, instruction: string): Promise<string | nu
 export async function normalizeSupportInput(text: string): Promise<{ language: SupportedLanguage; normalized: string; mode: "original" | "local-map" | "live-translation" }> {
   const language = detectLanguage(text);
   if (language === "en") return { language, normalized: text, mode: "original" };
+  const local = normalizeLocally(text, language);
   const translated = await translate(text, "Translate this customer-support request into concise English for intent, risk, and retrieval processing.");
   return translated
-    ? { language, normalized: translated, mode: "live-translation" }
-    : { language, normalized: normalizeLocally(text, language), mode: "local-map" };
+    // Preserve generic, testable topic/risk hints from the local adapter alongside
+    // the natural translation. This avoids a provider paraphrase accidentally
+    // dropping the vocabulary used by deterministic safety and retrieval gates.
+    ? { language, normalized: local === text ? translated : `${translated} ${local}`, mode: "live-translation" }
+    : { language, normalized: local, mode: "local-map" };
 }
 
 export async function localizeSupportAnswer(text: string, language: SupportedLanguage): Promise<string> {
