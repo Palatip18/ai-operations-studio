@@ -18,4 +18,15 @@ describe("response composer", () => {
     expect(reply).toMatch(/could not be created/i);
     expect(reply).not.toMatch(/has been created|reference is/i);
   });
+
+  it("removes internal document identifiers from customer-facing answers", async () => {
+    const reply = await composeCustomerResponse({ message: "How do I sign up?", intent: "account_onboarding", risk: "LOW", decision: "AUTO_RESPOND", escalationReason: null, evidence: "[onboarding-faq] Create an account with an email address.", locale: "en", tone: "helpful", handoffId: null });
+    expect(reply).toContain("Create an account");
+    expect(reply).not.toContain("[onboarding-faq]");
+  });
+
+  it("uses an empathetic lead for customer complaints", async () => {
+    const reply = await composeCustomerResponse({ message: "This is upsetting", intent: "complaint", risk: "MEDIUM", decision: "AUTO_RESPOND", escalationReason: null, evidence: "The documented next step is to review the request.", locale: "en", tone: "empathetic", handoffId: null });
+    expect(reply).toMatch(/^I understand your concern\./);
+  });
 });

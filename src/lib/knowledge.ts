@@ -127,7 +127,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Product Vision: Why the Support Copilot Was Built",
     category: "Customer Support Copilot",
     updated: "2026-07-01",
-    content: "This fictional Customer Support Copilot was built because support teams spend most of their time answering the same repetitive, low-risk questions instead of handling the complex cases that need a human. The goal is to automatically resolve routine, well-documented inquiries so human agents can focus on complex, sensitive, or high-risk cases. It is designed to target up to 80-90% automation of repetitive, low-risk customer inquiries when supported by a sufficiently comprehensive, validated, and continuously maintained knowledge base. This is a controlled-pilot target, not a guaranteed production result, and it is not designed or intended to replace customer support as a whole.",
+    content: "This fictional Customer Support Copilot was built because support teams spend much of their time answering repetitive, low-risk questions instead of handling complex cases that require judgment. The goal is to resolve routine, well-documented inquiries automatically so customer-support specialists can focus on complex, sensitive, or high-risk cases. It is designed to target up to 80-90% automation of repetitive, low-risk customer inquiries when supported by a sufficiently comprehensive, validated, and continuously maintained knowledge base. This is a controlled-pilot target, not a guaranteed production result, and it is not designed to replace customer support as a whole.",
     metadata: {
       topics: ["product_purpose", "business_value"],
       capabilityStatus: "MIXED",
@@ -139,7 +139,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Customer Support Pain Points This Prototype Targets",
     category: "Customer Support Copilot",
     updated: "2026-07-01",
-    content: "Common fictional support pain points include long wait times for simple questions, inconsistent answers between agents, repeated questions that already have documented answers, agents spending time searching multiple systems for one answer, and complex or sensitive cases getting stuck behind a queue of routine questions. Automating the routine share of inquiries is intended to reduce wait times for everyone and let human agents spend more time on cases that genuinely need judgment.",
+    content: "Common fictional support pain points include long waits for simple questions, inconsistent answers, repeated questions that already have documented answers, time spent searching multiple systems, and complex cases getting stuck behind routine inquiries. Automating the routine share is intended to reduce wait times and let customer-support specialists spend more time on cases that genuinely need judgment.",
     metadata: {
       topics: ["business_value", "product_purpose"],
       capabilityStatus: "IMPLEMENTED",
@@ -187,7 +187,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Current Architecture (Customer Support Copilot)",
     category: "Customer Support Copilot",
     updated: "2026-07-01",
-    content: "The support flow is: classify intent, classify risk, retrieve knowledge, optionally run a workflow tool, draft a response, run the groundedness verifier, apply deterministic policy rules, and return AUTO_RESPOND or ESCALATE with a reason. Intent and risk classification and the escalation rules are deterministic keyword-based logic, not model calls. Knowledge retrieval optionally uses a live embeddings provider and otherwise falls back to a deterministic local vector search. The full plan, tool calls, sources, verifier result, decision, and cost/latency are returned in one redacted execution trace.",
+    content: "The support flow is: classify intent, classify risk, retrieve knowledge, optionally run a workflow tool, verify the evidence, apply deterministic policy rules, and return AUTO_RESPOND or ESCALATE. AUTO_RESPOND replies pass through a locale-aware response composer. ESCALATE creates a simulated, idempotent support case with a demo reference ID through a shared handoff service. No real employee or external CRM receives the case. Intent, risk, and escalation rules remain deterministic and testable, while retrieval can use live embeddings or the local fallback. Safe technical details are returned in a redacted execution trace.",
     metadata: {
       topics: ["operational_policy", "current_capabilities"],
       capabilityStatus: "IMPLEMENTED",
@@ -199,7 +199,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Current Capabilities (Customer Support Copilot)",
     category: "Customer Support Copilot",
     updated: "2026-07-01",
-    content: "IMPLEMENTED in this repository: deterministic intent classification, deterministic risk classification, mandatory-escalation rule checks, knowledge retrieval with citations, a groundedness verifier, an AUTO_RESPOND or ESCALATE decision, and a redacted execution trace with latency and token usage. SIMULATED / MOCKED: workflow automation steps, request-status lookups, and escalation routing (no real queue or ticketing system is connected). ROADMAP: CRM and ticketing integration, email and chat-channel connectors, a persisted vector database, model-based groundedness, and a real human-agent handoff queue.",
+    content: "IMPLEMENTED in this repository: deterministic intent and risk classification, mandatory-escalation rules, hybrid knowledge retrieval with citations, a groundedness verifier, AUTO_RESPOND or ESCALATE decisions, multilingual response composition, a protected simulated-handoff API, structured handoff results, idempotency, and redacted execution traces. SIMULATED / MOCKED: workflow status lookups and the in-memory customer-support queue; the demo creates a simulated case and reference ID but does not notify a real employee or external system. ROADMAP: CRM and ticketing integration, messaging-channel connectors, a persisted vector database, model-based groundedness, and a production human-review queue.",
     metadata: {
       topics: ["current_capabilities"],
       capabilityStatus: "MIXED",
@@ -223,7 +223,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Pilot Deployment Plan",
     category: "Customer Support Copilot",
     updated: "2026-07-01",
-    content: "A fictional controlled pilot would start with a narrow set of intents that have the most complete documentation (for example account onboarding and product usage), run in shadow mode alongside human agents to compare answers before enabling auto-response, and expand intent coverage only after the knowledge base and evaluation results support it. Escalation thresholds would start conservative and be relaxed gradually as real-world precision and recall are measured, not assumed.",
+    content: "A fictional controlled pilot would start with a narrow set of intents that have the most complete documentation, run in shadow mode alongside the customer-support team to compare answers before enabling auto-response, and expand coverage only after the knowledge base and evaluation results support it. Escalation thresholds would start conservative and be adjusted gradually as real-world precision and recall are measured, not assumed.",
     metadata: {
       topics: ["roadmap", "operational_policy"],
       capabilityStatus: "ROADMAP",
@@ -271,7 +271,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Complaints and Escalation Policy",
     category: "Customer Support Copilot",
     updated: "2026-07-01",
-    content: "A complaint that is highly negative, references legal action, or threatens public escalation (for example on social media) must be escalated to a human agent rather than answered automatically, even if the underlying question is otherwise simple. The goal is to make sure an upset customer reaches a person who can exercise judgment, not a scripted response.",
+    content: "A complaint that is highly negative, references legal action, or threatens public escalation must not receive an automatic resolution, even if the underlying question is simple. In this demo, the system creates a simulated support case and reference ID for further review. A production integration would route the case to an authorized customer-support team.",
     metadata: {
       topics: ["operational_policy", "customer_support_faq"],
       capabilityStatus: "IMPLEMENTED",
@@ -283,7 +283,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Tone and Response Guidelines",
     category: "Customer Support Copilot",
     updated: "2026-07-01",
-    content: "Automated responses should be concise, empathetic, and specific: acknowledge the question, give the grounded answer, and cite the source topic in plain language. Responses must never claim certainty they do not have, must never fabricate policy details not present in the knowledge base, and must clearly say when a case has been passed to a human agent and why.",
+    content: "Customer-facing responses should be concise, empathetic, and specific: acknowledge the question, answer from retrieved evidence, and explain the next step in plain language. Responses must not expose internal labels or document IDs, fabricate policy details, promise a callback, or claim that a real employee received a case. When the demo creates a simulated case, the reply must identify it as a demo case and provide only the simulated reference ID.",
     metadata: {
       topics: ["operational_policy"],
       capabilityStatus: "IMPLEMENTED",
@@ -295,7 +295,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Human-in-the-Loop Policy",
     category: "Customer Support Copilot",
     updated: "2026-07-01",
-    content: "Human agents remain responsible for complex, sensitive, exceptional, disputed, or high-risk cases. Escalated cases in this prototype are represented only as a decision and a reason returned by the API; there is no real ticketing queue, and no case is actually routed to a human. A production deployment would connect escalation to a real queue and require an audit trail of every automated decision.",
+    content: "People remain responsible for complex, sensitive, exceptional, disputed, or high-risk cases. For demonstration purposes, an ESCALATE decision creates an idempotent simulated case in an in-memory queue and returns a structured demo reference. It does not notify a real employee or external ticketing platform. A production deployment would replace the simulated adapter with an authenticated CRM or helpdesk integration and an immutable audit trail.",
     metadata: {
       topics: ["operational_policy", "limitations"],
       capabilityStatus: "MIXED",
@@ -345,7 +345,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Billing and Payment FAQ",
     category: "Customer Support FAQ",
     updated: "2026-07-01",
-    content: "Invoices are issued monthly on the customer's billing date. Accepted payment methods in this fictional product are credit card and bank transfer. A failed payment triggers one automatic retry after three days before the account is placed on hold. Customers disputing a charge or reporting an unauthorized charge must be escalated to a human agent rather than handled automatically.",
+    content: "Invoices are issued monthly on the customer's billing date. Accepted payment methods in this fictional product are credit card and bank transfer. A failed payment triggers one automatic retry after three days before the account is placed on hold. A disputed or unauthorized charge must not be resolved automatically; the demo creates a simulated case for further review.",
     metadata: {
       topics: ["customer_support_faq"],
       capabilityStatus: "IMPLEMENTED",
@@ -357,7 +357,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Refund and Cancellation Policy",
     category: "Customer Support FAQ",
     updated: "2026-07-01",
-    content: "Subscriptions can be cancelled at any time and remain active until the end of the current billing period. Refunds for the current billing period are available within 14 days of the charge for standard cancellations. Refund requests involving a dispute, a claim of unauthorized charge, or a request for an exception outside this policy must be escalated to a human agent, not auto-approved.",
+    content: "Subscriptions can be cancelled at any time and remain active until the end of the current billing period. Refunds for the current billing period are available within 14 days of the charge for standard cancellations. A dispute, unauthorized charge, or exception request must not be auto-approved; the demo creates a simulated case for additional review.",
     metadata: {
       topics: ["customer_support_faq"],
       capabilityStatus: "IMPLEMENTED",
@@ -381,7 +381,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Identity and Document Requirements",
     category: "Customer Support FAQ",
     updated: "2026-07-01",
-    content: "Some account changes, such as recovering an account with no working email access, require identity verification with a government-issued ID or passport. Any request involving identity documents, personal identification numbers, or proof-of-identity uploads must be escalated to a human agent for careful handling; this prototype does not automatically process real identity documents.",
+    content: "Some account changes, such as recovering an account with no working email access, require identity verification with a government-issued ID or passport. Requests involving identity documents or personal identification numbers must not be processed automatically. This prototype creates only a simulated review case and never accepts real identity documents.",
     metadata: {
       topics: ["customer_support_faq"],
       capabilityStatus: "IMPLEMENTED",
@@ -393,7 +393,7 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     title: "Privacy and Security Guidance",
     category: "Customer Support FAQ",
     updated: "2026-07-01",
-    content: "Customers can request a copy or deletion of their personal data through the fictional privacy request form. Any report of a suspected data breach, account compromise, or unauthorized access must be escalated immediately to a human agent and is never handled by automated response in this design.",
+    content: "Customers can request a copy or deletion of their personal data through the fictional privacy request form. A suspected data breach, account compromise, or unauthorized access must not receive an automated resolution. This demo creates a simulated security-review case; a production system would route it to an authorized security team.",
     metadata: {
       topics: ["customer_support_faq"],
       capabilityStatus: "IMPLEMENTED",

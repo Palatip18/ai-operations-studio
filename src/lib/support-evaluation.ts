@@ -156,21 +156,15 @@ export async function evaluateEscalation() {
 export async function evaluateResponsePolicyCompliance() {
   const runs = await runAll();
   const results = runs.map(({ testCase, result }) => {
-    // Strip out retrieved document chunks (anything inside [doc-id] ... to avoid matching banned terms
-    // that are legally part of the fictional operational policy documents).
-    const cleanAnswer = result.answer.replace(/\[[a-zA-Z0-9_-]+\][^]*?(?=(?:\[[a-zA-Z0-9_-]+\]|Please let me know|Hello!|I have looked into|Based on|I apologize|สวัสดีครับ|ผมรับทราบเรื่อง|ต้องขออภัย|รับเรื่อง|จากการตรวจสอบ|您好|我理解|对于给您|已为您|根据系统|เข้าใจครับ|ผมได้ประสานงาน|ยินดีที่จะช่วย|รับเรื่องด่วน|ต้องขออภัย|我已将|我很乐意|理解您的|$))/g, "");
-    
-    // Check for rigid, robotic developer terms in the generated text only
-    const hasRoboticTerms = /human agent|เจ้าหน้าที่มนุษย์|mandatory escalation|insufficient evidence|policy decision|high-risk complaint|escalation required/i.test(cleanAnswer);
-    
-    const compliant = !hasRoboticTerms;
-    if (!compliant) {
-      console.log(`Compliance failure for case: "${testCase.message}" -> Clean answer: "${cleanAnswer}"`);
-    }
+    const cleanAnswer = result.answer.replace(/\[[a-zA-Z0-9_-]+\]\s*/g, "").trim();
+    const hasInternalTerms = /human agent|เจ้าหน้าที่มนุษย์|mandatory escalation|insufficient evidence|policy decision|high-risk complaint|escalation required|转交人工客服审核/i.test(cleanAnswer);
+    const hasFalsePromise = /will contact you|callback within|ติดต่อกลับ|จะรีบติดต่อ|会与您联系|尽快联系您/i.test(cleanAnswer);
+    const hasInternalDocumentId = /\[[a-zA-Z0-9_-]+\]/.test(result.answer);
+    const compliant = !hasInternalTerms && !hasFalsePromise && !hasInternalDocumentId;
     return { message: testCase.message, decision: result.trace.decision, compliant };
   });
   const passed = results.filter((r) => r.compliant).length;
-  return { total: results.length, passed, complianceRate: passed / results.length };
+  return { total: results.length, passed, complianceRate: passed / results.length, results };
 }
 
 /**

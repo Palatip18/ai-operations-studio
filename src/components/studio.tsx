@@ -1546,9 +1546,9 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
               <div className="rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/10 p-4 text-sm text-[#93C5FD]">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">Demo Handoff Created</span>
+                    <span className="font-semibold text-foreground">{copy.handoffCreated}</span>
                     <span className="rounded bg-accent/20 px-2 py-0.5 font-mono text-[9px] text-accent font-semibold uppercase tracking-wider">
-                      Simulated
+                      {copy.simulated}
                     </span>
                   </div>
                   <span className="font-mono text-xs bg-success/20 text-success px-2 py-0.5 rounded font-semibold">
@@ -1557,16 +1557,16 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
                 </div>
                 <div className="space-y-1.5 text-xs text-muted leading-relaxed">
                   <p>
-                    Reference ID:{" "}
+                    {copy.reference}:{" "}
                     <span className="font-mono text-foreground font-semibold">
                       {result.handoff.handoffId || "DEMO-CS-QUEUED"}
                     </span>
                   </p>
                   <p>
-                    Destination: <span className="text-foreground font-semibold">{result.handoff.destination || "Customer Support Queue"}</span>
+                    {copy.destination}: <span className="text-foreground font-semibold">{copy.customerSupportQueue}</span>
                   </p>
                   <p>
-                    Created At:{" "}
+                    {copy.createdAt}:{" "}
                     <span className="text-foreground font-semibold">
                       {result.handoff.createdAt || new Date().toISOString()}
                     </span>

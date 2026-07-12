@@ -1,5 +1,6 @@
 import type { Intent, RiskLevel } from "./support-classification";
 import type { SupportDecision } from "./support-agent";
+import { localizeSupportAnswer } from "./multilingual";
 
 export type SupportTone = "neutral" | "helpful" | "empathetic" | "urgent" | "apologetic";
 
@@ -45,7 +46,30 @@ function localizedEscalation(input: ComposerInput): string {
 
 export async function composeCustomerResponse(input: ComposerInput): Promise<string> {
   if (input.decision === "ESCALATE") return localizedEscalation(input);
-  if (input.locale === "th") return `ได้เลยครับ ${input.evidence}`;
-  if (input.locale === "zh") return `可以。${input.evidence}`;
-  return input.evidence || "I could not find enough information to answer safely.";
+
+  const evidence = input.evidence
+    .replace(/\[[a-zA-Z0-9_-]+\]\s*/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!evidence) {
+    if (input.locale === "th") return "ขออภัยครับ ตอนนี้ยังไม่พบข้อมูลที่เพียงพอสำหรับตอบคำถามนี้อย่างถูกต้อง";
+    if (input.locale === "zh") return "抱歉，目前没有足够的信息可以准确回答这个问题。";
+    return "I could not find enough information to answer this accurately.";
+  }
+
+  const language = input.locale === "th" ? "th" : input.locale === "zh" ? "zh" : "en";
+  const localized = await localizeSupportAnswer(evidence, language);
+  if (language === "th") {
+    if (input.tone === "empathetic") return `เข้าใจครับว่าเรื่องนี้ทำให้คุณไม่สบายใจ ${localized}`;
+    if (input.tone === "urgent") return `เข้าใจครับว่าเรื่องนี้เร่งด่วน ${localized}`;
+    return `ได้เลยครับ ${localized}`;
+  }
+  if (language === "zh") {
+    if (input.tone === "empathetic") return `理解您的担忧。${localized}`;
+    if (input.tone === "urgent") return `理解此事较为紧急。${localized}`;
+    return localized;
+  }
+  if (input.tone === "empathetic") return `I understand your concern. ${localized}`;
+  if (input.tone === "urgent") return `I understand this is urgent. ${localized}`;
+  return localized;
 }

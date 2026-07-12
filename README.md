@@ -57,7 +57,7 @@ The default `mock` mode is deterministic, free to run, and requires no credentia
   | Mean latency | ~1ms | ~296ms |
 
   These numbers are not the 80-90% target — see [Knowledge-quality model](#knowledge-quality-model) for why, and [Evaluation methodology](#evaluation-methodology) for full definitions.
-- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, intent/risk classification, mandatory escalation, and API auth — 150 tests, see `npm test`.
+- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual normalization, response composition, intent/risk classification, simulated handoff, and API auth — **161 tests**, see `npm test`.
 - Results are exposed through `GET /api/evaluation`, `GET /api/agent-evaluation`, `GET /api/support-evaluation`, and displayed in the UI.
 
 These figures validate only the included fictional sample set and documented thresholds; they are not claims of production accuracy.
@@ -213,8 +213,11 @@ sequenceDiagram
   Verifier-->>API: grounded, score, warning
   API->>Policy: decideSupportPolicy(mandatory, verifier, risk, intent)
   Policy-->>API: AUTO_RESPOND | ESCALATE (+ reason)
-  API-->>UI: { answer, trace }
-  UI-->>Customer: Safe response, or "escalated to a human agent" + reason
+  API->>Composer: Compose a locale-aware customer reply
+  API->>Handoff: Create an idempotent simulated case when ESCALATE
+  Handoff-->>API: Structured demo reference, status, destination, timestamp
+  API-->>UI: { answer, handoff, trace }
+  UI-->>Customer: Natural reply + clearly labeled demo-case reference when applicable
 ```
 
 ## Knowledge-quality model
@@ -395,10 +398,11 @@ It does **not** claim: production RAG, learned semantic embeddings at scale, an 
 | AUTO_RESPOND / ESCALATE decision, redacted execution trace | **IMPLEMENTED** |
 | Evaluation suite (routing, groundedness, escalation precision/recall, coverage, latency) | **IMPLEMENTED** |
 | Workflow "status check" step for request-status/onboarding intents | **SIMULATED / MOCKED** — no real ticketing system |
-| Human-agent handoff | **SIMULATED / MOCKED** — represented only as a decision + reason, nothing is actually routed anywhere |
+| Support handoff adapter | **IMPLEMENTED AS A SIMULATION** — creates an idempotent in-memory demo case with a structured reference; no real employee or external system is notified |
 | CRM, ticketing, email, web chat widget, LINE/Telegram/WhatsApp/Slack, Google Drive/Notion/SharePoint integration | **ROADMAP** — not present in this codebase |
 | Persisted vector database, model-based (entailment) groundedness | **ROADMAP** |
-| Multi-language support, role-based access, audit log | **ROADMAP** |
+| English/Thai/Chinese UI, input normalization, and response localization | **IMPLEMENTED** — live translation is provider-assisted; offline localization is intentionally limited |
+| Role-based access and persisted audit log | **ROADMAP** |
 
 ## Interview talking points
 
@@ -416,7 +420,7 @@ It does **not** claim: production RAG, learned semantic embeddings at scale, an 
 - Replace the local feature-hashing embedding adapter with learned embeddings and a persisted vector database; expand the evaluation dataset.
 - Replace the lexical-overlap verifier with a model-based entailment check for stronger groundedness detection.
 - Connect CRM, ticketing, email, web chat, and messaging channels (LINE, Telegram, WhatsApp, Slack) plus document sources (Google Drive, Notion, SharePoint) for a continuously synced knowledge base.
-- Add a real human-agent handoff queue with an immutable audit log, in place of the current decision-and-reason-only escalation.
+- Replace the simulated in-memory handoff adapter with an authenticated CRM/helpdesk queue and immutable audit log.
 - Add multi-language intent/risk classification and role-based access for support supervisors.
 - Add file ingestion for safe sample PDF/Markdown documents.
 - Persist workflow runs with authentication, role-based access, and an immutable audit log.
@@ -429,7 +433,7 @@ It does **not** claim: production RAG, learned semantic embeddings at scale, an 
 - `.env*` is ignored; `.env.example` contains placeholders only.
 - Public AI endpoints (including `/api/agent`, `/api/agent-evaluation`, `/api/support`, and `/api/support-evaluation`) apply per-client request limits, 500-character input limits, provider timeouts, and a 350-token chat output cap as basic cost guards. Both agent planners additionally cap every request to at most 2-3 tool calls.
 - The execution trace shown in the UI is built only from a fixed set of safe, summarized fields (plan/intent/risk, tool name, summarized input/output, sources, verifier result, decision + escalation reason, latency, call counts, token usage) — it never includes prompts, hidden system instructions, secrets, API keys, passwords, or cookies. As defense in depth, any text derived from user input or tool output that lands in a trace field is also passed through a secret-pattern redactor (`trace-redaction.ts`) before being returned; this is tested directly (`auth-flow.test.ts`, `support-agent.test.ts`) by embedding a fake secret pattern in a request and asserting it never appears in the response.
-- The Support Copilot's escalation decisions are policy simulations only: no case is actually routed to a human agent or a real ticketing system in this codebase (see [Implementation status](#implementation-status)).
+- An ESCALATE decision creates a **simulated** in-memory support case and structured demo reference. No real employee, CRM, or external ticketing platform is notified (see [Implementation status](#implementation-status)).
 - Never upload private documents, production credentials, or real personal/transaction data to this demo.
 
 The in-memory request limiter is appropriate only as a lightweight portfolio guard. A production deployment should use a shared rate-limit store, authentication, quotas, abuse monitoring, and budget alerts.
