@@ -151,6 +151,8 @@ export const uiCopy = {
     destination: "Destination",
     createdAt: "Created at",
     customerSupportQueue: "Customer Support Queue",
+    conversationHistory: "Conversation",
+    newConversation: "New conversation",
     categoriesList: {
       "all": "All",
       "People Operations": "People Ops",
@@ -296,6 +298,8 @@ export const uiCopy = {
     destination: "คิวปลายทาง",
     createdAt: "เวลาที่สร้าง",
     customerSupportQueue: "คิวบริการลูกค้า",
+    conversationHistory: "บทสนทนา",
+    newConversation: "เริ่มบทสนทนาใหม่",
     categoriesList: {
       "all": "ทั้งหมด",
       "People Operations": "ฝ่ายบุคคล",
@@ -438,6 +442,8 @@ export const uiCopy = {
     destination: "目标队列",
     createdAt: "创建时间",
     customerSupportQueue: "客户服务队列",
+    conversationHistory: "对话记录",
+    newConversation: "新建对话",
     categoriesList: {
       "all": "全部",
       "People Operations": "人事运营",

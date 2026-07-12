@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { knowledgeDocuments } from "@/lib/knowledge";
 import {
   LanguageSwitcher,
@@ -62,6 +62,12 @@ type HandoffResult = {
   idempotent?: boolean;
 };
 type SupportResult = { answer: string; handoff?: HandoffResult | null; trace: SupportTrace };
+type SupportHistoryEntry = {
+  id: string;
+  user: string;
+  answer: string;
+  decision: "AUTO_RESPOND" | "ESCALATE";
+};
 
 const moduleIds: Module[] = [
   "knowledge",
@@ -1409,10 +1415,27 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
   const [result, setResult] = useState<SupportResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
+  const [history, setHistory] = useState<SupportHistoryEntry[]>([]);
+  const conversationEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    conversationEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [history, submittedMessage, result, loading, errorText]);
 
   async function run(prompt: string) {
     const trimmed = prompt.trim();
     if (!trimmed || loading) return;
+    if (submittedMessage && result) {
+      setHistory((current) => [
+        ...current,
+        {
+          id: `${Date.now()}-${current.length}`,
+          user: submittedMessage,
+          answer: result.answer,
+          decision: result.trace.decision,
+        },
+      ]);
+    }
     setSubmittedMessage(trimmed);
     setMessage("");
     setLoading(true);
@@ -1457,6 +1480,14 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
     await run(message);
   }
 
+  function clearConversation() {
+    setHistory([]);
+    setSubmittedMessage("");
+    setResult(null);
+    setErrorText("");
+    setMessage("");
+  }
+
   return (
     <div className="flex min-h-[510px] flex-col">
       <div className="mb-5 rounded-xl border border-white/10 bg-[#07101F] p-4">
@@ -1497,13 +1528,46 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
         </div>
       </div>
 
-      <div className="flex-1 space-y-4" aria-live="polite">
-        {!submittedMessage && !errorText && (
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
+          {copy.conversationHistory}
+        </p>
+        {(history.length > 0 || submittedMessage) && (
+          <button
+            type="button"
+            onClick={clearConversation}
+            disabled={loading}
+            className="kb-focusable min-h-[36px] rounded-lg border border-white/10 px-3 py-1.5 text-xs text-muted transition hover:border-accent/35 hover:text-accent disabled:opacity-50"
+          >
+            {copy.newConversation}
+          </button>
+        )}
+      </div>
+
+      <div
+        className="flex-1 max-h-[560px] space-y-4 overflow-y-auto scroll-smooth rounded-xl border border-white/5 bg-black/10 p-3 sm:p-4"
+        aria-live="polite"
+        aria-label={copy.conversationHistory}
+      >
+        {history.length === 0 && !submittedMessage && !errorText && (
           <div className="rounded-xl border border-dashed border-white/10 px-5 py-10 text-center">
             <p className="text-sm text-muted">{copy.supportEmpty}</p>
             <p className="mt-2 text-xs text-muted/60">{copy.fictional}</p>
           </div>
         )}
+        {history.map((entry) => (
+          <div key={entry.id} className="space-y-3 border-b border-white/5 pb-4 last:border-b-0">
+            <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-accent px-4 py-3 text-sm text-[#07101F] font-medium">
+              {entry.user}
+            </div>
+            <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm leading-6 text-foreground">
+              <span className={`mr-2 rounded px-2 py-0.5 font-mono text-[10px] font-semibold ${entry.decision === "ESCALATE" ? "bg-warning/20 text-warning" : "bg-success/20 text-success"}`}>
+                {entry.decision === "ESCALATE" ? "ESCALATE" : "AUTO RESPOND"}
+              </span>
+              {entry.answer}
+            </div>
+          </div>
+        ))}
         {submittedMessage && (
           <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-accent px-4 py-3 text-sm text-[#07101F] font-medium">
             {submittedMessage}
@@ -1713,6 +1777,7 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
             </details>
           </div>
         )}
+        <div ref={conversationEndRef} aria-hidden="true" />
       </div>
 
       <form
