@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   const matches = retrieval.results;
   return NextResponse.json({
     answer: matches.length ? matches[0].chunk : "No grounded answer was found in the sample documents.",
-    sources: matches.map(({ document, score }) => ({ id: document.id, title: document.title, score })),
+    sources: matches.map(({ document, score, scoreComponents }) => ({ id: document.id, title: document.title, score, scoreComponents })),
     retrievalMode: retrieval.mode,
     embeddingModel: retrieval.model,
   });

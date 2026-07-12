@@ -1,19 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --background: #07100f;
-  --foreground: #edf8f3;
-  --panel: #0c1917;
-  --panel-strong: #11231f;
-  --muted: #90a9a0;
-  --line: rgba(189, 229, 212, 0.13);
-  --accent: #86efac;
-  --accent-strong: #4ade80;
+  --background: #07101F;
+  --panel: #0B1426;
+  --panel-strong: #101C32;
+  --foreground: #E6EEF8;
+  --muted: #8EA4BF;
+  --accent: #60A5FA;
+  --accent-strong: #3B82F6;
+  --accent-secondary: #22D3EE;
+  --success: #34D399;
+  --warning: #FBBF24;
+  --error: #F87171;
+  --line: rgba(120, 160, 220, 0.16);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-panel: var(--panel);
+  --color-panel-strong: var(--panel-strong);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-line: var(--line);
   --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
 }
@@ -23,12 +37,30 @@ html { background: var(--background); }
 body {
   margin: 0;
   background:
-    radial-gradient(circle at 82% 4%, rgba(34, 197, 94, .14), transparent 25rem),
-    radial-gradient(circle at 8% 42%, rgba(20, 184, 166, .08), transparent 28rem),
+    radial-gradient(circle at 82% 4%, rgba(59, 130, 246, .10), transparent 25rem),
+    radial-gradient(circle at 8% 42%, rgba(34, 211, 238, .06), transparent 28rem),
     var(--background);
   color: var(--foreground);
   font-family: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
 }
 button, input, textarea { font: inherit; }
 button { cursor: pointer; }
-::selection { background: rgba(74, 222, 128, .3); }
+::selection { background: rgba(96, 165, 250, .3); }
+
+/* Accessibility & Utility overrides */
+@keyframes kb-skel { 0%, 100% { opacity: .4; } 50% { opacity: .9; } }
+.animate-pulse-slow { animation: kb-skel 1.2s ease-in-out infinite; }
+
+.kb-focusable:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

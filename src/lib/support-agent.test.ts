@@ -59,7 +59,8 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     expect(trace.risk).toBe("HIGH");
     expect(trace.decision).toBe("ESCALATE");
     expect(trace.escalationReason).not.toBeNull();
-    expect(answer).toContain("escalated to a human agent");
+    expect(answer).toContain("DEMO-CS-");
+    expect(answer).toContain("billing issue");
   });
 
   it("escalates an angry complaint via the mandatory trigger", async () => {
@@ -92,5 +93,26 @@ describe("trace redaction for the support agent", () => {
     const { trace } = await runSupportAgent("My key is sk-shouldnotleak1234567890, how do I create a new account?");
     const raw = JSON.stringify(trace);
     expect(raw).not.toContain("sk-shouldnotleak1234567890");
+    expect(raw).toContain("[redacted]");
+  });
+
+  it("ensures personal data like phone, email, and tokens do not leak into technical traces", async () => {
+    const message = "Dispute charge immediately. Contact me at user@demo.com or +66-81-234-5678. Reference txn_987654321 and token bearer_secret_token_123.";
+    const { trace } = await runSupportAgent(message);
+    const rawTraceStr = JSON.stringify(trace);
+
+    // Assert absolute absence of raw PII/secrets inside traces
+    expect(rawTraceStr).not.toContain("user@demo.com");
+    expect(rawTraceStr).not.toContain("+66-81-234-5678");
+    expect(rawTraceStr).not.toContain("txn_987654321");
+    expect(rawTraceStr).not.toContain("bearer_secret_token_123");
+    
+    // Validate trace input schema constraints (redacted info/safe summary code only)
+    const handoffStep = trace.steps.find((s) => s.tool === "create_support_handoff");
+    expect(handoffStep).toBeDefined();
+    expect(handoffStep?.input).not.toHaveProperty("customerMessage");
+    expect(handoffStep?.input).not.toHaveProperty("idempotencyKey");
+    expect(handoffStep?.input).toHaveProperty("redactedIdempotencyIdentifier");
+    expect(handoffStep?.input).toHaveProperty("escalationReasonCode");
   });
 });

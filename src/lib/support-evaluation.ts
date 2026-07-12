@@ -156,12 +156,17 @@ export async function evaluateEscalation() {
 export async function evaluateResponsePolicyCompliance() {
   const runs = await runAll();
   const results = runs.map(({ testCase, result }) => {
-    // Check the exact escalation-response prefix, not a generic substring: some knowledge-base
-    // documents (e.g. complaints-escalation-policy) legitimately contain the phrase "escalated to
-    // a human agent" as policy text, which would false-positive a naive substring match on an
-    // AUTO_RESPOND answer that happens to quote that document.
-    const isEscalationFormat = result.answer.startsWith("This request has been escalated to a human agent.");
-    const compliant = result.trace.decision === "ESCALATE" ? isEscalationFormat : !isEscalationFormat;
+    // Strip out retrieved document chunks (anything inside [doc-id] ... to avoid matching banned terms
+    // that are legally part of the fictional operational policy documents).
+    const cleanAnswer = result.answer.replace(/\[[a-zA-Z0-9_-]+\][^]*?(?=(?:\[[a-zA-Z0-9_-]+\]|Please let me know|Hello!|I have looked into|Based on|I apologize|สวัสดีครับ|ผมรับทราบเรื่อง|ต้องขออภัย|รับเรื่อง|จากการตรวจสอบ|您好|我理解|对于给您|已为您|根据系统|เข้าใจครับ|ผมได้ประสานงาน|ยินดีที่จะช่วย|รับเรื่องด่วน|ต้องขออภัย|我已将|我很乐意|理解您的|$))/g, "");
+    
+    // Check for rigid, robotic developer terms in the generated text only
+    const hasRoboticTerms = /human agent|เจ้าหน้าที่มนุษย์|mandatory escalation|insufficient evidence|policy decision|high-risk complaint|escalation required/i.test(cleanAnswer);
+    
+    const compliant = !hasRoboticTerms;
+    if (!compliant) {
+      console.log(`Compliance failure for case: "${testCase.message}" -> Clean answer: "${cleanAnswer}"`);
+    }
     return { message: testCase.message, decision: result.trace.decision, compliant };
   });
   const passed = results.filter((r) => r.compliant).length;
