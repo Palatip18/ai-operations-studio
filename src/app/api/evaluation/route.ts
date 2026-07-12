@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { evaluateRetrieval } from "@/lib/evaluation";
+import { evaluateRetrieval, evaluateSemanticRetrieval } from "@/lib/evaluation";
+import { isOpenAIConfigured } from "@/lib/openai";
 
-export async function GET() {
-  return NextResponse.json(evaluateRetrieval());
+export async function GET(request: Request) {
+  const mode = new URL(request.url).searchParams.get("mode");
+  return NextResponse.json(mode === "semantic" || (mode !== "local" && isOpenAIConfigured()) ? await evaluateSemanticRetrieval() : evaluateRetrieval());
 }

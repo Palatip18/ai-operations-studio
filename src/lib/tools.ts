@@ -1,4 +1,4 @@
-import { searchKnowledge } from "./knowledge";
+import { searchKnowledge, searchKnowledgeSemantic } from "./knowledge";
 import { runWorkflow, type WorkflowRequest } from "./workflow";
 import { evaluateRetrieval } from "./evaluation";
 
@@ -30,4 +30,19 @@ export function executeTool(name: ToolName, args: Record<string, unknown>): { an
   }
   const metrics = evaluateRetrieval();
   return { answer: `The current retrieval evaluation passes ${metrics.passed} of ${metrics.total} cases (${Math.round(metrics.top1Accuracy * 100)}% top-1 accuracy) on the small documented sample set.`, trace: { name, arguments: args, resultCount: metrics.total, summary: `${metrics.passed}/${metrics.total} evaluation cases passed` } };
+}
+
+export async function executeToolLive(name: ToolName, args: Record<string, unknown>) {
+  if (name !== "search_knowledge") return executeTool(name, args);
+  const retrieval = await searchKnowledgeSemantic(String(args.query ?? ""));
+  const results = retrieval.results;
+  return {
+    answer: results.length ? `Grounded answer: ${results[0].chunk}` : "No grounded answer was found in the sample documents.",
+    trace: {
+      name,
+      arguments: args,
+      resultCount: results.length,
+      summary: results.length ? `Top source: ${results[0].document.title} via ${retrieval.model}` : `No source matched via ${retrieval.model}`,
+    } satisfies ToolTrace,
+  };
 }

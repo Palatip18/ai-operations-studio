@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { knowledgeDocuments } from "@/lib/knowledge";
 
 type Module = "chat" | "knowledge" | "workflow";
@@ -14,6 +14,8 @@ const modules = [
 
 export function Studio() {
   const [active, setActive] = useState<Module>("chat");
+  const [liveAI, setLiveAI] = useState(false);
+  useEffect(() => { fetch("/api/status").then((response) => response.json()).then((data: { liveAI: boolean }) => setLiveAI(data.liveAI)).catch(() => setLiveAI(false)); }, []);
   return (
     <div className="mx-auto min-h-screen max-w-[1500px] px-5 py-5 sm:px-8 lg:px-12">
       <header className="flex items-center justify-between border-b border-white/10 pb-5">
@@ -21,7 +23,7 @@ export function Studio() {
           <div className="grid h-9 w-9 place-items-center rounded-lg border border-green-300/30 bg-green-300/10 font-mono text-sm text-green-300">AI</div>
           <div><p className="text-sm font-semibold tracking-tight">AI Operations Studio</p><p className="text-xs text-[#90a9a0]">Personal portfolio prototype</p></div>
         </div>
-        <div className="flex items-center gap-2 rounded-full border border-green-300/20 bg-green-300/5 px-3 py-1.5 text-xs text-green-200"><span className="h-1.5 w-1.5 rounded-full bg-green-300" />Mock mode · no secrets</div>
+        <div className="flex items-center gap-2 rounded-full border border-green-300/20 bg-green-300/5 px-3 py-1.5 text-xs text-green-200"><span className="h-1.5 w-1.5 rounded-full bg-green-300" />{liveAI ? "Live AI · server-side key" : "Safe demo · no key required"}</div>
       </header>
 
       <main className="grid gap-10 py-10 lg:grid-cols-[340px_1fr] lg:py-16">
@@ -78,13 +80,13 @@ function ChatDemo() {
 
 function KnowledgeDemo() {
   const [query, setQuery] = useState("When should an expense claim be submitted?");
-  const [result, setResult] = useState<{ answer: string; sources: { id: string; title: string; score: number }[] } | null>(null);
+  const [result, setResult] = useState<{ answer: string; sources: { id: string; title: string; score: number }[]; retrievalMode: string; embeddingModel: string } | null>(null);
   const [metrics, setMetrics] = useState<{ passed: number; total: number; top1Accuracy: number } | null>(null);
   async function submit(event: FormEvent) { event.preventDefault(); const [response, evaluation] = await Promise.all([fetch("/api/rag", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query }) }), fetch("/api/evaluation")]); setResult(await response.json()); setMetrics(await evaluation.json()); }
   return <div>
     <form onSubmit={submit} className="flex gap-2"><input aria-label="Knowledge query" value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#07100f] px-4 py-3 text-sm outline-none focus:border-green-300/40" /><button className="rounded-lg bg-green-300 px-4 text-sm font-medium text-[#07100f]">Search</button></form>
     <div className="mt-7 grid gap-5 xl:grid-cols-[.9fr_1.1fr]"><div><p className="mb-3 font-mono text-[10px] uppercase tracking-wider text-[#718a81]">Sample documents</p><div className="space-y-2">{knowledgeDocuments.map((doc) => <div key={doc.id} className="rounded-xl border border-white/10 bg-white/[.025] p-4"><div className="flex items-start justify-between gap-3"><p className="text-sm font-medium">{doc.title}</p><span className="text-green-300">◇</span></div><p className="mt-2 text-xs text-[#718a81]">{doc.category} · {doc.updated}</p></div>)}</div></div>
-    <div><p className="mb-3 font-mono text-[10px] uppercase tracking-wider text-[#718a81]">Grounded answer</p><div className="min-h-56 rounded-xl border border-white/10 bg-[#07100f] p-5">{result ? <><p className="text-sm leading-6 text-[#d9e8e2]">{result.answer}</p><div className="mt-5 border-t border-white/10 pt-4"><p className="mb-2 text-[10px] uppercase tracking-wider text-[#60776f]">Vector retrieval citations</p>{result.sources.map((source) => <p key={source.id} className="mb-1 text-xs text-green-300">[{source.title}] · cosine {source.score.toFixed(3)}</p>)}</div>{metrics && <div className="mt-4 rounded-lg border border-green-300/20 bg-green-300/5 p-3"><p className="font-mono text-[10px] uppercase tracking-wider text-green-300">Evaluation</p><p className="mt-1 text-xs text-[#d9e8e2]">Top-1 accuracy: {Math.round(metrics.top1Accuracy * 100)}% ({metrics.passed}/{metrics.total} documented cases)</p></div>}</> : <p className="text-sm text-[#60776f]">Run a query to retrieve an answer with visible citations and evaluation metrics.</p>}</div></div></div>
+    <div><p className="mb-3 font-mono text-[10px] uppercase tracking-wider text-[#718a81]">Grounded answer</p><div className="min-h-56 rounded-xl border border-white/10 bg-[#07100f] p-5">{result ? <><p className="text-sm leading-6 text-[#d9e8e2]">{result.answer}</p><div className="mt-5 border-t border-white/10 pt-4"><div className="mb-2 flex flex-wrap items-center justify-between gap-2"><p className="text-[10px] uppercase tracking-wider text-[#60776f]">Semantic retrieval citations</p><span className="rounded bg-green-300/10 px-2 py-1 font-mono text-[9px] text-green-300">{result.retrievalMode} · {result.embeddingModel}</span></div>{result.sources.map((source) => <p key={source.id} className="mb-1 text-xs text-green-300">[{source.title}] · cosine {source.score.toFixed(3)}</p>)}</div>{metrics && <div className="mt-4 rounded-lg border border-green-300/20 bg-green-300/5 p-3"><p className="font-mono text-[10px] uppercase tracking-wider text-green-300">Evaluation</p><p className="mt-1 text-xs text-[#d9e8e2]">Top-1 accuracy: {Math.round(metrics.top1Accuracy * 100)}% ({metrics.passed}/{metrics.total} documented cases)</p></div>}</> : <p className="text-sm text-[#60776f]">Run a query to retrieve an answer with visible citations and evaluation metrics.</p>}</div></div></div>
   </div>;
 }
 

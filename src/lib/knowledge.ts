@@ -7,6 +7,7 @@ export type KnowledgeDocument = {
 };
 
 import { chunkText, cosineSimilarity, embedText } from "./retrieval";
+import { createOpenAIEmbeddings, isOpenAIConfigured } from "./openai";
 
 export const knowledgeDocuments: KnowledgeDocument[] = [
   {
@@ -48,4 +49,39 @@ export function searchKnowledge(query: string, limit = 3) {
     .filter((result) => result.score >= 0.1)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
+}
+
+const semanticChunks = knowledgeDocuments.flatMap((document) =>
+  chunkText(document.content).map((chunk, chunkIndex) => ({ document, chunk, chunkIndex })),
+);
+let documentEmbeddings: Promise<Awaited<ReturnType<typeof createOpenAIEmbeddings>>> | null = null;
+
+export async function searchKnowledgeSemantic(query: string, limit = 3) {
+  return (await searchKnowledgeSemanticBatch([query], limit))[0];
+}
+
+export async function searchKnowledgeSemanticBatch(queries: string[], limit = 3) {
+  if (!isOpenAIConfigured()) return queries.map((query) => ({ results: searchKnowledge(query, limit), mode: "local-vector" as const, model: "feature-hashing-256" }));
+  try {
+    documentEmbeddings ??= createOpenAIEmbeddings(
+      semanticChunks.map(({ document, chunk }) => `${document.title}\n${document.category}\n${chunk}`),
+    );
+    const [documents, queryEmbeddings] = await Promise.all([
+      documentEmbeddings,
+      createOpenAIEmbeddings(queries),
+    ]);
+    return queryEmbeddings.vectors.map((queryVector) => ({
+      results: semanticChunks
+        .map((item, index) => ({ ...item, score: cosineSimilarity(queryVector, documents.vectors[index]) }))
+        .filter((result) => result.score >= 0.25)
+        .sort((left, right) => right.score - left.score)
+        .slice(0, limit),
+      mode: "openai-embeddings" as const,
+      model: queryEmbeddings.model,
+    }));
+  } catch (error) {
+    console.error("Semantic retrieval failed; using local vector fallback", error instanceof Error ? error.message : "Unknown error");
+    documentEmbeddings = null;
+    return queries.map((query) => ({ results: searchKnowledge(query, limit), mode: "local-vector-fallback" as const, model: "feature-hashing-256" }));
+  }
 }

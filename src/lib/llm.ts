@@ -1,4 +1,4 @@
-import { executeTool, toolDefinitions, type ToolName, type ToolTrace } from "./tools";
+import { executeToolLive, toolDefinitions, type ToolName, type ToolTrace } from "./tools";
 
 type ChatMessage = { role: "system" | "user" | "assistant" | "tool"; content: string; tool_call_id?: string; tool_calls?: unknown[] };
 
@@ -22,7 +22,7 @@ export async function runLiveAssistant(message: string) {
     const name = call.function.name as ToolName;
     if (!toolDefinitions.some((tool) => tool.function.name === name)) continue;
     const args = JSON.parse(call.function.arguments || "{}") as Record<string, unknown>;
-    const output = executeTool(name, args);
+    const output = await executeToolLive(name, args);
     traces.push(output.trace);
     messages.push({ role: "tool", tool_call_id: call.id, content: output.answer });
   }

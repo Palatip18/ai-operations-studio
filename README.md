@@ -22,11 +22,12 @@ The default `mock` mode is deterministic, free to run, and requires no credentia
 
 ### Measured prototype quality
 
-- 3/3 documented retrieval evaluation cases pass at top-1 on the intentionally small sample set.
+- 10/10 semantic retrieval cases pass at top-1 with `text-embedding-3-small`, including paraphrased questions and one negative/no-answer case.
+- 3/3 deterministic local-vector checks remain available as the no-key fallback baseline.
 - 9 unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, and workflow policy behavior.
 - The evaluation result is exposed through `GET /api/evaluation` and displayed in the Knowledge Base interface.
 
-These figures validate only the included fictional sample set; they are not claims of production accuracy.
+These figures validate only the included fictional sample set and documented threshold; they are not claims of production accuracy.
 
 ## Portfolio case study
 
