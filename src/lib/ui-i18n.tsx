@@ -19,14 +19,13 @@ export const uiCopy = {
     footer:
       "Built as a personal portfolio prototype. No client or employer data.",
     modules: [
-      ["AI Chat", "Tool routing"],
       ["Knowledge Base", "Grounded retrieval"],
       ["Workflow", "Policy automation"],
       ["Agentic Copilot", "Plan → act → verify"],
-      ["Support Copilot", "Auto-respond or escalate"],
+      ["AI Support Chat", "Conversation, tools, and safe escalation"],
     ],
     stats: [
-      ["5", "modules"],
+      ["4", "modules"],
       ["100%", "sample data"],
       ["0", "real records"],
     ],
@@ -88,11 +87,11 @@ export const uiCopy = {
     loginFooter: "Portfolio review access — not production authentication.",
     loginError: "Unable to sign in. Please try again.",
     networkError: "Network error. Please try again.",
-    supportTitle: "Agentic Customer Support Copilot",
+    supportTitle: "AI Support Chat",
     supportIntro:
       "Designed to target up to 80–90% automation of repetitive, low-risk inquiries when the knowledge base is sufficiently complete, validated, and maintained.",
     supportLimit:
-      "A controlled-pilot target, not a production guarantee. Complex, sensitive, disputed, or high-risk cases remain with human agents.",
+      "A controlled-pilot target, not a production guarantee. Complex, sensitive, disputed, or high-risk cases remain with customer-support specialists.",
     supportEmpty: "Choose a scenario or ask your own support question.",
     fictional: "All customers, requests, and documents are fictional.",
     processing: "Classifying → retrieving → verifying → deciding…",
@@ -174,14 +173,13 @@ export const uiCopy = {
     prototype: "ต้นแบบ",
     footer: "ผลงานต้นแบบส่วนตัว ไม่มีข้อมูลลูกค้าหรือนายจ้าง",
     modules: [
-      ["แชต AI", "เลือกใช้เครื่องมือ"],
       ["ฐานความรู้", "ค้นคำตอบพร้อมหลักฐาน"],
       ["เวิร์กโฟลว์", "กฎและระบบอัตโนมัติ"],
       ["Agentic Copilot", "วางแผน → ลงมือ → ตรวจสอบ"],
-      ["ผู้ช่วยบริการลูกค้า", "ตอบอัตโนมัติหรือส่งต่อ"],
+      ["AI แชตบริการลูกค้า", "สนทนา ใช้เครื่องมือ และส่งตรวจอย่างปลอดภัย"],
     ],
     stats: [
-      ["5", "โมดูล"],
+      ["4", "โมดูล"],
       ["100%", "ข้อมูลตัวอย่าง"],
       ["0", "ข้อมูลจริง"],
     ],
@@ -243,7 +241,7 @@ export const uiCopy = {
     loginFooter: "ใช้สำหรับตรวจผลงาน ไม่ใช่ระบบยืนยันตัวตนระดับ Production",
     loginError: "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่",
     networkError: "เกิดปัญหาเครือข่าย กรุณาลองใหม่",
-    supportTitle: "AI ผู้ช่วยบริการลูกค้าแบบ Agentic",
+    supportTitle: "AI แชตบริการลูกค้า",
     supportIntro:
       "ออกแบบเพื่อมุ่งรองรับคำถามซ้ำและความเสี่ยงต่ำได้สูงสุด 80–90% เมื่อฐานความรู้ครบถ้วน ถูกตรวจสอบ และได้รับการดูแลต่อเนื่อง",
     supportLimit:
@@ -252,7 +250,7 @@ export const uiCopy = {
     fictional: "ลูกค้า คำขอ และเอกสารทั้งหมดเป็นข้อมูลสมมติ",
     processing: "จำแนก → ค้นข้อมูล → ตรวจสอบ → ตัดสินใจ…",
     placeholder: "ถามคำถามบริการลูกค้า…",
-    run: "เรียกใช้ผู้ช่วย CS",
+    run: "ส่งข้อความ",
     running: "กำลังทำงาน…",
     trace: "รายละเอียดการทำงาน",
     intent: "ประเภทคำถาม",
@@ -320,14 +318,13 @@ export const uiCopy = {
     prototype: "原型",
     footer: "个人作品集原型，不包含客户或雇主数据。",
     modules: [
-      ["AI 对话", "工具路由"],
       ["知识库", "有依据的检索"],
       ["工作流", "策略自动化"],
       ["Agentic Copilot", "规划 → 执行 → 验证"],
-      ["客服 Copilot", "自动回复或转人工"],
+      ["AI 客服对话", "对话、工具调用与安全升级"],
     ],
     stats: [
-      ["5", "模块"],
+      ["4", "模块"],
       ["100%", "示例数据"],
       ["0", "真实记录"],
     ],
@@ -386,7 +383,7 @@ export const uiCopy = {
     loginFooter: "仅供作品集评审，不是生产级身份验证。",
     loginError: "登录失败，请重试。",
     networkError: "网络错误，请重试。",
-    supportTitle: "Agentic AI 客服 Copilot",
+    supportTitle: "AI 客服对话",
     supportIntro:
       "当知识库足够完整、经过验证并持续维护时，目标是自动处理最多 80–90% 的重复、低风险咨询。",
     supportLimit:
@@ -395,7 +392,7 @@ export const uiCopy = {
     fictional: "所有客户、请求和文档均为虚构数据。",
     processing: "分类 → 检索 → 验证 → 决策…",
     placeholder: "请输入客服问题…",
-    run: "运行客服 Copilot",
+    run: "发送消息",
     running: "运行中…",
     trace: "执行轨迹",
     intent: "意图",

@@ -4,21 +4,29 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-150_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-164_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
-![AI Operations Studio interface](docs/ai-operations-studio.png)
-
 AI Operations Studio demonstrates how applied AI patterns can turn operational and customer-support requests into clear, traceable, safely-escalated outcomes. It is intentionally domain-neutral and uses only fictional, general-purpose sample content. It contains no employer, client, transaction, or confidential data.
+
+## Reviewer quick start
+
+1. Open the **[live demo](https://ai-operations-studio-black.vercel.app)** and enter the demo password supplied privately with the application.
+2. Open **AI Support Chat** and run one routine FAQ scenario to see `AUTO_RESPOND` with evidence.
+3. Run the financial-dispute or angry-complaint scenario to see `ESCALATE`, a simulated case reference, and safe customer-facing wording.
+4. Expand **Technical execution trace** to inspect intent, risk, retrieval sources, verifier result, tool calls, latency, and usage.
+5. Review the [recruiter and technical-review guide](docs/reviewer-guide.md), [localization QA](docs/localization-qa.md), and [repository recovery QA](docs/repository-recovery-qa.md).
+
+Estimated review time: **3–5 minutes for the guided demo; 15–20 minutes for the technical review.**
 
 ## Product positioning
 
 **Designed to target up to 80-90% automation of repetitive, low-risk customer inquiries when supported by a sufficiently comprehensive, validated, and continuously maintained knowledge base.**
 
-**This is a controlled-pilot target, not a guaranteed production result. Human agents remain responsible for complex, sensitive, exceptional, disputed, or high-risk cases.**
+**This is a controlled-pilot target, not a guaranteed production result. Customer-support specialists remain responsible for complex, sensitive, exceptional, disputed, or high-risk cases.**
 
-The Support Copilot module combines six pieces, each earning its place for a specific reason:
+The consolidated AI Support Chat combines six pieces, each earning its place for a specific reason:
 
 - **RAG** — grounds answers in an actual, inspectable document instead of the model's own memory.
 - **A bounded agent** — an explicit, step-limited plan (classify → retrieve → optional tool → draft → verify → decide) instead of an open-ended loop, so cost and behavior stay predictable.
@@ -29,11 +37,12 @@ The Support Copilot module combines six pieces, each earning its place for a spe
 
 ## What the MVP demonstrates
 
-1. **AI Chat + Multi-Tool Calling** — routes requests to knowledge search, workflow preview, or evaluation metrics and exposes every tool trace.
-2. **RAG Knowledge Base** — chunks sample documents, creates deterministic local feature-hashing embeddings, ranks passages with cosine similarity, and returns grounded answers with visible citations.
+1. **AI Support Chat (Conversation → Tools → Evidence → Decision)** — the primary conversational surface combines customer-support chat, knowledge retrieval, workflow tools, multilingual response composition, and safe escalation instead of presenting a separate generic chatbot.
+2. **RAG Knowledge Base** — chunks sample documents, creates deterministic local feature-hashing embeddings, ranks passages with hybrid scoring, and returns grounded answers with visible citations.
 3. **Workflow Automation** — validates a fictional internal request, applies deterministic policy rules, routes exceptions, and prepares a mock notification.
 4. **Agentic Copilot (Planner → Tool Execution → Verifier)** — a bounded agent that plans up to 3 tool steps, executes them, and runs a groundedness verifier over the result. The full plan, tool inputs/outputs, retrieved sources, verifier result, latency, call counts, and provider usage (when available) are shown in the UI. See [Agent flow](#agent-flow).
-5. **Agentic Customer Support Copilot (Intent → Risk → Retrieval → Verify → AUTO_RESPOND/ESCALATE)** — extends the same bounded-agent pattern with deterministic intent/risk classification and mandatory-escalation rules, so routine questions can be safely auto-answered while complex, sensitive, or high-risk cases are escalated with a stated reason. See [Support agent flow](#support-agent-flow).
+
+The original `/api/chat` route remains available as a tested internal API capability, but the portfolio UI intentionally presents one consolidated conversational product: **AI Support Chat**.
 
 The default `mock` mode is deterministic, free to run, and requires no credentials. An optional OpenAI-compatible provider can perform model-driven tool selection (chat) and semantic retrieval (RAG, agent, support) behind the same API boundary. If the provider is unavailable, every route falls back safely to deterministic behavior.
 
@@ -68,7 +77,7 @@ These figures validate only the included fictional sample set and documented thr
 
 **Approach:** Build small but complete flows behind explicit API boundaries. Keep retrieval, policy logic, tool traces, citations, and workflow states visible. Add a bounded agent (plan → act → verify, max 3 tool steps, no open-ended loop) so multi-step reasoning stays inspectable instead of being a black box. Use fictional sample documents so any reviewer can run the project safely.
 
-**Delivered:** A deployed, responsive Next.js application with five working modules, a deterministic no-key demo mode, a conservative lexical verifier, an extended evaluation suite, tested domain logic, production build validation, and automatic deployments from GitHub through Vercel.
+**Delivered:** A deployed, responsive Next.js application with four focused modules, a consolidated AI Support Chat, a deterministic no-key demo mode, a conservative lexical verifier, an extended evaluation suite, tested domain logic, production build validation, and automatic deployments from GitHub through Vercel.
 
 **Measurable business value this pattern targets in a real deployment:**
 
@@ -260,7 +269,7 @@ Three endpoints expose evaluation results, all computed against the small, ficti
 
 ## Recruiter scenarios
 
-The Support Copilot tab has 8 one-click scenarios:
+The AI Support Chat tab has 8 one-click scenarios:
 
 1. FAQ resolved automatically (AUTO_RESPOND) — "How do I create a new account?"
 2. Troubleshooting resolved automatically (AUTO_RESPOND) — "The product won't load, what should I do?"
@@ -372,7 +381,7 @@ src/
     ├── support-classification.ts  # Deterministic intent/risk/mandatory-escalation logic
     ├── support-agent.ts           # Support Copilot orchestrator + decideSupportPolicy
     ├── support-evaluation.ts      # 35-case Customer Support Copilot evaluation suite
-    └── *.test.ts                  # Unit tests (150)
+    └── *.test.ts                  # Unit and integration tests (164)
 ```
 
 **Files an AI Engineer should inspect first:** `src/lib/support-agent.ts` (the orchestration flow and the pure `decideSupportPolicy` function), `src/lib/support-classification.ts` (deterministic policy logic), `src/lib/verifier.ts` (the groundedness heuristic and its documented limits), `src/lib/agent.ts` (the mode-aware retrieval threshold and why it exists), `src/lib/support-evaluation.ts` (how the honest, non-cherry-picked metrics table above was produced).

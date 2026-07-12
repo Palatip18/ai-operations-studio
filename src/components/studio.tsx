@@ -64,7 +64,6 @@ type HandoffResult = {
 type SupportResult = { answer: string; handoff?: HandoffResult | null; trace: SupportTrace };
 
 const moduleIds: Module[] = [
-  "chat",
   "knowledge",
   "workflow",
   "agent",
@@ -79,7 +78,7 @@ export function Studio() {
     label: copy.modules[index][0],
     description: copy.modules[index][1],
   }));
-  const [active, setActive] = useState<Module>("chat");
+  const [active, setActive] = useState<Module>("support");
   const [liveAI, setLiveAI] = useState(false);
   useEffect(() => {
     fetch("/api/status")
