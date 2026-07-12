@@ -31,8 +31,8 @@ Technical identifiers, source document titles/content, intent codes, tool names,
 ## 2026-07-13 release record
 
 - Automated catalog checks: passed for EN / ไทย / 中文.
-- Lint, TypeScript, 158 tests, and production build: passed.
-- Production browser review covered all four modules in Thai and Chinese, plus the English baseline.
+- Lint, TypeScript, 206 tests across 29 files, and production build: passed for the current release.
+- Production localization coverage now includes Live Chat and all six internal modules in Thai, Chinese, and the English baseline.
 - Issues found during browser QA and fixed before final sign-off:
   - The former generic AI Chat surface was consolidated into AI Support Chat to remove duplicated conversational experiences.
   - Summary metrics remained English.

@@ -10,14 +10,28 @@
 
 AI Operations Studio demonstrates how applied AI patterns can turn fictional online-gaming support requests into clear, traceable, safely escalated outcomes. The knowledge base covers promotions, deposits, withdrawals, game issues, and responsible-use support. It contains no real operator names, employer data, customer records, transactions, or confidential information.
 
+## Release readiness snapshot
+
+| Evidence | Current release |
+|---|---|
+| Customer experience | Multi-turn Live Chat with clarification-first behavior and Thai/English/Chinese responses |
+| AI workflow | Intent/risk classification → hybrid RAG → optional tools/APIs → groundedness verification → respond or review |
+| Account-scoped demo | Conversational User ID binding, protected transaction lookup, and deposit-slip verification |
+| Knowledge | 44 fictional documents, including 10 distinct promotion records across slots, live casino, sports, cashback, referral, and loyalty |
+| Internal operations | Support trace, RAG explorer, workflow demo, bounded agent, Support Analytics, and versioned AI Behavior Settings |
+| Continuous improvement | Daily/7-day/30-day issue metrics plus `AI_RESOLVED` and `EMPLOYEE_REVIEW` case-learning logs |
+| Verification | 206 automated tests across 29 test files, lint, TypeScript, production build, and Vercel runtime-error review |
+| Deployment | GitHub `main` automatically deployed to the production Vercel URL above |
+
 ## Reviewer quick start
 
 1. Open the **[live demo](https://ai-operations-studio-black.vercel.app)** and enter the demo password supplied privately with the application.
 2. In the default **Live Chat**, ask a promotion or game question immediately—general support does not require customer verification.
 3. Ask about a deposit or withdrawal. The assistant requests `USER-RAY01` only when an account-scoped lookup becomes necessary and then binds the signed customer context to the current browser chat session.
 4. Run the missing-deposit or missing-withdrawal scenario to see a customer-scoped status lookup, safe reply, and simulated transaction-review reference.
-5. Switch to **Internal AI Operations**, open Support Copilot, and expand **Technical execution trace** to inspect customer scope, intent, risk, retrieval sources, verifier result, tool calls, latency, and usage.
-6. Review the [recruiter and technical-review guide](docs/reviewer-guide.md), [domain research QA](docs/domain-research-qa.md), [promotion research QA](docs/promotion-research-qa.md), [localization QA](docs/localization-qa.md), and [repository recovery QA](docs/repository-recovery-qa.md).
+5. Send an ambiguous message such as `คือไรครับ` to confirm the assistant asks a focused clarification instead of guessing or creating a case.
+6. Switch to **Internal AI Operations**. Inspect Support Copilot's technical trace, the 44-document Knowledge Base, Support Analytics case-learning log, and AI Behavior Settings.
+7. Review the [final release QA](docs/release-qa-2026-07-13.md), [recruiter and technical-review guide](docs/reviewer-guide.md), [support analytics QA](docs/support-analytics-qa.md), [domain research QA](docs/domain-research-qa.md), [promotion research QA](docs/promotion-research-qa.md), [localization QA](docs/localization-qa.md), and [repository recovery QA](docs/repository-recovery-qa.md).
 
 Estimated review time: **3–5 minutes for the guided demo; 15–20 minutes for the technical review.**
 
@@ -83,6 +97,8 @@ When a verified customer reports a missing deposit without a transaction referen
 2. **RAG Knowledge Base** — chunks sample documents, creates deterministic local feature-hashing embeddings, ranks passages with hybrid scoring, and returns grounded answers with visible citations.
 3. **Workflow Automation** — validates a fictional internal request, applies deterministic policy rules, routes exceptions, and prepares a mock notification.
 4. **Agentic Copilot (Planner → Tool Execution → Verifier)** — a bounded agent that plans up to 3 tool steps, executes them, and runs a groundedness verifier over the result. The full plan, tool inputs/outputs, retrieved sources, verifier result, latency, call counts, and provider usage (when available) are shown in the UI. See [Agent flow](#agent-flow).
+5. **Support Analytics and Case Learning** — reconciles daily/weekly/monthly event metrics, separates AI-resolved and employee-review cases, and produces an owner-specific improvement backlog without retaining customer text or identifiers.
+6. **AI Behavior Settings** — exposes the versioned role, persona, tone, response principles, data rules, escalation boundaries, and prohibited customer-visible terms that feed the live localization path.
 
 The original `/api/chat` route remains available as a tested internal API capability, but the portfolio UI intentionally presents one consolidated conversational product: **AI Support Chat**.
 
@@ -108,7 +124,7 @@ The default `mock` mode is deterministic, free to run, and requires no credentia
   | Mean latency | ~1ms | ~296ms |
 
   These numbers are not the 80-90% target — see [Knowledge-quality model](#knowledge-quality-model) for why, and [Evaluation methodology](#evaluation-methodology) for full definitions.
-- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual conversation correction, conversational User-ID capture, chat-session customer reuse, cross-account isolation, simulated slip scanning/reconciliation, back-office lookup/handoff, and API auth — **188 tests**, see `npm test`.
+- Unit and integration tests cover retrieval, vector similarity, chunking, promotion-catalog routing, tool routing, evaluation, workflow policy, agent planning/verification/redaction, clarification-first behavior, multilingual conversation correction, conversational User-ID capture, chat-session customer reuse, cross-account isolation, simulated slip scanning/reconciliation, back-office lookup/handoff, privacy-safe analytics, case learning, report dispatch, and API auth — **206 tests across 29 files**, see `npm test`.
 - Results are exposed through `GET /api/evaluation`, `GET /api/agent-evaluation`, `GET /api/support-evaluation`, and displayed in the UI.
 
 These figures validate only the included fictional sample set and documented thresholds; they are not claims of production accuracy.
@@ -119,7 +135,7 @@ These figures validate only the included fictional sample set and documented thr
 
 **Approach:** Build small but complete flows behind explicit API boundaries. Keep retrieval, policy logic, tool traces, citations, and workflow states visible. Add a bounded agent (plan → act → verify, max 3 tool steps, no open-ended loop) so multi-step reasoning stays inspectable instead of being a black box. Use fictional sample documents so any reviewer can run the project safely.
 
-**Delivered:** A deployed, responsive Next.js application with four focused modules, a consolidated AI Support Chat, a deterministic no-key demo mode, a conservative lexical verifier, an extended evaluation suite, tested domain logic, production build validation, and automatic deployments from GitHub through Vercel.
+**Delivered:** A deployed, responsive Next.js application with one customer Live Chat and six internal AI Operations modules, a deterministic no-key fallback, optional live provider integration, hybrid retrieval, a conservative lexical verifier, simulated account/back-office/slip APIs, privacy-safe support analytics, an extended evaluation suite, tested domain logic, production build validation, and automatic deployments from GitHub through Vercel.
 
 **Measurable business value this pattern targets in a real deployment:**
 
@@ -144,6 +160,10 @@ flowchart LR
   UI --> A["POST /api/agent"]
   UI --> AE["GET /api/agent-evaluation"]
   UI --> S["POST /api/support"]
+  UI --> ST["POST /api/support/status"]
+  UI --> SC["GET/DELETE /api/support/customer"]
+  UI --> SV["POST /api/support/slip/verify"]
+  UI --> SA["GET/POST /api/support/analytics"]
   UI --> SE["GET /api/support-evaluation"]
   C --> L{"Live provider configured?"}
   L -->|"Yes"| M["OpenAI-compatible model"]
@@ -162,12 +182,20 @@ flowchart LR
   S --> CL["Intent + risk classification (deterministic)"]
   CL --> K
   CL --> VF
-  CL --> SD["decideSupportPolicy: AUTO_RESPOND / ESCALATE"]
+  CL --> SD["clarify first or decide: AUTO_RESPOND / ESCALATE"]
   VF --> O["Execution trace (redacted)"]
   SD --> O
+  S --> BO["Customer-scoped back-office adapter"]
+  S --> CTX["Signed customer context"]
+  ST --> BO
+  SC --> CTX
+  SV --> OCR["Slip validation + simulated OCR"]
+  OCR --> BO
+  S --> EVT["Privacy-safe support events"]
+  SA --> EVT
   AE --> P
   SE --> S
-  K --> D[("26 fictional sample documents")]
+  K --> D[("44 fictional sample documents")]
   V --> O
 ```
 
@@ -366,7 +394,7 @@ DEMO_PASSWORD=change-me-demo-password
 Behavior:
 
 - Visiting any application page without a valid session redirects to `/login`.
-- All AI API routes (`/api/chat`, `/api/rag`, `/api/workflow`, `/api/evaluation`, `/api/status`, `/api/agent`, `/api/agent-evaluation`, `/api/support`, `/api/support-evaluation`) independently return `401` without a valid session.
+- All AI and support API routes—including chat, RAG, workflow, agent/evaluation, customer context, transaction status, slip verification, simulated handoff, and analytics/reporting—independently enforce the signed demo session before returning protected data.
 - A correct password issues a signed session cookie: `HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, and a 24-hour expiry.
 - After 5 failed attempts within 15 minutes, further attempts from that client are temporarily blocked (`429`).
 - **Sign out** clears the session cookie and returns to `/login`.
@@ -399,6 +427,8 @@ curl -X POST http://localhost:3000/api/support \
   -d '{"message":"How do I create a new account?"}'
 
 curl http://localhost:3000/api/support-evaluation
+
+curl "http://localhost:3000/api/support/analytics?period=week"
 ```
 
 (All require a valid `demo_session` cookie from `/api/login` — see [Demo access](#demo-access-password-gate).)
@@ -412,9 +442,9 @@ src/
 │   ├── globals.css      # Visual system and Tailwind entry point
 │   └── page.tsx         # Server-rendered application entry
 ├── components/
-│   └── studio.tsx       # Five interactive demo modules, including both agent trace UIs
+│   └── studio.tsx       # Live Chat plus six internal AI Operations modules
 └── lib/
-    ├── knowledge.ts              # Sample documents (26) and retrieval logic
+    ├── knowledge.ts              # 44 fictional documents and hybrid retrieval logic
     ├── workflow.ts                # Policy-based automation logic
     ├── agent.ts                   # Bounded Planner → Tool Execution → Verifier orchestrator
     ├── verifier.ts                # Groundedness scoring
@@ -422,8 +452,12 @@ src/
     ├── agent-evaluation.ts        # Agentic Copilot evaluation suite
     ├── support-classification.ts  # Deterministic intent/risk/mandatory-escalation logic
     ├── support-agent.ts           # Support Copilot orchestrator + decideSupportPolicy
+    ├── support-backoffice.ts      # Customer-scoped simulated transaction status adapter
+    ├── support-slip.ts            # Simulated slip verification and reconciliation
+    ├── support-analytics.ts       # Privacy-safe events, case learning, metrics, and report routing
+    ├── support-behavior.ts        # Versioned role, tone, response, data, and escalation policy
     ├── support-evaluation.ts      # 41-case Customer Support Copilot evaluation suite
-    └── *.test.ts                  # Unit and integration tests (188)
+    └── *.test.ts                  # Unit and integration tests (206 across 29 files)
 ```
 
 **Files an AI Engineer should inspect first:** `src/lib/support-agent.ts` (the orchestration flow and the pure `decideSupportPolicy` function), `src/lib/support-classification.ts` (deterministic policy logic), `src/lib/verifier.ts` (the groundedness heuristic and its documented limits), `src/lib/agent.ts` (the mode-aware retrieval threshold and why it exists), `src/lib/support-evaluation.ts` (how the honest, non-cherry-picked metrics table above was produced).
@@ -450,10 +484,15 @@ It does **not** claim: production RAG, learned semantic embeddings at scale, an 
 | Evaluation suite (routing, groundedness, escalation precision/recall, coverage, latency) | **IMPLEMENTED** |
 | Workflow "status check" step for request-status/onboarding intents | **SIMULATED / MOCKED** — no real ticketing system |
 | Support handoff adapter | **IMPLEMENTED AS A SIMULATION** — creates an idempotent in-memory demo case with a structured reference; no real employee or external system is notified |
+| Conversational customer context + scoped back-office lookup | **IMPLEMENTED AS A SIMULATION** — signed browser-session scope and fictional customer-owned records only |
+| Deposit-slip verification + reconciliation | **IMPLEMENTED AS A SIMULATION** — validates PNG/JPEG bytes and deterministic fictional OCR; uploaded bytes are not persisted |
+| Clarification-first behavior | **IMPLEMENTED** — ambiguous requests ask a focused question and create neither a case nor a completed analytics event |
+| Support analytics + case learning | **IMPLEMENTED AS A SIMULATION** — privacy-safe seeded/live in-memory events, AI-resolved vs employee-review logs, improvement backlog, and queued report output |
+| AI Behavior Settings | **IMPLEMENTED** — version-controlled runtime configuration with an internal read-only inspection panel |
 | CRM, ticketing, email, web chat widget, LINE/Telegram/WhatsApp/Slack, Google Drive/Notion/SharePoint integration | **ROADMAP** — not present in this codebase |
 | Persisted vector database, model-based (entailment) groundedness | **ROADMAP** |
 | English/Thai/Chinese UI, input normalization, and response localization | **IMPLEMENTED** — live translation is provider-assisted; offline localization is intentionally limited |
-| Role-based access and persisted audit log | **ROADMAP** |
+| Role-based access, persistent analytics/audit storage, scheduled delivery | **ROADMAP** |
 
 ## Interview talking points
 
@@ -475,7 +514,7 @@ It does **not** claim: production RAG, learned semantic embeddings at scale, an 
 - Add multi-language intent/risk classification and role-based access for support supervisors.
 - Add file ingestion for safe sample PDF/Markdown documents.
 - Persist workflow runs with authentication, role-based access, and an immutable audit log.
-- Add integration tests, accessibility checks, and observability (structured tracing/metrics export) for both agent flows.
+- Expand browser-level E2E and accessibility coverage; export structured runtime telemetry to a durable observability platform.
 
 ## Privacy and security
 
