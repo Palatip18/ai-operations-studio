@@ -74,7 +74,12 @@ type TransactionResult = {
   safeReason?: string;
   reviewRequired: boolean;
 };
-type SupportResult = { answer: string; customerVerificationRequired?: boolean; transaction?: TransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
+type SupportResult = { answer: string; customerVerificationRequired?: boolean; slipUploadRequired?: boolean; transaction?: TransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
+type SlipApiResult = {
+  verification: { simulated: true; status: "VERIFIED" | "REJECTED" | "DUPLICATE"; slipReference: string; extracted: { amount: number | null; currency: "THB"; transferReference: string | null; destinationAccount: string | null }; confidence: number; reason: string };
+  reconciliation: { simulated: true; accepted: boolean; status: "MATCHED_PENDING_CREDIT" | "NOT_SENT"; backofficeReference?: string; idempotent: boolean };
+  trace: Array<{ tool: string; status: string }>;
+};
 type SupportHistoryEntry = {
   id: string;
   user: string;
@@ -1483,6 +1488,10 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
   const [verificationLoading, setVerificationLoading] = useState(true);
   const [verificationError, setVerificationError] = useState("");
   const [quickTopicsOpen, setQuickTopicsOpen] = useState(false);
+  const [slipFile, setSlipFile] = useState<File | null>(null);
+  const [slipLoading, setSlipLoading] = useState(false);
+  const [slipError, setSlipError] = useState("");
+  const [slipResult, setSlipResult] = useState<SlipApiResult | null>(null);
 
   useEffect(() => {
     fetch("/api/support/customer")
@@ -1603,12 +1612,35 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
     clearConversation();
   }
 
+  async function uploadSlip(event: FormEvent) {
+    event.preventDefault();
+    if (!slipFile || slipLoading || !customer) return;
+    setSlipLoading(true);
+    setSlipError("");
+    setSlipResult(null);
+    try {
+      const form = new FormData();
+      form.set("slip", slipFile);
+      const response = await fetch("/api/support/slip/verify", { method: "POST", body: form });
+      const data = await response.json() as SlipApiResult & { error?: string };
+      if (!response.ok) throw new Error(data.error || "Slip verification failed");
+      setSlipResult(data);
+    } catch (error) {
+      setSlipError(error instanceof Error ? error.message : "Slip verification failed");
+    } finally {
+      setSlipLoading(false);
+    }
+  }
+
   function clearConversation() {
     setHistory([]);
     setSubmittedMessage("");
     setResult(null);
     setErrorText("");
     setMessage("");
+    setSlipFile(null);
+    setSlipError("");
+    setSlipResult(null);
   }
 
   return (
@@ -1810,6 +1842,45 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
                 <p className="mt-2 text-xs text-muted/60">Demo: USER-RAY01 · USER-MALI02</p>
                 {verificationError && <p className="mt-2 text-xs text-error">{verificationError}</p>}
               </form>
+            )}
+
+            {customer && result.slipUploadRequired && !slipResult && (
+              <form onSubmit={uploadSlip} className="rounded-xl border border-accent/20 bg-accent/5 p-3">
+                <label className="block text-xs font-medium text-foreground" htmlFor={`support-slip-${customerView ? "customer" : "internal"}`}>
+                  {locale === "th" ? "อัปโหลดสลิปฝากเงิน" : locale === "zh" ? "上传存款凭证" : "Upload deposit slip"}
+                </label>
+                <input
+                  id={`support-slip-${customerView ? "customer" : "internal"}`}
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={(event) => setSlipFile(event.target.files?.[0] ?? null)}
+                  className="kb-focusable mt-2 block min-h-[44px] w-full rounded-lg border border-white/10 bg-black/20 p-2 text-xs text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:font-semibold file:text-[#07101F]"
+                />
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] text-muted/55">PNG/JPEG · max 3 MB · simulated OCR · not stored</p>
+                  <button type="submit" disabled={!slipFile || slipLoading} className="kb-focusable min-h-[40px] rounded-lg bg-accent px-4 text-xs font-semibold text-[#07101F] disabled:opacity-50">
+                    {slipLoading ? copy.checking : locale === "th" ? "สแกนและตรวจสลิป" : locale === "zh" ? "扫描并验证" : "Scan and verify"}
+                  </button>
+                </div>
+                {slipError && <p className="mt-2 text-xs text-error">{slipError}</p>}
+              </form>
+            )}
+
+            {slipResult && (
+              <div className={`rounded-xl border p-4 text-sm ${slipResult.verification.status === "VERIFIED" ? "border-success/25 bg-success/5" : "border-warning/25 bg-warning/5"}`}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold text-foreground">{locale === "th" ? "ผลตรวจสลิปแบบจำลอง" : locale === "zh" ? "模拟凭证验证结果" : "Simulated slip verification"}</p>
+                  <span className={`rounded px-2 py-1 font-mono text-[10px] font-semibold ${slipResult.verification.status === "VERIFIED" ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>{slipResult.verification.status}</span>
+                </div>
+                <div className="mt-3 grid gap-2 text-xs text-muted sm:grid-cols-2">
+                  <p>Slip: <span className="font-mono text-foreground">{slipResult.verification.slipReference}</span></p>
+                  <p>{locale === "th" ? "ยอดที่สกัดได้" : locale === "zh" ? "识别金额" : "Extracted amount"}: <span className="text-foreground">{slipResult.verification.extracted.amount?.toLocaleString() ?? "—"} THB</span></p>
+                  <p>{locale === "th" ? "ความมั่นใจ" : locale === "zh" ? "置信度" : "Confidence"}: <span className="text-foreground">{Math.round(slipResult.verification.confidence * 100)}%</span></p>
+                  <p>Back office: <span className="font-mono text-foreground">{slipResult.reconciliation.status}</span></p>
+                </div>
+                {slipResult.reconciliation.backofficeReference && <p className="mt-3 text-xs text-muted">{copy.reference}: <span className="font-mono text-accent-secondary">{slipResult.reconciliation.backofficeReference}</span></p>}
+                <p className="mt-3 text-[11px] leading-5 text-muted/55">{slipResult.verification.reason}</p>
+              </div>
             )}
 
             {result.transaction && result.transaction.status !== "NEEDS_REFERENCE" && (

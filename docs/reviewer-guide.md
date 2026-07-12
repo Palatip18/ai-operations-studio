@@ -73,6 +73,8 @@ Recommended files:
 | API adapter | `src/app/api/support/handoff/route.ts` |
 | Status API adapter | `src/app/api/support/status/route.ts` |
 | Customer verification API | `src/app/api/support/customer/route.ts` |
+| Simulated slip scanner | `src/lib/support-slip.ts` |
+| Slip verification API | `src/app/api/support/slip/verify/route.ts` |
 | Evaluation | `src/lib/support-evaluation.ts` and `src/lib/support-challenge.ts` |
 | Portfolio UI | `src/components/studio.tsx` |
 

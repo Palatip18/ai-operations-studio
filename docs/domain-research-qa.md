@@ -75,3 +75,14 @@ The support flow now uses a protected external-style adapter at `POST /api/suppo
 - Token signatures and expiry are unit-tested, including tamper rejection.
 - The UI and trace never expose the signed token. The trace shows only the fictional customer scope used for the lookup.
 - This remains a portfolio simulation, not KYC or production identity verification.
+
+## Deposit-slip verification checkpoint
+
+- Missing-deposit questions first request customer verification, then request a deposit-slip image when no transaction reference is available.
+- The protected upload route accepts PNG/JPEG only, validates file signatures, limits payloads to 3 MB, and applies a per-client rate limit.
+- Deterministic simulated OCR returns structured fields and explicitly labels every result `simulated`.
+- Only `VERIFIED` results call the shared deposit-reconciliation service; `REJECTED` and `DUPLICATE` results return `NOT_SENT`.
+- Reconciliation is idempotent per verified customer and slip hash.
+- Image bytes are processed in memory and are not persisted by the prototype.
+- Filename conventions can force demo states (`invalid`, `rejected`, or `duplicate`) and can provide a fictional amount (`amount-1500`). This is test scaffolding, not real fraud detection.
+- Production use would require a bank slip-verification provider, malware scanning, encrypted object storage with retention controls, consent, audit logging, and provider/webhook signature verification.

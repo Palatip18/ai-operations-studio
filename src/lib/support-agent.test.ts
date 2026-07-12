@@ -130,12 +130,13 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     expect(result.handoff).toBeNull();
   });
 
-  it("requests a transaction reference before opening a case", async () => {
+  it("requests a slip before checking a verified customer's missing deposit", async () => {
     const result = await runSupportAgent("My deposit has not arrived.", [], "USER-RAY01");
     expect(result.transaction?.status).toBe("NEEDS_REFERENCE");
+    expect(result.slipUploadRequired).toBe(true);
     expect(result.trace.decision).toBe("AUTO_RESPOND");
     expect(result.handoff).toBeNull();
-    expect(result.answer).toMatch(/DEP-1001|transaction reference/i);
+    expect(result.answer).toMatch(/upload|slip/i);
   });
 
   it("asks for a User ID only when an unverified customer needs an account lookup", async () => {
@@ -160,8 +161,8 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     expect(result.transaction).toMatchObject({ status: "NEEDS_REFERENCE", kind: "DEPOSIT", reviewRequired: false });
     expect(result.trace.decision).toBe("AUTO_RESPOND");
     expect(result.handoff).toBeNull();
-    expect(result.answer).toContain("รายการฝากเงิน");
-    expect(result.answer).toContain("DEP-1001");
+    expect(result.slipUploadRequired).toBe(true);
+    expect(result.answer).toContain("สลิปฝากเงิน");
     expect(result.answer).not.toContain("หมายเลขอ้างอิงการถอน");
   });
 });

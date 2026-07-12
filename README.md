@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-182_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-186_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
@@ -57,6 +57,10 @@ Deposit and withdrawal questions use a shared simulated back-office adapter expo
 
 Live Chat accepts general, promotion, and game-support questions without customer verification. When a request requires account or transaction data, the assistant asks for a fictional User ID through `GET/POST/DELETE /api/support/customer`. The server stores the verified identity in a signed, HttpOnly, SameSite=Lax cookie with a 30-minute lifetime. The direct transaction-status route rejects requests without this context, and back-office records are filtered by owner User ID before any status is returned. `USER-RAY01` owns the guided-scenario transactions; `USER-MALI02` is a second fictional account used to test cross-account isolation.
 
+### Simulated deposit-slip verification
+
+When a verified customer reports a missing deposit without a transaction reference, Live Chat requests a PNG/JPEG deposit-slip image. `POST /api/support/slip/verify` validates authentication, customer scope, MIME type, real PNG/JPEG file signatures, a 3 MB size limit, and rate limits before running deterministic simulated OCR. The response contains extracted fictional amount/reference fields, confidence, individual checks, and a `VERIFIED`, `REJECTED`, or `DUPLICATE` decision. Only `VERIFIED` results reach the shared back-office reconciliation service; rejected results return `NOT_SENT`. Reconciliation is idempotent by customer and slip hash. Uploaded bytes are processed in memory and are not persisted by this prototype.
+
 ## What the MVP demonstrates
 
 1. **AI Gaming Support Chat (Conversation → Tools → Evidence → Decision)** — the primary conversational surface handles fictional promotion, deposit, withdrawal, and game-support conversations with knowledge retrieval, multilingual response composition, simulated case handoff, and safe escalation.
@@ -88,7 +92,7 @@ The default `mock` mode is deterministic, free to run, and requires no credentia
   | Mean latency | ~1ms | ~296ms |
 
   These numbers are not the 80-90% target — see [Knowledge-quality model](#knowledge-quality-model) for why, and [Evaluation methodology](#evaluation-methodology) for full definitions.
-- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual conversation correction, response composition, intent/risk classification, on-demand signed customer context, cross-account isolation, simulated back-office lookup/handoff, and API auth — **182 tests**, see `npm test`.
+- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual conversation correction, response composition, intent/risk classification, on-demand signed customer context, cross-account isolation, simulated slip scanning/reconciliation, back-office lookup/handoff, and API auth — **186 tests**, see `npm test`.
 - Results are exposed through `GET /api/evaluation`, `GET /api/agent-evaluation`, `GET /api/support-evaluation`, and displayed in the UI.
 
 These figures validate only the included fictional sample set and documented thresholds; they are not claims of production accuracy.
@@ -403,7 +407,7 @@ src/
     ├── support-classification.ts  # Deterministic intent/risk/mandatory-escalation logic
     ├── support-agent.ts           # Support Copilot orchestrator + decideSupportPolicy
     ├── support-evaluation.ts      # 41-case Customer Support Copilot evaluation suite
-    └── *.test.ts                  # Unit and integration tests (182)
+    └── *.test.ts                  # Unit and integration tests (186)
 ```
 
 **Files an AI Engineer should inspect first:** `src/lib/support-agent.ts` (the orchestration flow and the pure `decideSupportPolicy` function), `src/lib/support-classification.ts` (deterministic policy logic), `src/lib/verifier.ts` (the groundedness heuristic and its documented limits), `src/lib/agent.ts` (the mode-aware retrieval threshold and why it exists), `src/lib/support-evaluation.ts` (how the honest, non-cherry-picked metrics table above was produced).
