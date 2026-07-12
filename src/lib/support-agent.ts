@@ -59,7 +59,7 @@ export type SupportTrace = {
   customerScope: string | null;
 };
 
-export type SupportResult = { answer: string; transaction?: BackofficeTransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
+export type SupportResult = { answer: string; customerVerificationRequired?: boolean; transaction?: BackofficeTransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
 
 const WORKFLOW_INTENTS = new Set<Intent>(["request_status", "account_onboarding"]);
 
@@ -138,6 +138,7 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   // normal status is answered directly; only an anomaly or unknown valid
   // reference is eligible for a review case.
   const transaction = intent === "deposit_withdrawal" && customerUserId ? lookupSimulatedTransaction(message, customerUserId) : null;
+  const customerVerificationRequired = intent === "deposit_withdrawal" && !customerUserId;
   if (transaction) {
     steps.push({
       tool: "lookup_transaction_status",
@@ -171,7 +172,16 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   const verifier = verifyGroundedness(answer, groundingEvidence, processingMessage);
   const mandatory = checkMandatoryEscalation(processingMessage, intent);
   let { decision, escalationReason } = decideSupportPolicy(mandatory, verifier, risk, intent);
-  if (transaction) {
+  if (customerVerificationRequired) {
+    decision = "AUTO_RESPOND";
+    escalationReason = null;
+    steps.push({
+      tool: "request_customer_verification",
+      input: { requiredFor: "transaction_lookup" },
+      outputSummary: "Customer User ID is required before accessing account-scoped transaction data.",
+      resultCount: 0,
+    });
+  } else if (transaction) {
     if (transaction.status === "NEEDS_REFERENCE") {
       decision = "AUTO_RESPOND";
       escalationReason = null;
@@ -234,7 +244,13 @@ export async function runSupportAgent(message: string, previousUserMessages: str
     tone,
     handoffId: handoff?.handoffId ?? null
   });
-  if (transaction) {
+  if (customerVerificationRequired) {
+    safeAnswer = multilingual.language === "th"
+      ? "ยินดีช่วยตรวจสอบให้ครับ ก่อนเปิดดูรายการฝากหรือถอน ขอทราบ User ID ของลูกค้าเพื่อให้ระบบตรวจสอบข้อมูลได้ตรงบัญชีและปลอดภัยครับ ไม่ต้องส่งรหัสผ่าน OTP หรือเลขบัญชีธนาคาร"
+      : multilingual.language === "zh"
+        ? "很乐意帮您查询。查看存款或提款记录前，请提供客户 User ID，以便系统安全地查询正确账户。请勿发送密码、OTP 或银行账号。"
+        : "I’ll be happy to check that. Before viewing a deposit or withdrawal, please provide the customer User ID so the system can securely query the correct account. Do not send a password, OTP, or bank-account number.";
+  } else if (transaction) {
     safeAnswer = composeTransactionStatusReply(transaction, multilingual.language);
     if (handoff?.handoffId) {
       safeAnswer += multilingual.language === "th"
@@ -247,6 +263,7 @@ export async function runSupportAgent(message: string, previousUserMessages: str
 
   return {
     answer: safeAnswer,
+    customerVerificationRequired,
     transaction,
     handoff,
     trace: {

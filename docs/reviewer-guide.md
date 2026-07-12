@@ -12,7 +12,7 @@ This guide provides a short evaluation path for recruiters, AI Engineers, engine
 
 ### 1. Routine customer question
 
-Stay in the default **Live Chat**, verify `USER-RAY01`, and select the promotion-details or game-issue scenario.
+Stay in the default **Live Chat** and select the promotion-details or game-issue scenario without verifying a User ID.
 
 Look for:
 
@@ -22,7 +22,7 @@ Look for:
 
 ### 2. High-risk customer case
 
-Select the deposit-missing or withdrawal-missing scenario.
+Select the deposit-missing or withdrawal-missing scenario. The assistant should politely request `USER-RAY01` before accessing the transaction, then continue the same conversation after verification.
 
 Look for:
 

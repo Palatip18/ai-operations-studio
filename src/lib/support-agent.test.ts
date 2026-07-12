@@ -138,6 +138,18 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     expect(result.answer).toMatch(/DEP-1001|transaction reference/i);
   });
 
+  it("asks for a User ID only when an unverified customer needs an account lookup", async () => {
+    const transaction = await runSupportAgent("ฝากเงินไม่เข้า ช่วยตรวจสอบให้หน่อย");
+    expect(transaction.customerVerificationRequired).toBe(true);
+    expect(transaction.trace.decision).toBe("AUTO_RESPOND");
+    expect(transaction.handoff).toBeNull();
+    expect(transaction.answer).toContain("User ID");
+
+    const promotion = await runSupportAgent("โปรโมชั่นสมาชิกใหม่มีเงื่อนไขอะไรบ้าง");
+    expect(promotion.customerVerificationRequired).toBe(false);
+    expect(promotion.answer).not.toContain("User ID");
+  });
+
   it("treats a Thai deposit correction as the current topic instead of repeating withdrawal guidance", async () => {
     const result = await runSupportAgent(
       "ไม่ใช่ถอน ฝากไม่เข้า",

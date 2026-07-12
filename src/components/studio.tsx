@@ -74,7 +74,7 @@ type TransactionResult = {
   safeReason?: string;
   reviewRequired: boolean;
 };
-type SupportResult = { answer: string; transaction?: TransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
+type SupportResult = { answer: string; customerVerificationRequired?: boolean; transaction?: TransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
 type SupportHistoryEntry = {
   id: string;
   user: string;
@@ -1482,6 +1482,7 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
   const [userId, setUserId] = useState("");
   const [verificationLoading, setVerificationLoading] = useState(true);
   const [verificationError, setVerificationError] = useState("");
+  const [quickTopicsOpen, setQuickTopicsOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/support/customer")
@@ -1565,6 +1566,11 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
     await run(message);
   }
 
+  async function selectScenario(prompt: string) {
+    setQuickTopicsOpen(false);
+    await run(prompt);
+  }
+
   async function verifyCustomer(event: FormEvent) {
     event.preventDefault();
     const candidate = userId.trim().toUpperCase();
@@ -1579,9 +1585,11 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
       });
       const data = await response.json() as { customer?: DemoCustomer; error?: string };
       if (!response.ok || !data.customer) throw new Error(data.error || "Verification failed");
+      const pendingLookup = submittedMessage && result?.customerVerificationRequired ? submittedMessage : null;
       setCustomer(data.customer);
       setUserId("");
-      clearConversation();
+      if (pendingLookup) await run(pendingLookup);
+      else clearConversation();
     } catch (error) {
       setVerificationError(error instanceof Error ? error.message : "Verification failed");
     } finally {
@@ -1603,57 +1611,24 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
     setMessage("");
   }
 
-  if (verificationLoading && !customer) {
-    return <div className={`grid min-h-[610px] place-items-center text-sm text-muted ${customerView ? "p-6" : ""}`}>{copy.checking}</div>;
-  }
-
-  if (!customer) {
-    return (
-      <div className={`grid min-h-[610px] place-items-center ${customerView ? "p-4 sm:p-6" : ""}`}>
-        <form onSubmit={verifyCustomer} className="w-full max-w-md rounded-2xl border border-white/10 bg-[#07101F] p-6 shadow-xl">
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-accent/30 bg-accent/10 text-accent">ID</div>
-          <h2 className="text-xl font-semibold text-foreground">{locale === "th" ? "ยืนยันผู้ใช้ก่อนเริ่มแชต" : locale === "zh" ? "开始对话前验证用户" : "Verify the user before chatting"}</h2>
-          <p className="mt-2 text-sm leading-6 text-muted">{locale === "th" ? "กรอก User ID ตัวอย่างเพื่อให้ระบบเรียกดูเฉพาะข้อมูลและรายการของผู้ใช้นั้น" : locale === "zh" ? "请输入演示 User ID，以便系统仅查询该用户的数据与交易。" : "Enter a demo User ID so the system can scope every lookup to that customer's data."}</p>
-          <label className="mt-5 block text-xs font-medium text-muted" htmlFor={`support-user-${customerView ? "customer" : "internal"}`}>User ID</label>
-          <input
-            id={`support-user-${customerView ? "customer" : "internal"}`}
-            value={userId}
-            onChange={(event) => setUserId(event.target.value)}
-            placeholder="USER-RAY01"
-            autoComplete="off"
-            className="kb-focusable mt-2 min-h-[46px] w-full rounded-xl border border-white/10 bg-black/20 px-4 font-mono text-sm uppercase text-foreground outline-none placeholder:text-muted/40"
-          />
-          <p className="mt-2 text-xs text-muted/60">Demo: USER-RAY01 · USER-MALI02</p>
-          {verificationError && <p className="mt-3 rounded-lg border border-error/30 bg-error/5 p-3 text-xs text-error">{verificationError}</p>}
-          <button type="submit" disabled={!userId.trim() || verificationLoading} className="kb-focusable mt-5 min-h-[44px] w-full rounded-xl bg-accent px-4 text-sm font-semibold text-[#07101F] disabled:opacity-50">
-            {verificationLoading ? copy.checking : locale === "th" ? "ยืนยันและเริ่มแชต" : locale === "zh" ? "验证并开始对话" : "Verify and start chat"}
-          </button>
-          <p className="mt-4 text-xs leading-5 text-muted/55">{locale === "th" ? "เดโมนี้ไม่ขอรหัสผ่าน OTP หรือเลขบัญชีธนาคาร" : locale === "zh" ? "本演示不会要求密码、OTP 或银行账号。" : "This demo never asks for a password, OTP, or bank-account number."}</p>
-        </form>
-      </div>
-    );
-  }
-
   return (
     <div className={`flex min-h-[610px] flex-col ${customerView ? "p-4 sm:p-6" : ""}`}>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-success/20 bg-success/5 px-4 py-3 text-xs">
+      {customer && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-success/20 bg-success/5 px-4 py-3 text-xs">
         <div><span className="font-semibold text-success">{customer.displayName}</span><span className="ml-2 font-mono text-muted">{customer.userId} · {customer.tier}</span></div>
         <button type="button" onClick={changeCustomer} className="kb-focusable min-h-[34px] rounded-lg border border-white/10 px-3 text-muted hover:text-foreground">{locale === "th" ? "เปลี่ยนผู้ใช้" : locale === "zh" ? "切换用户" : "Change user"}</button>
-      </div>
-      <div className="mb-5 rounded-xl border border-white/10 bg-[#07101F] p-4">
+      </div>}
+      {!customerView && <div className="mb-5 rounded-xl border border-white/10 bg-[#07101F] p-4">
         <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-accent">
           {copy.supportTitle}
         </p>
         <p className="text-sm leading-5 text-muted">{copy.supportIntro}</p>
-        {!customerView && <p className="mt-2 text-xs text-muted/65 leading-relaxed">{copy.supportLimit}</p>}
-      </div>
+        <p className="mt-2 text-xs text-muted/65 leading-relaxed">{copy.supportLimit}</p>
+      </div>}
 
-      {/* Guided demo scenarios cards */}
-      <div className="mb-6">
+      {/* Full scenario grid remains an internal reviewer tool. */}
+      {!customerView && <div className="mb-6">
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">
-          {customerView
-            ? locale === "th" ? "หัวข้อที่สอบถามบ่อย" : locale === "zh" ? "常见咨询" : "Common questions"
-            : copy.guidedScenarios}
+          {copy.guidedScenarios}
         </h3>
         <div className="grid gap-2 sm:grid-cols-4">
           {localizedScenarios.map((scenario) => {
@@ -1665,7 +1640,7 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
                 key={scenario.label}
                 type="button"
                 disabled={loading}
-                onClick={() => run(scenario.message)}
+                onClick={() => selectScenario(scenario.message)}
                 className="kb-focusable flex flex-col items-start rounded-xl border border-white/5 bg-[#0B1426] p-3 text-left transition hover:border-accent/40 disabled:opacity-50 min-h-[72px]"
               >
                 <span className="mb-1 font-mono text-[10px] text-accent font-semibold">
@@ -1678,12 +1653,22 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
             );
           })}
         </div>
-      </div>
+      </div>}
 
       <div className="mb-2 flex items-center justify-between gap-3">
         <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
           {copy.conversationHistory}
         </p>
+        <div className="flex items-center gap-2">
+        {customerView && <button
+          type="button"
+          aria-expanded={quickTopicsOpen}
+          aria-controls="support-quick-topics"
+          onClick={() => setQuickTopicsOpen((open) => !open)}
+          className="kb-focusable min-h-[36px] rounded-lg border border-white/10 px-3 py-1.5 text-xs text-muted transition hover:border-accent/35 hover:text-accent"
+        >
+          {locale === "th" ? "คำถามที่พบบ่อย" : locale === "zh" ? "常见问题" : "Common questions"} {quickTopicsOpen ? "↑" : "↓"}
+        </button>}
         {(history.length > 0 || submittedMessage) && (
           <button
             type="button"
@@ -1694,14 +1679,64 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
             {copy.newConversation}
           </button>
         )}
+        </div>
       </div>
+
+      {customerView && quickTopicsOpen && (
+        <div id="support-quick-topics" className="mb-3 rounded-xl border border-white/10 bg-[#07101F] p-3">
+          <div className="grid gap-2 sm:grid-cols-2">
+            {localizedScenarios.map((scenario) => (
+              <button
+                key={scenario.label}
+                type="button"
+                disabled={loading}
+                onClick={() => selectScenario(scenario.message)}
+                className="kb-focusable min-h-[44px] rounded-lg border border-white/5 bg-white/[.03] px-3 py-2 text-left text-xs text-foreground transition hover:border-accent/35 hover:bg-accent/5 disabled:opacity-50"
+              >
+                {scenario.label.split(" · ")[1]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div
         className="flex-1 max-h-[560px] space-y-4 overflow-y-auto scroll-smooth rounded-xl border border-white/5 bg-black/10 p-3 sm:p-4"
         aria-live="polite"
         aria-label={copy.conversationHistory}
       >
-        {history.length === 0 && !submittedMessage && !errorText && (
+        {!customer && verificationLoading && (
+          <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm text-muted">
+            {copy.checking}
+          </div>
+        )}
+        {!customer && !verificationLoading && !submittedMessage && history.length === 0 && (
+          <div className="max-w-[95%] space-y-3 rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] p-4 sm:max-w-[85%]">
+            <div className="text-sm leading-6 text-foreground">
+              {locale === "th" ? "สวัสดีครับ สอบถามข้อมูลทั่วไป โปรโมชั่น หรือปัญหาเกมได้เลย หากต้องการให้ตรวจสอบรายการฝาก–ถอน กรุณายืนยัน User ID เพื่อให้ผมเปิดดูข้อมูลได้ตรงบัญชีครับ" : locale === "zh" ? "您好，您可以直接咨询一般信息、促销或游戏问题。如需查询存款或提款记录，请验证 User ID，以便我查看正确账户。" : "Hello. You can ask general, promotion, or game questions right away. To check a deposit or withdrawal, verify the User ID so I access the correct account."}
+            </div>
+            <form onSubmit={verifyCustomer} className="rounded-xl border border-white/10 bg-[#07101F] p-3">
+              <label className="block text-xs font-medium text-muted" htmlFor={`support-user-${customerView ? "customer" : "internal"}`}>User ID</label>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <input
+                  id={`support-user-${customerView ? "customer" : "internal"}`}
+                  value={userId}
+                  onChange={(event) => setUserId(event.target.value)}
+                  placeholder="USER-RAY01"
+                  autoComplete="off"
+                  className="kb-focusable min-h-[44px] min-w-0 flex-1 rounded-lg border border-white/10 bg-black/20 px-3 font-mono text-sm uppercase text-foreground outline-none placeholder:text-muted/40"
+                />
+                <button type="submit" disabled={!userId.trim() || verificationLoading} className="kb-focusable min-h-[44px] rounded-lg bg-accent px-4 text-sm font-semibold text-[#07101F] disabled:opacity-50">
+                  {locale === "th" ? "ยืนยัน" : locale === "zh" ? "验证" : "Verify"}
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-muted/60">Demo: USER-RAY01 · USER-MALI02</p>
+              {verificationError && <p className="mt-2 text-xs text-error">{verificationError}</p>}
+              <p className="mt-2 text-[11px] leading-5 text-muted/50">{locale === "th" ? "ไม่ต้องส่งรหัสผ่าน OTP หรือเลขบัญชีธนาคาร" : locale === "zh" ? "请勿发送密码、OTP 或银行账号。" : "Do not send a password, OTP, or bank-account number."}</p>
+            </form>
+          </div>
+        )}
+        {customer && history.length === 0 && !submittedMessage && !errorText && (
           <div className="rounded-xl border border-dashed border-white/10 px-5 py-10 text-center">
             <p className="text-sm text-muted">{copy.supportEmpty}</p>
             <p className="mt-2 text-xs text-muted/60">{copy.fictional}</p>
@@ -1755,6 +1790,27 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
               </span>}
               {result.answer}
             </div>
+
+            {!customer && result.customerVerificationRequired && (
+              <form onSubmit={verifyCustomer} className="rounded-xl border border-accent/20 bg-accent/5 p-3">
+                <label className="block text-xs font-medium text-foreground" htmlFor={`support-user-request-${customerView ? "customer" : "internal"}`}>User ID</label>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    id={`support-user-request-${customerView ? "customer" : "internal"}`}
+                    value={userId}
+                    onChange={(event) => setUserId(event.target.value)}
+                    placeholder="USER-RAY01"
+                    autoComplete="off"
+                    className="kb-focusable min-h-[44px] min-w-0 flex-1 rounded-lg border border-white/10 bg-black/20 px-3 font-mono text-sm uppercase text-foreground outline-none"
+                  />
+                  <button type="submit" disabled={!userId.trim() || verificationLoading} className="kb-focusable min-h-[44px] rounded-lg bg-accent px-4 text-sm font-semibold text-[#07101F] disabled:opacity-50">
+                    {verificationLoading ? copy.checking : locale === "th" ? "ยืนยันและตรวจสอบ" : locale === "zh" ? "验证并查询" : "Verify and check"}
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-muted/60">Demo: USER-RAY01 · USER-MALI02</p>
+                {verificationError && <p className="mt-2 text-xs text-error">{verificationError}</p>}
+              </form>
+            )}
 
             {result.transaction && result.transaction.status !== "NEEDS_REFERENCE" && (
               <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm">

@@ -175,9 +175,9 @@ describe("agent trace redaction", () => {
     }
   });
 
-  it("requires a verified customer context before support chat", async () => {
+  it("allows general support chat before customer verification", async () => {
     const response = await supportRoute(new Request("http://localhost/api/support", { method: "POST", headers: { "content-type": "application/json", cookie: cookie(), "x-forwarded-for": "203.0.113.29" }, body: JSON.stringify({ message: "hello" }) }));
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(200);
   });
 });
 
