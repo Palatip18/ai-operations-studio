@@ -2,6 +2,12 @@
 
 > Personal portfolio project / functional prototype — not a production system.
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![Tests](https://img.shields.io/badge/tests-3_passing-4ade80?style=flat-square)](#quality-checks)
+
+**[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
+
 AI Operations Studio demonstrates how applied AI patterns can turn operational requests into clear, traceable outcomes. It is intentionally domain-neutral and uses only fictional, general-purpose sample content. It contains no employer, client, transaction, or confidential data.
 
 ## What the MVP demonstrates
@@ -11,6 +17,16 @@ AI Operations Studio demonstrates how applied AI patterns can turn operational r
 3. **Workflow Automation** — validates a fictional internal request, applies deterministic policy rules, routes exceptions, and prepares a mock notification.
 
 The default `mock` mode is deterministic, free to run, and requires no credentials. This keeps the demo easy to review while making a clear distinction between implemented workflow logic and a future live-LLM integration.
+
+## Portfolio case study
+
+**Problem:** Operational AI demos often hide their decisions, depend on private data, or fail without a paid model key.
+
+**Approach:** Build three small but complete flows behind explicit API boundaries. Keep retrieval, policy logic, tool traces, citations, and workflow states visible. Use fictional sample documents so any reviewer can run the project safely.
+
+**Delivered:** A deployed, responsive Next.js application with three working modules, deterministic no-key demo mode, tested domain logic, production build validation, and automatic deployments from GitHub through Vercel.
+
+**What I would measure next:** grounded-answer accuracy, retrieval precision, workflow completion rate, exception rate, time saved per request, and cost/latency after adding a live model provider.
 
 ## Architecture
 
