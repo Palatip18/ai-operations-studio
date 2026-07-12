@@ -12,16 +12,13 @@ This guide provides a short evaluation path for recruiters, AI Engineers, engine
 
 ### 1. Routine customer question
 
-Open **AI Gaming Support Chat** and select the promotion-details or game-issue scenario.
+Stay in the default **Live Chat** view and select the promotion-details or game-issue scenario.
 
 Look for:
 
-- detected intent and risk;
-- retrieved evidence;
-- groundedness result;
-- `AUTO_RESPOND` decision;
 - natural customer-facing response;
-- bounded tool-call count.
+- scrollable multi-turn conversation history;
+- no exposed intent, risk, model, RAG, or execution terminology.
 
 ### 2. High-risk customer case
 
@@ -29,11 +26,11 @@ Select the deposit-missing or withdrawal-missing scenario.
 
 Look for:
 
-- deterministic risk and mandatory-review rules;
-- `ESCALATE` decision even when related knowledge exists;
 - a structured simulated case with `QUEUED` status and demo reference ID;
 - no promise that a real employee has received the case;
-- redacted technical trace.
+- a clear next step without exposing the internal policy decision.
+
+Then switch to **Internal AI Operations → Support Copilot** to inspect the detected intent/risk, retrieved evidence, groundedness result, `AUTO_RESPOND`/`ESCALATE` decision, structured handoff, and redacted trace behind the same behavior. The customer-facing and reviewer-facing views are deliberately separated.
 
 ### 3. Promotion and responsible-use boundaries
 

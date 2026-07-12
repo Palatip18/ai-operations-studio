@@ -13,9 +13,9 @@ AI Operations Studio demonstrates how applied AI patterns can turn fictional onl
 ## Reviewer quick start
 
 1. Open the **[live demo](https://ai-operations-studio-black.vercel.app)** and enter the demo password supplied privately with the application.
-2. Open **AI Gaming Support Chat** and run the promotion or game-issue scenario to see `AUTO_RESPOND` with evidence.
-3. Run the missing-deposit or missing-withdrawal scenario to see `ESCALATE`, a simulated transaction-review reference, and safe customer-facing wording.
-4. Expand **Technical execution trace** to inspect intent, risk, retrieval sources, verifier result, tool calls, latency, and usage.
+2. The default **Live Chat** view simulates the customer experience. Run the promotion or game-issue scenario to see a natural response without internal AI terminology.
+3. Run the missing-deposit or missing-withdrawal scenario to see a safe customer reply and simulated transaction-review reference.
+4. Switch to **Internal AI Operations**, open Support Copilot, and expand **Technical execution trace** to inspect intent, risk, retrieval sources, verifier result, tool calls, latency, and usage.
 5. Review the [recruiter and technical-review guide](docs/reviewer-guide.md), [domain research QA](docs/domain-research-qa.md), [localization QA](docs/localization-qa.md), and [repository recovery QA](docs/repository-recovery-qa.md).
 
 Estimated review time: **3–5 minutes for the guided demo; 15–20 minutes for the technical review.**
@@ -34,6 +34,13 @@ The consolidated AI Support Chat combines six pieces, each earning its place for
 - **A groundedness verifier** — checks the draft answer against retrieved evidence before it's allowed to auto-respond, instead of trusting the model's confidence.
 - **Human escalation** — the explicit fallback whenever risk, evidence, or policy don't clearly support automation.
 - **Evaluation and observability** — a fictional test dataset and a full execution trace turn "does this work" into a measurable, inspectable question instead of a demo-only claim.
+
+## Product surfaces
+
+- **Live Chat (default)** — a customer-facing simulation containing only conversation history, natural responses, common-question shortcuts, and a demo case reference when review is required. Internal intent, risk, RAG scores, decision labels, and execution traces are hidden.
+- **Internal AI Operations** — a reviewer-facing workspace containing the Support AI monitor, Knowledge/RAG explorer, deterministic workflow automation, and bounded Agentic Copilot. This is where technical evidence and evaluation details remain inspectable.
+
+This separation demonstrates that internal AI observability can remain available to operations and engineering teams without leaking implementation details into the customer experience.
 
 ## What the MVP demonstrates
 

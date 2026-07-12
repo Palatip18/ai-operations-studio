@@ -69,22 +69,34 @@ type SupportHistoryEntry = {
   decision: "AUTO_RESPOND" | "ESCALATE";
 };
 
-const moduleIds: Module[] = [
+const moduleIds: Exclude<Module, "chat">[] = [
+  "support",
   "knowledge",
   "workflow",
   "agent",
-  "support",
 ];
+const moduleCopyIndex: Record<Exclude<Module, "chat">, number> = {
+  knowledge: 0,
+  workflow: 1,
+  agent: 2,
+  support: 3,
+};
 
 export function Studio() {
   const { locale, setLocale, copy } = useUiLocale();
   const modules = moduleIds.map((id, index) => ({
     id,
     number: String(index + 1).padStart(2, "0"),
-    label: copy.modules[index][0],
-    description: copy.modules[index][1],
+    label: copy.modules[moduleCopyIndex[id]][0],
+    description: copy.modules[moduleCopyIndex[id]][1],
   }));
   const [active, setActive] = useState<Module>("support");
+  const [view, setView] = useState<"customer" | "internal">("customer");
+  const viewLabels = locale === "th"
+    ? { customer: "Live Chat", internal: "ระบบการทำงานภายใน", customerTitle: "บริการลูกค้าออนไลน์", customerIntro: "สอบถามเรื่องฝากเงิน ถอนเงิน โปรโมชั่น หรือปัญหาเกมได้ที่นี่" }
+    : locale === "zh"
+      ? { customer: "在线客服", internal: "内部 AI 系统", customerTitle: "在线客户服务", customerIntro: "可在此咨询存款、提款、促销或游戏问题" }
+      : { customer: "Live Chat", internal: "Internal AI Operations", customerTitle: "Online customer support", customerIntro: "Ask about deposits, withdrawals, promotions, or game issues." };
   const [liveAI, setLiveAI] = useState(false);
   useEffect(() => {
     fetch("/api/status")
@@ -111,6 +123,22 @@ export function Studio() {
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
+          <div className="hidden rounded-full border border-white/10 bg-white/[.03] p-1 md:flex">
+            <button
+              type="button"
+              onClick={() => setView("customer")}
+              className={`kb-focusable min-h-[32px] rounded-full px-3 text-xs transition ${view === "customer" ? "bg-accent text-[#07101F] font-semibold" : "text-muted hover:text-foreground"}`}
+            >
+              {viewLabels.customer}
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("internal")}
+              className={`kb-focusable min-h-[32px] rounded-full px-3 text-xs transition ${view === "internal" ? "bg-accent text-[#07101F] font-semibold" : "text-muted hover:text-foreground"}`}
+            >
+              {viewLabels.internal}
+            </button>
+          </div>
           <LanguageSwitcher locale={locale} onChange={setLocale} />
           <div className="hidden items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-1.5 text-xs text-accent-secondary sm:flex">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
@@ -126,6 +154,26 @@ export function Studio() {
         </div>
       </header>
 
+      <div className="mt-4 grid grid-cols-2 gap-2 md:hidden">
+        <button type="button" onClick={() => setView("customer")} className={`kb-focusable min-h-[44px] rounded-xl border px-3 text-sm ${view === "customer" ? "border-accent/40 bg-accent/10 text-accent" : "border-white/10 text-muted"}`}>{viewLabels.customer}</button>
+        <button type="button" onClick={() => setView("internal")} className={`kb-focusable min-h-[44px] rounded-xl border px-3 text-sm ${view === "internal" ? "border-accent/40 bg-accent/10 text-accent" : "border-white/10 text-muted"}`}>{viewLabels.internal}</button>
+      </div>
+
+      {view === "customer" ? (
+        <main className="mx-auto max-w-4xl py-8 sm:py-12">
+          <div className="mb-5 text-center">
+            <div className="mx-auto mb-3 flex w-fit items-center gap-2 rounded-full border border-success/20 bg-success/5 px-3 py-1.5 text-xs text-success">
+              <span className="h-2 w-2 rounded-full bg-success" />
+              {liveAI ? copy.live : copy.safe}
+            </div>
+            <h1 className="text-3xl font-semibold tracking-[-.04em] text-foreground sm:text-4xl">{viewLabels.customerTitle}</h1>
+            <p className="mt-2 text-sm text-muted">{viewLabels.customerIntro}</p>
+          </div>
+          <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0B1426]/90 shadow-2xl shadow-black/35">
+            <SupportDemo locale={locale} customerView />
+          </section>
+        </main>
+      ) : (
       <main className="grid gap-10 py-10 lg:grid-cols-[340px_1fr] lg:py-16">
         <section>
           <p className="mb-4 font-mono text-xs uppercase tracking-[.22em] text-accent">
@@ -199,20 +247,19 @@ export function Studio() {
             </span>
           </div>
           <div className="min-h-[570px] p-5 sm:p-7">
-            {active === "chat" ? (
-              <ChatDemo locale={locale} />
+            {active === "support" ? (
+              <SupportDemo locale={locale} />
             ) : active === "knowledge" ? (
               <KnowledgeDemo locale={locale} />
             ) : active === "workflow" ? (
               <WorkflowDemo locale={locale} />
-            ) : active === "agent" ? (
-              <AgentDemo locale={locale} />
             ) : (
-              <SupportDemo locale={locale} />
+              <AgentDemo locale={locale} />
             )}
           </div>
         </section>
       </main>
+      )}
       <footer className="flex flex-col gap-2 border-t border-white/10 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
         <p>{copy.footer}</p>
         <p className="font-mono">Next.js · TypeScript · Tailwind CSS</p>
@@ -221,7 +268,7 @@ export function Studio() {
   );
 }
 
-function ChatDemo({ locale }: { locale: UiLocale }) {
+export function ChatDemo({ locale }: { locale: UiLocale }) {
   const copy = uiCopy[locale];
   const [message, setMessage] = useState<string>(copy.chatDefault);
   const [submittedMessage, setSubmittedMessage] = useState("");
@@ -1404,7 +1451,7 @@ function AgentDemo({ locale }: { locale: UiLocale }) {
   );
 }
 
-function SupportDemo({ locale }: { locale: UiLocale }) {
+function SupportDemo({ locale, customerView = false }: { locale: UiLocale; customerView?: boolean }) {
   const copy = uiCopy[locale];
   const localizedScenarios = copy.scenarios.map(([label, message], index) => ({
     label: `${index + 1} · ${label}`,
@@ -1489,19 +1536,21 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
   }
 
   return (
-    <div className="flex min-h-[510px] flex-col">
+    <div className={`flex min-h-[610px] flex-col ${customerView ? "p-4 sm:p-6" : ""}`}>
       <div className="mb-5 rounded-xl border border-white/10 bg-[#07101F] p-4">
         <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-accent">
           {copy.supportTitle}
         </p>
         <p className="text-sm leading-5 text-muted">{copy.supportIntro}</p>
-        <p className="mt-2 text-xs text-muted/65 leading-relaxed">{copy.supportLimit}</p>
+        {!customerView && <p className="mt-2 text-xs text-muted/65 leading-relaxed">{copy.supportLimit}</p>}
       </div>
 
       {/* Guided demo scenarios cards */}
       <div className="mb-6">
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">
-          {copy.guidedScenarios}
+          {customerView
+            ? locale === "th" ? "หัวข้อที่สอบถามบ่อย" : locale === "zh" ? "常见咨询" : "Common questions"
+            : copy.guidedScenarios}
         </h3>
         <div className="grid gap-2 sm:grid-cols-4">
           {localizedScenarios.map((scenario) => {
@@ -1561,9 +1610,9 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
               {entry.user}
             </div>
             <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm leading-6 text-foreground">
-              <span className={`mr-2 rounded px-2 py-0.5 font-mono text-[10px] font-semibold ${entry.decision === "ESCALATE" ? "bg-warning/20 text-warning" : "bg-success/20 text-success"}`}>
+              {!customerView && <span className={`mr-2 rounded px-2 py-0.5 font-mono text-[10px] font-semibold ${entry.decision === "ESCALATE" ? "bg-warning/20 text-warning" : "bg-success/20 text-success"}`}>
                 {entry.decision === "ESCALATE" ? "ESCALATE" : "AUTO RESPOND"}
-              </span>
+              </span>}
               {entry.answer}
             </div>
           </div>
@@ -1587,12 +1636,12 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
           <div className="max-w-full space-y-3">
             <div
               className={`rounded-2xl rounded-bl-sm border px-4 py-3 text-sm leading-6 ${
-                result.trace.decision === "ESCALATE"
+                !customerView && result.trace.decision === "ESCALATE"
                   ? "border-warning/30 bg-warning/10 text-warning"
                   : "border-white/10 bg-white/[.04] text-foreground"
               }`}
             >
-              <span
+              {!customerView && <span
                 className={`mr-2 rounded px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider font-semibold ${
                   result.trace.decision === "ESCALATE"
                     ? "bg-warning/20 text-warning"
@@ -1600,7 +1649,7 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
                 }`}
               >
                 {result.trace.decision === "ESCALATE" ? "ESCALATE" : "AUTO RESPOND"}
-              </span>
+              </span>}
               {result.answer}
             </div>
 
@@ -1639,7 +1688,7 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
             )}
 
             {/* Support Copilot Trace - Collapsed by default */}
-            <details className="group border border-white/10 bg-[#0B1426] p-4 rounded-xl">
+            {!customerView && <details className="group border border-white/10 bg-[#0B1426] p-4 rounded-xl">
               <summary className="kb-focusable cursor-pointer font-mono text-xs text-accent select-none list-none outline-none focus-visible:ring-1 focus-visible:ring-accent">
                 ▸ {copy.technicalTrace}
               </summary>
@@ -1774,7 +1823,7 @@ function SupportDemo({ locale }: { locale: UiLocale }) {
                   )}
                 </div>
               </div>
-            </details>
+            </details>}
           </div>
         )}
         <div ref={conversationEndRef} aria-hidden="true" />
