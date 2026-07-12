@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectLanguage, normalizeLocally } from "./multilingual";
+import { applyConversationContext, detectLanguage, normalizeLocally } from "./multilingual";
 
 describe("multilingual support", () => {
   it("detects English, Thai, and Chinese", () => {
@@ -31,5 +31,12 @@ describe("multilingual support", () => {
   it("keeps canonical product-purpose hints in Thai and Chinese local normalization", () => {
     expect(normalizeLocally("ระบบนี้สร้างมาทำไม", "th")).toContain("product purpose");
     expect(normalizeLocally("为什么要创建这个系统？", "zh")).toContain("product purpose");
+  });
+
+  it("lets an explicit deposit correction override rejected withdrawal vocabulary", () => {
+    const original = "ไม่ใช่ถอน ฝากไม่เข้า";
+    const contextual = applyConversationContext(original, normalizeLocally(original, "th"), ["ถอนเงินสำเร็จแต่เงินไม่เข้า"]);
+    expect(contextual).toContain("deposit transaction");
+    expect(contextual).not.toContain("withdrawal completed");
   });
 });

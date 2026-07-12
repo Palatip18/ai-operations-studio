@@ -29,7 +29,12 @@ const MISSING_FUNDS = /not (?:arrived|received|credited)|missing|ไม่เข
 export function lookupSimulatedTransaction(message: string): BackofficeTransactionResult {
   const reference = message.toUpperCase().match(/\b(?:DEP|WDL)-\d{4}\b/)?.[0] ?? null;
   if (!reference) {
-    return { simulated: true, found: false, reference: null, kind: null, status: "NEEDS_REFERENCE", reviewRequired: false };
+    const kind = /ฝาก|deposit|top ?up|存款|充值/i.test(message)
+      ? "DEPOSIT"
+      : /ถอน|withdraw|cash ?out|提款|提现/i.test(message)
+        ? "WITHDRAWAL"
+        : null;
+    return { simulated: true, found: false, reference: null, kind, status: "NEEDS_REFERENCE", reviewRequired: false };
   }
 
   const record = transactions.get(reference);
@@ -43,9 +48,21 @@ export function lookupSimulatedTransaction(message: string): BackofficeTransacti
 
 export function composeTransactionStatusReply(result: BackofficeTransactionResult, locale: string): string {
   if (result.status === "NEEDS_REFERENCE") {
-    if (locale === "th") return "ขอหมายเลขอ้างอิงรายการก่อนนะครับ เช่น DEP-1001 สำหรับฝากเงิน หรือ WDL-2001 สำหรับถอนเงิน โดยไม่ต้องส่งเลขบัญชีเต็ม รหัสผ่าน หรือ OTP";
-    if (locale === "zh") return "请先提供交易编号，例如存款 DEP-1001 或提款 WDL-2001。请勿发送完整银行账号、密码或 OTP。";
-    return "Please provide the transaction reference first, such as DEP-1001 for a deposit or WDL-2001 for a withdrawal. Do not send a full bank-account number, password, or OTP.";
+    if (locale === "th") return result.kind === "DEPOSIT"
+      ? "เข้าใจแล้วครับ เป็นรายการฝากเงินที่เครดิตยังไม่เข้า กรุณาส่งหมายเลขอ้างอิงการฝากรูปแบบ DEP-1001 เพื่อตรวจสอบสถานะ โดยไม่ต้องส่งเลขบัญชีเต็ม รหัสผ่าน หรือ OTP"
+      : result.kind === "WITHDRAWAL"
+        ? "เข้าใจแล้วครับ เป็นรายการถอนเงิน กรุณาส่งหมายเลขอ้างอิงการถอนรูปแบบ WDL-2001 เพื่อตรวจสอบสถานะ โดยไม่ต้องส่งเลขบัญชีเต็ม รหัสผ่าน หรือ OTP"
+        : "ขอหมายเลขอ้างอิงรายการก่อนนะครับ เช่น DEP-1001 สำหรับฝากเงิน หรือ WDL-2001 สำหรับถอนเงิน โดยไม่ต้องส่งเลขบัญชีเต็ม รหัสผ่าน หรือ OTP";
+    if (locale === "zh") return result.kind === "DEPOSIT"
+      ? "明白了，这是存款未到账问题。请提供 DEP-1001 格式的存款编号以查询状态，请勿发送完整银行账号、密码或 OTP。"
+      : result.kind === "WITHDRAWAL"
+        ? "明白了，这是提款问题。请提供 WDL-2001 格式的提款编号以查询状态，请勿发送完整银行账号、密码或 OTP。"
+        : "请先提供交易编号，例如存款 DEP-1001 或提款 WDL-2001。请勿发送完整银行账号、密码或 OTP。";
+    return result.kind === "DEPOSIT"
+      ? "Understood — this is a deposit-credit issue. Please provide a deposit reference such as DEP-1001 so I can check its status. Do not send a full bank-account number, password, or OTP."
+      : result.kind === "WITHDRAWAL"
+        ? "Understood — this is a withdrawal issue. Please provide a withdrawal reference such as WDL-2001 so I can check its status. Do not send a full bank-account number, password, or OTP."
+        : "Please provide the transaction reference first, such as DEP-1001 for a deposit or WDL-2001 for a withdrawal. Do not send a full bank-account number, password, or OTP.";
   }
   if (result.status === "NOT_FOUND") {
     if (locale === "th") return `ไม่พบรายการ ${result.reference} ในระบบหลังบ้านจำลอง ระบบจึงสร้างเคสจำลองเพื่อตรวจสอบเลขอ้างอิงนี้เพิ่มเติมครับ`;
@@ -62,4 +79,3 @@ export function composeTransactionStatusReply(result: BackofficeTransactionResul
   if (locale === "zh") return `已在模拟后台找到交易 ${status}。${result.safeReason ?? "交易正按所示状态处理。"}`;
   return `Transaction ${status} was found in the simulated back office. ${result.safeReason ?? "It is progressing according to the displayed status."}`;
 }
-

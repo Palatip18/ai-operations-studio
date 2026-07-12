@@ -58,6 +58,33 @@ export function normalizeLocally(text: string, language = detectLanguage(text)):
   return normalized.replace(/\s+/g, " ").trim();
 }
 
+/**
+ * Applies a bounded amount of conversation context without letting a
+ * corrected topic keep vocabulary from the rejected topic. The current turn
+ * always wins when it explicitly names deposit vs. withdrawal.
+ */
+export function applyConversationContext(original: string, normalized: string, previousUserMessages: string[] = []): string {
+  const depositCorrection = /ฝาก(?:เงิน)?|deposit|top ?up|存款|充值/i.test(original);
+  const withdrawalCorrection = /ถอน(?:เงิน)?|withdraw|cash ?out|提款|提现/i.test(original);
+  const rejectsWithdrawal = /ไม่ใช่\s*ถอน|not (?:a )?withdrawal|不是提款|不是提现/i.test(original);
+  const rejectsDeposit = /ไม่ใช่\s*ฝาก|not (?:a )?deposit|不是存款|不是充值/i.test(original);
+
+  if (depositCorrection && (rejectsWithdrawal || !withdrawalCorrection)) {
+    return `${normalized.replace(/withdraw(?:al|ing)?|cash ?out/gi, " ")} deposit transaction deposit not credited`.replace(/\s+/g, " ").trim();
+  }
+  if (withdrawalCorrection && (rejectsDeposit || !depositCorrection)) {
+    return `${normalized.replace(/deposit|top ?up/gi, " ")} withdrawal transaction`.replace(/\s+/g, " ").trim();
+  }
+
+  const looksLikeFollowUp = /อันนี้|เมื่อกี้|รายการนี้|แล้วล่ะ|that one|previous|what about|这个|刚才|那笔/i.test(original);
+  const previous = previousUserMessages.at(-1);
+  if (looksLikeFollowUp && previous) {
+    const previousNormalized = normalizeLocally(previous, detectLanguage(previous));
+    return `${previousNormalized} Follow-up clarification: ${normalized}`;
+  }
+  return normalized;
+}
+
 async function translate(text: string, instruction: string): Promise<string | null> {
   if (!isOpenAIConfigured()) return null;
   const apiKey = process.env.OPENAI_API_KEY;

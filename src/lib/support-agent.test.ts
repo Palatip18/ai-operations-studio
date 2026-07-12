@@ -137,6 +137,20 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     expect(result.handoff).toBeNull();
     expect(result.answer).toMatch(/DEP-1001|transaction reference/i);
   });
+
+  it("treats a Thai deposit correction as the current topic instead of repeating withdrawal guidance", async () => {
+    const result = await runSupportAgent(
+      "ไม่ใช่ถอน ฝากไม่เข้า",
+      ["ถอนเงินสำเร็จแล้วแต่บัญชีปลายทางยังไม่ได้รับเงิน"],
+    );
+    expect(result.trace.intent).toBe("deposit_withdrawal");
+    expect(result.transaction).toMatchObject({ status: "NEEDS_REFERENCE", kind: "DEPOSIT", reviewRequired: false });
+    expect(result.trace.decision).toBe("AUTO_RESPOND");
+    expect(result.handoff).toBeNull();
+    expect(result.answer).toContain("รายการฝากเงิน");
+    expect(result.answer).toContain("DEP-1001");
+    expect(result.answer).not.toContain("หมายเลขอ้างอิงการถอน");
+  });
 });
 
 describe("trace redaction for the support agent", () => {

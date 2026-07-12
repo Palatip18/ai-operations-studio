@@ -40,3 +40,21 @@ Technical identifiers, source document titles/content, intent codes, tool names,
   - Workflow options and Agent scenarios remained English.
   - Agent empty-state disclaimer remained English.
 - Canonical English knowledge-document titles were intentionally retained and explicitly labeled as English source documents.
+# Conversation-correction regression
+
+## Reported behavior
+
+After the assistant answered a withdrawal question, the customer corrected it with `ไม่ใช่ถอน ฝากไม่เข้า` ("not withdrawal; the deposit did not arrive"). The UI displayed conversation history, but the support API previously received only the latest message. Retrieval therefore retained withdrawal vocabulary and repeated withdrawal guidance.
+
+## Fix
+
+- The Live Chat now sends at most four previous customer messages to `/api/support`.
+- The API validates, trims, and caps every context item before passing it to the agent.
+- `applyConversationContext` treats an explicitly named current topic as authoritative.
+- Negated withdrawal vocabulary is removed when the customer explicitly corrects the topic to deposit, and vice versa.
+- A deposit correction without a reference requests a `DEP-` reference and does not open a case.
+- Conversation context is used for routing only and is not copied into the technical trace.
+
+## Regression coverage
+
+Automated tests reproduce the exact Thai correction, verify `deposit_withdrawal` intent, confirm `DEPOSIT / NEEDS_REFERENCE`, prohibit a withdrawal-reference response, and confirm that no handoff is created before the required deposit reference is supplied.

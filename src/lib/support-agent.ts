@@ -7,7 +7,7 @@ import { isOpenAIConfigured } from "./openai";
 import { summarize } from "./trace-redaction";
 import { RETRIEVAL_RELEVANCE_THRESHOLD } from "./agent";
 import { classifyQueryTopics } from "./query-topics";
-import { normalizeSupportInput } from "./multilingual";
+import { applyConversationContext, normalizeSupportInput } from "./multilingual";
 import { deriveTone, composeCustomerResponse } from "./response-composer";
 import { handleSimulatedHandoff, type HandoffResult } from "./support-handoff";
 import { composeTransactionStatusReply, lookupSimulatedTransaction, type BackofficeTransactionResult } from "./support-backoffice";
@@ -87,10 +87,10 @@ export function decideSupportPolicy(
   return { decision: "AUTO_RESPOND", escalationReason: null };
 }
 
-export async function runSupportAgent(message: string): Promise<SupportResult> {
+export async function runSupportAgent(message: string, previousUserMessages: string[] = []): Promise<SupportResult> {
   const start = Date.now();
   const multilingual = await normalizeSupportInput(message);
-  const processingMessage = multilingual.normalized;
+  const processingMessage = applyConversationContext(message, multilingual.normalized, previousUserMessages.slice(-4));
   const intent = classifyIntent(processingMessage);
   const risk = classifyRisk(processingMessage, intent);
   const live = isOpenAIConfigured();

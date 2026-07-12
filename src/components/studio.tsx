@@ -1484,6 +1484,10 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
   async function run(prompt: string) {
     const trimmed = prompt.trim();
     if (!trimmed || loading) return;
+    const previousUserMessages = [
+      ...history.map((entry) => entry.user),
+      ...(submittedMessage ? [submittedMessage] : []),
+    ].slice(-4);
     if (submittedMessage && result) {
       setHistory((current) => [
         ...current,
@@ -1505,7 +1509,7 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
       const response = await fetch("/api/support", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({ message: trimmed, previousUserMessages }),
       });
 
       if (response.status === 401) {
