@@ -27,3 +27,16 @@ For each locale (`EN`, `ไทย`, `中文`) verify:
 ## Honest limitation
 
 Technical identifiers, source document titles/content, intent codes, tool names, risk codes, and execution payloads remain in canonical English. They are system data, not interface copy. Production multilingual parity requires translated, version-controlled knowledge documents and native-language evaluation sets.
+
+## 2026-07-13 release record
+
+- Automated catalog checks: passed for EN / ไทย / 中文.
+- Lint, TypeScript, 158 tests, and production build: passed.
+- Production browser review covered all five modules in Thai and Chinese, plus the English baseline.
+- Issues found during browser QA and fixed before final sign-off:
+  - AI Chat body remained English after selecting Thai.
+  - Summary metrics remained English.
+  - Chat and Knowledge default inputs did not update after locale changes.
+  - Workflow options and Agent scenarios remained English.
+  - Agent empty-state disclaimer remained English.
+- Canonical English knowledge-document titles were intentionally retained and explicitly labeled as English source documents.

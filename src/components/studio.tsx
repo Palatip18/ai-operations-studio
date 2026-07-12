@@ -671,7 +671,7 @@ function AgentDemo({ locale }: { locale: UiLocale }) {
           <div className="rounded-xl border border-dashed border-white/10 px-5 py-10 text-center">
             <p className="text-sm text-[#90a9a0]">{copy.agentEmpty}</p>
             <p className="mt-2 text-xs text-[#60776f]">
-              All documents and requests in this demo are fictional.
+              {copy.documentsFictional}
             </p>
           </div>
         )}
