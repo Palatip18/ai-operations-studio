@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-150_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-154_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
@@ -37,6 +37,12 @@ The Support Copilot module combines six pieces, each earning its place for a spe
 
 The default `mock` mode is deterministic, free to run, and requires no credentials. An optional OpenAI-compatible provider can perform model-driven tool selection (chat) and semantic retrieval (RAG, agent, support) behind the same API boundary. If the provider is unavailable, every route falls back safely to deterministic behavior.
 
+### Language support
+
+The Customer Support Copilot accepts **English, Thai, and Simplified Chinese**. It detects the input language, translates or locally normalizes the request into English for the current intent/risk/retrieval pipeline, and returns the response in the user's language when the live provider is available. The no-key fallback includes a tested phrase map for common account, billing, cancellation, troubleshooting, privacy, dispute, security, complaint, roadmap, and automation-condition requests; when a safe localized answer cannot be generated, it returns a clearly labeled English reference instead of inventing a translation.
+
+English remains the canonical knowledge and evaluation language. Thai and Chinese support is an implemented multilingual adapter, **not yet production-grade multilingual RAG**: there is no fully translated document corpus, locale-specific policy ownership, or large native-language evaluation set. Those are required before claiming equal accuracy across all three languages.
+
 ### Measured prototype quality
 
 - 10/10 semantic retrieval cases pass at top-1 with `text-embedding-3-small`, including paraphrased questions and one negative/no-answer case (original 3-document Agentic Copilot dataset).
@@ -57,7 +63,7 @@ The default `mock` mode is deterministic, free to run, and requires no credentia
   | Mean latency | ~1ms | ~296ms |
 
   These numbers are not the 80-90% target — see [Knowledge-quality model](#knowledge-quality-model) for why, and [Evaluation methodology](#evaluation-methodology) for full definitions.
-- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, intent/risk classification, mandatory escalation, and API auth — 150 tests, see `npm test`.
+- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual normalization, intent/risk classification, mandatory escalation, and API auth — 154 tests, see `npm test`.
 - Results are exposed through `GET /api/evaluation`, `GET /api/agent-evaluation`, `GET /api/support-evaluation`, and displayed in the UI.
 
 These figures validate only the included fictional sample set and documented thresholds; they are not claims of production accuracy.
@@ -369,7 +375,7 @@ src/
     ├── support-classification.ts  # Deterministic intent/risk/mandatory-escalation logic
     ├── support-agent.ts           # Support Copilot orchestrator + decideSupportPolicy
     ├── support-evaluation.ts      # 35-case Customer Support Copilot evaluation suite
-    └── *.test.ts                  # Unit tests (150)
+    └── *.test.ts                  # Unit tests (154)
 ```
 
 **Files an AI Engineer should inspect first:** `src/lib/support-agent.ts` (the orchestration flow and the pure `decideSupportPolicy` function), `src/lib/support-classification.ts` (deterministic policy logic), `src/lib/verifier.ts` (the groundedness heuristic and its documented limits), `src/lib/agent.ts` (the mode-aware retrieval threshold and why it exists), `src/lib/support-evaluation.ts` (how the honest, non-cherry-picked metrics table above was produced).

@@ -7,6 +7,7 @@ import { isOpenAIConfigured } from "./openai";
 import { summarize } from "./trace-redaction";
 import { RETRIEVAL_RELEVANCE_THRESHOLD } from "./agent";
 import { classifyQueryTopics } from "./query-topics";
+import { localizeSupportAnswer, localizedEscalation, normalizeSupportInput, type SupportedLanguage } from "./multilingual";
 
 /**
  * Bounded customer-support agent:
@@ -49,6 +50,8 @@ export type SupportTrace = {
   modelCallCount: number;
   estimatedUsage: { promptTokens: number; totalTokens: number } | null;
   mode: "live" | "deterministic";
+  language: SupportedLanguage;
+  normalizationMode: "original" | "local-map" | "live-translation";
 };
 
 export type SupportResult = { answer: string; trace: SupportTrace };
@@ -84,8 +87,10 @@ export function decideSupportPolicy(
 
 export async function runSupportAgent(message: string): Promise<SupportResult> {
   const start = Date.now();
-  const intent = classifyIntent(message);
-  const risk = classifyRisk(message, intent);
+  const multilingual = await normalizeSupportInput(message);
+  const processingMessage = multilingual.normalized;
+  const intent = classifyIntent(processingMessage);
+  const risk = classifyRisk(processingMessage, intent);
   const live = isOpenAIConfigured();
 
   const steps: SupportStepTrace[] = [];
@@ -95,9 +100,10 @@ export async function runSupportAgent(message: string): Promise<SupportResult> {
   let promptTokens = 0;
   let totalTokens = 0;
   let sawUsage = false;
+  if (multilingual.mode === "live-translation") modelCallCount += 1;
 
   // Step 1: knowledge retrieval (always attempted — a support answer should be grounded whenever possible)
-  const retrieval = await searchKnowledgeSemantic(message);
+  const retrieval = await searchKnowledgeSemantic(processingMessage);
   const relevanceThreshold = retrieval.mode === "openai-embeddings" ? RETRIEVAL_RELEVANCE_THRESHOLD.live : RETRIEVAL_RELEVANCE_THRESHOLD.local;
   const results = retrieval.results.filter((result) => result.score >= relevanceThreshold);
   for (const result of results) {
@@ -127,13 +133,13 @@ export async function runSupportAgent(message: string): Promise<SupportResult> {
   // Use one source for ordinary questions and up to two independently ranked sources
   // for explicit multi-topic questions. Each section keeps its source id so the answer
   // does not imply that a single document supports every claim.
-  const queryTopics = classifyQueryTopics(message).filter((topic) => topic !== "unknown");
+  const queryTopics = classifyQueryTopics(processingMessage).filter((topic) => topic !== "unknown");
   const selectedResults = results.slice(0, new Set(queryTopics).size > 1 ? 2 : 1);
   const fragments: string[] = [selectedResults.length
     ? selectedResults.map((result) => `[${result.document.id}] ${result.chunk}`).join("\n\n")
     : "No grounded answer was found in the knowledge base for this request."];
   if (WORKFLOW_INTENTS.has(intent)) {
-    const args = deriveWorkflowRequest(message);
+    const args = deriveWorkflowRequest(processingMessage);
     const workflowSteps = runWorkflow(args);
     fragments.push(`Simulated status check: ${workflowSteps.map((s) => `${s.step}: ${s.detail}`).join(" ")}`);
     steps.push({
@@ -145,13 +151,19 @@ export async function runSupportAgent(message: string): Promise<SupportResult> {
   }
 
   const answer = summarize(fragments.join(" "), 2000);
-  const verifier = verifyGroundedness(answer, groundingEvidence, message);
-  const mandatory = checkMandatoryEscalation(message, intent);
+  const verifier = verifyGroundedness(answer, groundingEvidence, processingMessage);
+  const mandatory = checkMandatoryEscalation(processingMessage, intent);
   const { decision, escalationReason } = decideSupportPolicy(mandatory, verifier, risk, intent);
 
-  const safeAnswer = decision === "AUTO_RESPOND"
-    ? answer
-    : `This request has been escalated to a human agent. ${escalationReason ?? ""}`.trim();
+  let safeAnswer: string;
+  if (decision === "AUTO_RESPOND") {
+    safeAnswer = await localizeSupportAnswer(answer, multilingual.language);
+  } else if (multilingual.language !== "en" && live) {
+    safeAnswer = await localizeSupportAnswer(`This request has been escalated to a human agent. ${escalationReason ?? "Human review is required."}`, multilingual.language);
+  } else {
+    safeAnswer = localizedEscalation(multilingual.language, escalationReason ?? "Human review is required.");
+  }
+  if (multilingual.language !== "en" && live) modelCallCount += 1;
 
   return {
     answer: safeAnswer,
@@ -168,6 +180,8 @@ export async function runSupportAgent(message: string): Promise<SupportResult> {
       modelCallCount,
       estimatedUsage: sawUsage ? { promptTokens, totalTokens } : null,
       mode: live ? "live" : "deterministic",
+      language: multilingual.language,
+      normalizationMode: multilingual.mode,
     },
   };
 }
