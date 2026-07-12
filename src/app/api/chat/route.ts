@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { runLiveAssistant } from "@/lib/llm";
 import { executeTool, routeTool } from "@/lib/tools";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const rate = checkRateLimit(request, "chat", 12, 10 * 60 * 1000);
+  if (!rate.allowed) return NextResponse.json({ error: "Demo request limit reached. Please try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfter) } });
   const body = (await request.json()) as { message?: string };
   const message = body.message?.trim();
   if (!message) return NextResponse.json({ error: "Message is required" }, { status: 400 });
+  if (message.length > 500) return NextResponse.json({ error: "Message must be 500 characters or fewer" }, { status: 400 });
 
   if (process.env.AI_PROVIDER === "openai") {
     try {

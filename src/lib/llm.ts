@@ -34,7 +34,7 @@ async function completion(baseUrl: string, apiKey: string, model: string, messag
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ model, messages, tools: toolDefinitions, tool_choice: "auto", temperature: 0.1 }),
+    body: JSON.stringify({ model, messages, tools: toolDefinitions, tool_choice: "auto", temperature: 0.1, max_tokens: 350 }),
     signal: AbortSignal.timeout(20_000),
   });
   if (!response.ok) throw new Error(`Model provider returned ${response.status}`);

@@ -144,7 +144,10 @@ This repository is a **personal portfolio prototype**. It demonstrates working U
 
 - Only mock/sample data is included.
 - `.env*` is ignored; `.env.example` contains placeholders only.
+- Public AI endpoints apply per-client request limits, 500-character input limits, provider timeouts, and a 350-token chat output cap as basic cost guards.
 - Never upload private documents, production credentials, or real personal/transaction data to this demo.
+
+The in-memory request limiter is appropriate only as a lightweight portfolio guard. A production deployment should use a shared rate-limit store, authentication, quotas, abuse monitoring, and budget alerts.
 
 ## License
 

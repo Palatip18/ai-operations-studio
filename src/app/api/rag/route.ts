@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { searchKnowledgeSemantic } from "@/lib/knowledge";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const rate = checkRateLimit(request, "rag", 20, 10 * 60 * 1000);
+  if (!rate.allowed) return NextResponse.json({ error: "Demo request limit reached. Please try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfter) } });
   const body = (await request.json()) as { query?: string };
   const query = body.query?.trim();
   if (!query) return NextResponse.json({ error: "Query is required" }, { status: 400 });
+  if (query.length > 500) return NextResponse.json({ error: "Query must be 500 characters or fewer" }, { status: 400 });
   const retrieval = await searchKnowledgeSemantic(query);
   const matches = retrieval.results;
   return NextResponse.json({
