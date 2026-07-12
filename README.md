@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-155_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-158_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
@@ -39,7 +39,7 @@ The default `mock` mode is deterministic, free to run, and requires no credentia
 
 ### Language support
 
-The Customer Support Copilot accepts **English, Thai, and Simplified Chinese**. It detects the input language, translates or locally normalizes the request into English for the current intent/risk/retrieval pipeline, and returns the response in the user's language when the live provider is available. The no-key fallback includes a tested phrase map for common account, billing, cancellation, troubleshooting, privacy, dispute, security, complaint, roadmap, and automation-condition requests; when a safe localized answer cannot be generated, it returns a clearly labeled English reference instead of inventing a translation.
+The interface and Customer Support Copilot support **English, Thai, and Simplified Chinese**. The login page, application shell, module navigation, core controls, empty/loading states, workflow labels, agent/support scenarios, and support trace labels use the selected language, which persists in the browser. The support pipeline detects the input language, translates or locally normalizes it into English for intent/risk/retrieval, and returns the response in the user's language when the live provider is available. See [`docs/localization-qa.md`](docs/localization-qa.md) for the retained QA matrix.
 
 English remains the canonical knowledge and evaluation language. Thai and Chinese support is an implemented multilingual adapter, **not yet production-grade multilingual RAG**: there is no fully translated document corpus, locale-specific policy ownership, or large native-language evaluation set. Those are required before claiming equal accuracy across all three languages.
 
@@ -49,21 +49,22 @@ English remains the canonical knowledge and evaluation language. Thai and Chines
 - 3/3 deterministic local-vector checks remain available as the no-key fallback baseline (same dataset).
 - The following 35-case results are a **historical pre-hybrid baseline** on this repository's fictional data. They demonstrate the evaluation method, not the current checkpoint's live-provider performance; live metrics must be re-run after retrieval-policy changes:
 
-  | Metric | Deterministic (no-key) | Live embeddings |
-  |---|---|---|
-  | Intent classification accuracy | 100% | 100% |
-  | Risk classification accuracy | 100% | 100% |
-  | Tool-routing accuracy | 100% | 100% |
-  | Retrieval top-1 accuracy | 24% | 72% |
-  | Groundedness accuracy | 48% | 76% |
-  | No-answer detection | 80% | 80% |
-  | Escalation precision / recall | 54% / 93% | 72% / 93% |
-  | Response-format compliance | 100% | 100% |
-  | Automation coverage (low-risk eligible cases) | 50% | 90% |
-  | Mean latency | ~1ms | ~296ms |
+  | Metric                                        | Deterministic (no-key) | Live embeddings |
+  | --------------------------------------------- | ---------------------- | --------------- |
+  | Intent classification accuracy                | 100%                   | 100%            |
+  | Risk classification accuracy                  | 100%                   | 100%            |
+  | Tool-routing accuracy                         | 100%                   | 100%            |
+  | Retrieval top-1 accuracy                      | 24%                    | 72%             |
+  | Groundedness accuracy                         | 48%                    | 76%             |
+  | No-answer detection                           | 80%                    | 80%             |
+  | Escalation precision / recall                 | 54% / 93%              | 72% / 93%       |
+  | Response-format compliance                    | 100%                   | 100%            |
+  | Automation coverage (low-risk eligible cases) | 50%                    | 90%             |
+  | Mean latency                                  | ~1ms                   | ~296ms          |
 
   These numbers are not the 80-90% target — see [Knowledge-quality model](#knowledge-quality-model) for why, and [Evaluation methodology](#evaluation-methodology) for full definitions.
-- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, multilingual normalization, intent/risk classification, mandatory escalation, and API auth — 155 tests, see `npm test`.
+
+- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, UI catalogs, multilingual normalization, intent/risk classification, mandatory escalation, and API auth — 158 tests, see `npm test`.
 - Results are exposed through `GET /api/evaluation`, `GET /api/agent-evaluation`, `GET /api/support-evaluation`, and displayed in the UI.
 
 These figures validate only the included fictional sample set and documented thresholds; they are not claims of production accuracy.
@@ -78,13 +79,13 @@ These figures validate only the included fictional sample set and documented thr
 
 **Measurable business value this pattern targets in a real deployment:**
 
-| Metric | What it would tell an operations team |
-|---|---|
-| Grounded-answer rate | Share of answers backed by a real document, vs. unsupported claims caught before reaching a user |
-| No-answer precision | Whether the system correctly says "I don't know" instead of guessing — directly reduces support escalations from wrong answers |
-| Tool-routing accuracy | Whether requests reach the right automation path the first time, cutting manual triage |
-| Workflow decision accuracy | Whether policy automation matches what a human reviewer would decide, a proxy for time saved per request |
-| Latency and token/cost per request | What a rollout would cost and how it would feel to end users at scale |
+| Metric                             | What it would tell an operations team                                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Grounded-answer rate               | Share of answers backed by a real document, vs. unsupported claims caught before reaching a user                               |
+| No-answer precision                | Whether the system correctly says "I don't know" instead of guessing — directly reduces support escalations from wrong answers |
+| Tool-routing accuracy              | Whether requests reach the right automation path the first time, cutting manual triage                                         |
+| Workflow decision accuracy         | Whether policy automation matches what a human reviewer would decide, a proxy for time saved per request                       |
+| Latency and token/cost per request | What a rollout would cost and how it would feel to end users at scale                                                          |
 
 **What I would measure next in production:** grounded-answer accuracy against a larger labeled set, retrieval precision/recall, workflow completion and exception rates, time saved per request vs. a manual baseline, and live cost/latency under real traffic.
 
@@ -225,13 +226,13 @@ sequenceDiagram
 
 ## Knowledge-quality model
 
-Automation coverage is presented as a function of conditions, not a fixed number, because this repository's own measurements show why: retrieval quality alone moved the *same* decision logic from 50% automation coverage (deterministic local-vector retrieval) to 90% (live embeddings) on the identical 35-case dataset (see the table above). The conditions this repository documents (`automation-coverage-conditions` in the knowledge base, and enforced nowhere else — this is intentionally not a numeric formula) are:
+Automation coverage is presented as a function of conditions, not a fixed number, because this repository's own measurements show why: retrieval quality alone moved the _same_ decision logic from 50% automation coverage (deterministic local-vector retrieval) to 90% (live embeddings) on the identical 35-case dataset (see the table above). The conditions this repository documents (`automation-coverage-conditions` in the knowledge base, and enforced nowhere else — this is intentionally not a numeric formula) are:
 
 - **Knowledge completeness** — every intent the system should auto-answer needs a document.
 - **Document accuracy** — an out-of-date document produces a confidently-wrong grounded answer just as easily as a correct one.
 - **Freshness** — policy changes (pricing, refund windows, exceptions) must reach the knowledge base before they reach customers.
 - **Exception coverage** — undocumented edge cases are exactly where an automated answer is most likely to be wrong.
-- **Retrieval quality** — measured directly in this repository: the same policy logic, same dataset, same threshold *type*, produced a 3x difference in automation coverage purely from retrieval method.
+- **Retrieval quality** — measured directly in this repository: the same policy logic, same dataset, same threshold _type_, produced a 3x difference in automation coverage purely from retrieval method.
 - **Escalation thresholds** — set too loose, unsafe answers get auto-sent; set too strict, coverage drops (also measured directly above).
 - **Channel and language coverage** — this prototype only implements one web-chat demo UI in English; real coverage claims must specify which channels/languages they cover.
 - **Continuous evaluation and maintenance** — a knowledge base and threshold that are correct today drift as products, policies, and phrasing change.
@@ -375,7 +376,7 @@ src/
     ├── support-classification.ts  # Deterministic intent/risk/mandatory-escalation logic
     ├── support-agent.ts           # Support Copilot orchestrator + decideSupportPolicy
     ├── support-evaluation.ts      # 35-case Customer Support Copilot evaluation suite
-    └── *.test.ts                  # Unit tests (155)
+    └── *.test.ts                  # Unit tests (158)
 ```
 
 **Files an AI Engineer should inspect first:** `src/lib/support-agent.ts` (the orchestration flow and the pure `decideSupportPolicy` function), `src/lib/support-classification.ts` (deterministic policy logic), `src/lib/verifier.ts` (the groundedness heuristic and its documented limits), `src/lib/agent.ts` (the mode-aware retrieval threshold and why it exists), `src/lib/support-evaluation.ts` (how the honest, non-cherry-picked metrics table above was produced).
@@ -394,17 +395,17 @@ It does **not** claim: production RAG, learned semantic embeddings at scale, an 
 
 ### Implementation status
 
-| Capability | Status |
-|---|---|
-| Intent classification, risk classification, mandatory-escalation rules | **IMPLEMENTED** (deterministic) |
-| Knowledge retrieval with citations, groundedness verifier | **IMPLEMENTED** |
-| AUTO_RESPOND / ESCALATE decision, redacted execution trace | **IMPLEMENTED** |
-| Evaluation suite (routing, groundedness, escalation precision/recall, coverage, latency) | **IMPLEMENTED** |
-| Workflow "status check" step for request-status/onboarding intents | **SIMULATED / MOCKED** — no real ticketing system |
-| Human-agent handoff | **SIMULATED / MOCKED** — represented only as a decision + reason, nothing is actually routed anywhere |
-| CRM, ticketing, email, web chat widget, LINE/Telegram/WhatsApp/Slack, Google Drive/Notion/SharePoint integration | **ROADMAP** — not present in this codebase |
-| Persisted vector database, model-based (entailment) groundedness | **ROADMAP** |
-| Multi-language support, role-based access, audit log | **ROADMAP** |
+| Capability                                                                                                       | Status                                                                                                |
+| ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Intent classification, risk classification, mandatory-escalation rules                                           | **IMPLEMENTED** (deterministic)                                                                       |
+| Knowledge retrieval with citations, groundedness verifier                                                        | **IMPLEMENTED**                                                                                       |
+| AUTO_RESPOND / ESCALATE decision, redacted execution trace                                                       | **IMPLEMENTED**                                                                                       |
+| Evaluation suite (routing, groundedness, escalation precision/recall, coverage, latency)                         | **IMPLEMENTED**                                                                                       |
+| Workflow "status check" step for request-status/onboarding intents                                               | **SIMULATED / MOCKED** — no real ticketing system                                                     |
+| Human-agent handoff                                                                                              | **SIMULATED / MOCKED** — represented only as a decision + reason, nothing is actually routed anywhere |
+| CRM, ticketing, email, web chat widget, LINE/Telegram/WhatsApp/Slack, Google Drive/Notion/SharePoint integration | **ROADMAP** — not present in this codebase                                                            |
+| Persisted vector database, model-based (entailment) groundedness                                                 | **ROADMAP**                                                                                           |
+| Multi-language support, role-based access, audit log                                                             | **ROADMAP**                                                                                           |
 
 ## Interview talking points
 
@@ -413,7 +414,7 @@ It does **not** claim: production RAG, learned semantic embeddings at scale, an 
 - **How do you decide what a bot should never answer on its own?** Separate policy from retrieval: mandatory-escalation triggers (fraud, disputes, sensitive data, policy exceptions, angry complaints) are deterministic keyword rules checked independently of whether the answer would otherwise be grounded — a well-cited answer to a question that should never be automated still escalates (see recruiter scenario 7).
 - **Why did retrieval accuracy matter so much here?** I measured it directly rather than assuming it: the exact same policy logic on the exact same 35-case dataset went from 50% to 90% automation coverage purely by swapping the retrieval method (deterministic hashing vs. live embeddings). That's the single clearest piece of evidence in this repo for why "knowledge quality/retrieval quality" is listed as a precondition for the 80-90% target, not a guarantee.
 - **How would you extend this to a real team's documents?** Swap `embedText`/`searchKnowledge` for a managed embedding model and a persisted vector store (already isolated behind `knowledge.ts`), add document-level access control, and replace the lexical verifier with an entailment-model-based check — the Planner/Verifier/trace architecture does not need to change.
-- **How do you show value to a non-engineering stakeholder?** The trace panel and evaluation suite are deliberately non-technical-readable: intent/risk → tools → sources → grounded/not-grounded → AUTO_RESPOND/ESCALATE → latency/cost, in one screen, so a hiring manager or ops lead can see *why* a decision was made without reading code.
+- **How do you show value to a non-engineering stakeholder?** The trace panel and evaluation suite are deliberately non-technical-readable: intent/risk → tools → sources → grounded/not-grounded → AUTO_RESPOND/ESCALATE → latency/cost, in one screen, so a hiring manager or ops lead can see _why_ a decision was made without reading code.
 - **What would you change before shipping this to real users?** See [Roadmap](#roadmap) and [Current scope and honest claims](#current-scope-and-honest-claims) — persisted vector store, real authentication, shared rate-limit store, model-based (not lexical) groundedness, a real human-agent queue, and a much larger labeled evaluation set validated against real traffic.
 
 ## Roadmap
