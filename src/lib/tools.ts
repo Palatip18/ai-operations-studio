@@ -11,10 +11,26 @@ export const toolDefinitions = [
   { type: "function", function: { name: "get_demo_metrics", description: "Return automated retrieval evaluation results for this prototype.", parameters: { type: "object", properties: {}, additionalProperties: false } } },
 ] as const;
 
+/** Best-effort requester name extraction (e.g. "...for Maya Chen...") with a safe fallback. Deterministic, no model call. */
+export function extractRequesterName(message: string): string {
+  const match = message.match(/\bfor\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/);
+  return match ? match[1] : "Demo User";
+}
+
+export function deriveWorkflowRequest(message: string): WorkflowRequest {
+  const lower = message.toLowerCase();
+  return {
+    requester: extractRequesterName(message),
+    type: lower.includes("equipment") ? "Equipment" : lower.includes("training") ? "Training" : "Software access",
+    priority: lower.includes("high") || lower.includes("urgent") ? "High" : "Normal",
+    details: message,
+  };
+}
+
 export function routeTool(message: string): { name: ToolName; arguments: Record<string, unknown> } | null {
   const lower = message.toLowerCase();
   if (/metric|accuracy|evaluation|quality|score/.test(lower)) return { name: "get_demo_metrics", arguments: {} };
-  if (/workflow|access request|equipment|training request/.test(lower)) return { name: "preview_workflow", arguments: { requester: "Demo User", type: lower.includes("equipment") ? "Equipment" : lower.includes("training") ? "Training" : "Software access", priority: lower.includes("high") || lower.includes("urgent") ? "High" : "Normal", details: message } };
+  if (/workflow|access request|equipment|training request/.test(lower)) return { name: "preview_workflow", arguments: deriveWorkflowRequest(message) };
   if (/policy|onboard|incident|expense|receipt|security training|claim/.test(lower)) return { name: "search_knowledge", arguments: { query: message } };
   return null;
 }
