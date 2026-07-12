@@ -6,6 +6,7 @@ import { verifyGroundedness, type VerifierResult } from "./verifier";
 import { isOpenAIConfigured } from "./openai";
 import { summarize } from "./trace-redaction";
 import { RETRIEVAL_RELEVANCE_THRESHOLD } from "./agent";
+import { classifyQueryTopics } from "./query-topics";
 
 /**
  * Bounded customer-support agent:
@@ -123,12 +124,14 @@ export async function runSupportAgent(message: string): Promise<SupportResult> {
     resultCount: results.length,
   });
 
-  // Multi-document evidence: all retrieved sources contribute to grounding evidence and citations.
-  // The answer text uses only the primary (top-1) chunk to prevent lower-ranked document text
-  // from polluting the customer-facing response (e.g., a lower-ranked chunk that quotes policy
-  // phrases like "escalated to a human agent" should not appear in an AUTO_RESPOND answer).
-  const primaryChunk = results[0]?.chunk ?? null;
-  const fragments: string[] = [primaryChunk ? `Grounded answer: ${primaryChunk}` : "No grounded answer was found in the knowledge base for this request."];
+  // Use one source for ordinary questions and up to two independently ranked sources
+  // for explicit multi-topic questions. Each section keeps its source id so the answer
+  // does not imply that a single document supports every claim.
+  const queryTopics = classifyQueryTopics(message).filter((topic) => topic !== "unknown");
+  const selectedResults = results.slice(0, new Set(queryTopics).size > 1 ? 2 : 1);
+  const fragments: string[] = [selectedResults.length
+    ? selectedResults.map((result) => `[${result.document.id}] ${result.chunk}`).join("\n\n")
+    : "No grounded answer was found in the knowledge base for this request."];
   if (WORKFLOW_INTENTS.has(intent)) {
     const args = deriveWorkflowRequest(message);
     const workflowSteps = runWorkflow(args);
@@ -142,7 +145,7 @@ export async function runSupportAgent(message: string): Promise<SupportResult> {
   }
 
   const answer = summarize(fragments.join(" "), 2000);
-  const verifier = verifyGroundedness(answer, groundingEvidence);
+  const verifier = verifyGroundedness(answer, groundingEvidence, message);
   const mandatory = checkMandatoryEscalation(message, intent);
   const { decision, escalationReason } = decideSupportPolicy(mandatory, verifier, risk, intent);
 

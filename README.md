@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-95_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-150_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
@@ -41,7 +41,7 @@ The default `mock` mode is deterministic, free to run, and requires no credentia
 
 - 10/10 semantic retrieval cases pass at top-1 with `text-embedding-3-small`, including paraphrased questions and one negative/no-answer case (original 3-document Agentic Copilot dataset).
 - 3/3 deterministic local-vector checks remain available as the no-key fallback baseline (same dataset).
-- The 35-case Customer Support Copilot evaluation dataset measures, honestly, on **this repository's fictional data only**:
+- The following 35-case results are a **historical pre-hybrid baseline** on this repository's fictional data. They demonstrate the evaluation method, not the current checkpoint's live-provider performance; live metrics must be re-run after retrieval-policy changes:
 
   | Metric | Deterministic (no-key) | Live embeddings |
   |---|---|---|
@@ -57,7 +57,7 @@ The default `mock` mode is deterministic, free to run, and requires no credentia
   | Mean latency | ~1ms | ~296ms |
 
   These numbers are not the 80-90% target — see [Knowledge-quality model](#knowledge-quality-model) for why, and [Evaluation methodology](#evaluation-methodology) for full definitions.
-- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, intent/risk classification, mandatory escalation, and API auth — 95 tests, see `npm test`.
+- Unit tests cover retrieval, vector similarity, chunking, tool routing, evaluation, workflow policy, agent planning/verification/redaction, intent/risk classification, mandatory escalation, and API auth — 150 tests, see `npm test`.
 - Results are exposed through `GET /api/evaluation`, `GET /api/agent-evaluation`, `GET /api/support-evaluation`, and displayed in the UI.
 
 These figures validate only the included fictional sample set and documented thresholds; they are not claims of production accuracy.
@@ -68,7 +68,7 @@ These figures validate only the included fictional sample set and documented thr
 
 **Approach:** Build small but complete flows behind explicit API boundaries. Keep retrieval, policy logic, tool traces, citations, and workflow states visible. Add a bounded agent (plan → act → verify, max 3 tool steps, no open-ended loop) so multi-step reasoning stays inspectable instead of being a black box. Use fictional sample documents so any reviewer can run the project safely.
 
-**Delivered:** A deployed, responsive Next.js application with four working modules, a deterministic no-key demo mode, a groundedness verifier that flags unsupported answers instead of hiding them, an extended evaluation suite, tested domain logic, production build validation, and automatic deployments from GitHub through Vercel.
+**Delivered:** A deployed, responsive Next.js application with five working modules, a deterministic no-key demo mode, a conservative lexical verifier, an extended evaluation suite, tested domain logic, production build validation, and automatic deployments from GitHub through Vercel.
 
 **Measurable business value this pattern targets in a real deployment:**
 
@@ -135,7 +135,7 @@ The Agentic Copilot module (`/api/agent`) runs a **bounded Planner → Tool Exec
 
 1. **Planner** (`src/lib/agent.ts`, `planAgent`) — a deterministic, keyword-based router decides which of up to 3 tools to use: knowledge retrieval, the workflow policy tool, and/or the evaluation/metrics tool. There is one plan slot per known tool, so the plan can never exceed `MAX_PLAN_STEPS = 3`, and there is no re-planning loop — the plan is computed once and executed once.
 2. **Tool Execution** — each planned tool runs in order (semantic retrieval when a live provider is configured, otherwise the local deterministic path for every tool), and every call is recorded as a redacted trace entry (tool name, summarized input, summarized output, result count).
-3. **Verifier** (`src/lib/verifier.ts`, `verifyGroundedness`) — for any answer built from retrieved knowledge, checks lexical overlap between the answer and the retrieved evidence above a relevance threshold, and returns a `grounded` boolean, a 0–1 groundedness score, supporting source IDs, and a warning when the answer is not well supported. For workflow/metrics-only answers (no retrieval claim to check), the verifier reports `applicable: false` rather than a misleading score.
+3. **Verifier** (`src/lib/verifier.ts`, `verifyGroundedness`) — checks both answer-to-evidence overlap and query-to-evidence support. The second gate prevents an unrelated retrieved chunk from validating itself merely because the answer copied that chunk. This remains a lexical heuristic, not entailment or proof of factual correctness. For workflow/metrics-only answers, the verifier reports `applicable: false`.
 4. **Deterministic fallback** — if no tool matches, or a live provider call fails, the flow still returns a safe, explicit "could not confidently answer" response instead of erroring or hallucinating.
 
 ```mermaid
@@ -312,7 +312,7 @@ DEMO_PASSWORD=change-me-demo-password
 Behavior:
 
 - Visiting any application page without a valid session redirects to `/login`.
-- All AI API routes (`/api/chat`, `/api/rag`, `/api/workflow`, `/api/evaluation`, `/api/status`) independently return `401` without a valid session.
+- All AI API routes (`/api/chat`, `/api/rag`, `/api/workflow`, `/api/evaluation`, `/api/status`, `/api/agent`, `/api/agent-evaluation`, `/api/support`, `/api/support-evaluation`) independently return `401` without a valid session.
 - A correct password issues a signed session cookie: `HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, and a 24-hour expiry.
 - After 5 failed attempts within 15 minutes, further attempts from that client are temporarily blocked (`429`).
 - **Sign out** clears the session cookie and returns to `/login`.
@@ -369,16 +369,22 @@ src/
     ├── support-classification.ts  # Deterministic intent/risk/mandatory-escalation logic
     ├── support-agent.ts           # Support Copilot orchestrator + decideSupportPolicy
     ├── support-evaluation.ts      # 35-case Customer Support Copilot evaluation suite
-    └── *.test.ts                  # Unit tests (95)
+    └── *.test.ts                  # Unit tests (150)
 ```
 
 **Files an AI Engineer should inspect first:** `src/lib/support-agent.ts` (the orchestration flow and the pure `decideSupportPolicy` function), `src/lib/support-classification.ts` (deterministic policy logic), `src/lib/verifier.ts` (the groundedness heuristic and its documented limits), `src/lib/agent.ts` (the mode-aware retrieval threshold and why it exists), `src/lib/support-evaluation.ts` (how the honest, non-cherry-picked metrics table above was produced).
+
+## Engineering approach
+
+This project was built through an AI-assisted engineering workflow. I led the problem framing, requirements analysis, product direction, workflow and escalation rules, acceptance criteria, evaluation design, behavioral testing, and final review. AI coding tools accelerated implementation in areas where I am still developing deeper coding expertise.
+
+I do not present this repository as evidence that I manually authored every line or independently implemented every low-level component from memory. It demonstrates how I translate an operational problem into a bounded AI system, direct implementation, challenge incorrect behavior with measured tests, document trade-offs, and retain responsibility for final engineering decisions and acceptance.
 
 ## Current scope and honest claims
 
 This repository is a **personal portfolio prototype**. It demonstrates working UI, API boundaries, multi-tool routing, local feature-hashing vector retrieval, chunking, cosine ranking, source attribution, evaluation, validation, policy-based workflow orchestration, a bounded agent workflow with a groundedness verifier, and a customer-support-specific extension with deterministic intent/risk classification and mandatory-escalation policy.
 
-It does **not** claim: production RAG, learned semantic embeddings at scale, an autonomous production agent (the planner is deterministic and bounded, not a model deciding its own stopping point), model training, enterprise-grade RAG (no persisted vector store, no re-ranking, no access control on documents), enterprise security, or use with real customers. The groundedness verifier is a lexical-overlap heuristic, not an entailment model — it does not guarantee factual correctness and can be fooled by paraphrase or coincidental keyword overlap. **80-90% automation is a stated pilot target, not a result measured by this repository** — the measured table above shows 50-90% depending on retrieval method, on a 35-case fictional dataset only.
+It does **not** claim: production RAG, learned semantic embeddings at scale, an autonomous production agent (the planner is deterministic and bounded, not a model deciding its own stopping point), model training, enterprise security, or use with real customers. The retrieval layer uses lightweight hybrid ranking but has no persisted vector store or document access control. The groundedness verifier is a lexical heuristic, not an entailment model; it does not guarantee factual correctness. **80-90% automation is a stated pilot target, not a production result.** Historical live/local measurements in this README apply only to the included fictional dataset and must be re-measured after retrieval-policy changes.
 
 ### Implementation status
 
@@ -397,7 +403,7 @@ It does **not** claim: production RAG, learned semantic embeddings at scale, an 
 ## Interview talking points
 
 - **Why a bounded agent instead of an autonomous one?** Cost, testability, and explainability. A fixed max-3-step plan with no re-planning loop can be fully unit-tested (see `agent.test.ts`, `support-agent.test.ts`) and has a hard ceiling on tool calls and (in live mode) provider spend — properties an open-ended agent loop does not have. I can explain this trade-off to a non-technical stakeholder in one sentence: "it always finishes, and you can always see why."
-- **How do you keep an LLM feature from silently making things up?** Separate the answer from the check: the verifier scores groundedness independently of the tool that produced the answer, and the UI shows the warning instead of hiding it, rather than only surfacing confident-sounding text.
+- **How do you keep an LLM feature from silently making things up?** Use conservative retrieval gates, require both query-to-evidence support and answer-to-evidence overlap, and escalate when either is weak. This is an explainable heuristic rather than an independent semantic fact checker; production use would require claim-level entailment evaluation and human review for risky cases.
 - **How do you decide what a bot should never answer on its own?** Separate policy from retrieval: mandatory-escalation triggers (fraud, disputes, sensitive data, policy exceptions, angry complaints) are deterministic keyword rules checked independently of whether the answer would otherwise be grounded — a well-cited answer to a question that should never be automated still escalates (see recruiter scenario 7).
 - **Why did retrieval accuracy matter so much here?** I measured it directly rather than assuming it: the exact same policy logic on the exact same 35-case dataset went from 50% to 90% automation coverage purely by swapping the retrieval method (deterministic hashing vs. live embeddings). That's the single clearest piece of evidence in this repo for why "knowledge quality/retrieval quality" is listed as a precondition for the 80-90% target, not a guarantee.
 - **How would you extend this to a real team's documents?** Swap `embedText`/`searchKnowledge` for a managed embedding model and a persisted vector store (already isolated behind `knowledge.ts`), add document-level access control, and replace the lexical verifier with an entailment-model-based check — the Planner/Verifier/trace architecture does not need to change.

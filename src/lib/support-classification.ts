@@ -40,13 +40,17 @@ export function classifyIntent(message: string): Intent {
 }
 
 const HIGH_RISK_KEYWORDS =
-  /dispute|unauthorized charge|chargeback|fraudulent|fraud|hacked|security breach|lawsuit|legal action|compliance violation|gdpr complaint|lost money|financial loss|make an exception|waive (?:the|your) policy|bend the rules|special exception outside|social media|post this online|report you (?:publicly|online)|talk to (?:my )?lawyer|threaten(?:ing)? to/i;
+  /disput\w*|unauthorized charge|chargeback|fraudulent|fraud|hacked|compromis\w*|security breach|lawsuit|legal action|compliance violation|gdpr complaint|lost money|financial loss|make an exception|waive (?:the|your) policy|bend the rules|special exception outside|social media|post this online|report you (?:publicly|online)|talk to (?:my )?lawyer|threaten(?:ing)? to/i;
+
+function withoutSimpleNegatedRisk(message: string): string {
+  return message.replace(/\b(?:not|no|never)\s+(?:reporting\s+|claiming\s+)?(?:fraud|a fraud|a dispute|disputing|hacked|compromised|a security breach)\b/gi, "");
+}
 
 const MEDIUM_RISK_INTENTS = new Set<Intent>(["billing_payment", "refund_cancellation", "identity_documents", "privacy_security", "complaint"]);
 
 /** Deterministic risk classification. Mandatory-escalation keyword matches always classify as HIGH regardless of intent. */
 export function classifyRisk(message: string, intent: Intent): RiskLevel {
-  if (HIGH_RISK_KEYWORDS.test(message)) return "HIGH";
+  if (HIGH_RISK_KEYWORDS.test(withoutSimpleNegatedRisk(message))) return "HIGH";
   if (intent === "unknown") return "MEDIUM";
   if (MEDIUM_RISK_INTENTS.has(intent)) return "MEDIUM";
   return "LOW";
@@ -63,13 +67,14 @@ export type MandatoryEscalationCheck = { escalate: boolean; reason: string | nul
  * orchestrator (`support-agent.ts`) after retrieval, not here.
  */
 export function checkMandatoryEscalation(message: string, intent: Intent): MandatoryEscalationCheck {
-  if (/dispute|unauthorized charge|chargeback|fraudulent charge|lost money|financial loss/i.test(message)) {
+  const riskMessage = withoutSimpleNegatedRisk(message);
+  if (/disput\w*|unauthorized charge|chargeback|fraudulent charge|lost money|financial loss/i.test(riskMessage)) {
     return { escalate: true, reason: "Potential financial loss or transaction dispute requires human review." };
   }
   if (/passport|national id|social security|personal data|personal information|my data|identity document/i.test(message) && (intent === "identity_documents" || intent === "privacy_security")) {
     return { escalate: true, reason: "Request involves personal or sensitive identity/data handling." };
   }
-  if (/fraud|hacked|security breach|lawsuit|legal action|compliance violation|gdpr complaint/i.test(message)) {
+  if (/fraud|hacked|compromis\w*|security breach|lawsuit|legal action|compliance violation|gdpr complaint/i.test(riskMessage)) {
     return { escalate: true, reason: "Message raises a fraud, security, legal, or compliance concern." };
   }
   if (/make an exception|waive (?:the|your) policy|bend the rules|special exception outside/i.test(message)) {

@@ -6,6 +6,8 @@ export type VerifierResult = {
   grounded: boolean;
   groundednessScore: number;
   supportingSourceIds: string[];
+  /** Query-to-evidence lexical support. This prevents copied evidence from self-validating an unrelated answer. */
+  querySupportScore: number;
   warning: string | null;
 };
 
@@ -23,7 +25,7 @@ const SUPPORTING_SOURCE_THRESHOLD = 0.15;
  * by keyword overlap without real entailment (false support), and it
  * should be read as a low-confidence, explainable signal, not a proof.
  */
-export function verifyGroundedness(answer: string, evidence: EvidenceItem[]): VerifierResult {
+export function verifyGroundedness(answer: string, evidence: EvidenceItem[], query?: string): VerifierResult {
   const answerTokens = new Set(tokenize(answer));
   if (answerTokens.size === 0 || evidence.length === 0) {
     return {
@@ -31,6 +33,7 @@ export function verifyGroundedness(answer: string, evidence: EvidenceItem[]): Ve
       grounded: false,
       groundednessScore: 0,
       supportingSourceIds: [],
+      querySupportScore: 0,
       warning: "No retrieved evidence was available to support this answer.",
     };
   }
@@ -45,13 +48,23 @@ export function verifyGroundedness(answer: string, evidence: EvidenceItem[]): Ve
     .filter((source) => source.overlapRatio >= SUPPORTING_SOURCE_THRESHOLD)
     .map((source) => source.id);
   const groundednessScore = Math.min(1, Math.max(0, ...perSource.map((source) => source.overlapRatio)));
-  const grounded = groundednessScore >= GROUNDED_SCORE_THRESHOLD && supportingSourceIds.length > 0;
+  const queryTokens = new Set(tokenize(query ?? ""));
+  const querySupportScore = queryTokens.size === 0
+    ? 1
+    : Math.max(0, ...evidence.map((item) => {
+        const sourceTokens = new Set(tokenize(item.text));
+        return [...queryTokens].filter((token) => sourceTokens.has(token)).length / queryTokens.size;
+      }));
+  const grounded = groundednessScore >= GROUNDED_SCORE_THRESHOLD
+    && supportingSourceIds.length > 0
+    && querySupportScore >= SUPPORTING_SOURCE_THRESHOLD;
 
   return {
     applicable: true,
     grounded,
     groundednessScore: Number(groundednessScore.toFixed(2)),
     supportingSourceIds,
+    querySupportScore: Number(querySupportScore.toFixed(2)),
     warning: grounded
       ? null
       : "This answer could not be strongly matched to retrieved evidence. Treat it as low-confidence and verify independently.",
@@ -60,5 +73,5 @@ export function verifyGroundedness(answer: string, evidence: EvidenceItem[]): Ve
 
 /** Used for procedural tool outputs (workflow/metrics) where groundedness against retrieved text does not apply. */
 export function notApplicableVerifierResult(): VerifierResult {
-  return { applicable: false, grounded: true, groundednessScore: 1, supportingSourceIds: [], warning: null };
+  return { applicable: false, grounded: true, groundednessScore: 1, supportingSourceIds: [], querySupportScore: 1, warning: null };
 }

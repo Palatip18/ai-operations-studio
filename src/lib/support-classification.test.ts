@@ -66,4 +66,25 @@ describe("checkMandatoryEscalation", () => {
     expect(result.escalate).toBe(false);
     expect(result.reason).toBeNull();
   });
+
+  it("catches inflected dispute language", () => {
+    const message = "I am disputing a charge that I do not recognize.";
+    const intent = classifyIntent(message);
+    expect(classifyRisk(message, intent)).toBe("HIGH");
+    expect(checkMandatoryEscalation(message, intent).escalate).toBe(true);
+  });
+
+  it("catches an implicitly compromised account", () => {
+    const message = "I think my account may have been compromised.";
+    const intent = classifyIntent(message);
+    expect(classifyRisk(message, intent)).toBe("HIGH");
+    expect(checkMandatoryEscalation(message, intent).escalate).toBe(true);
+  });
+
+  it("does not turn a simple negation into a mandatory fraud escalation", () => {
+    const message = "I am not reporting fraud; I only need the billing policy.";
+    const intent = classifyIntent(message);
+    expect(classifyRisk(message, intent)).toBe("MEDIUM");
+    expect(checkMandatoryEscalation(message, intent).escalate).toBe(false);
+  });
 });

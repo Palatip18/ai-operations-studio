@@ -186,7 +186,7 @@ export async function runAgent(message: string): Promise<AgentResult> {
   }
 
   const answer = summarize(synthesizeAnswer(fragments), 2000);
-  const verifier = ranRetrieval ? verifyGroundedness(answer, groundingEvidence) : notApplicableVerifierResult();
+  const verifier = ranRetrieval ? verifyGroundedness(answer, groundingEvidence, message) : notApplicableVerifierResult();
 
   return {
     answer,

@@ -27,6 +27,28 @@ describe("verifyGroundedness", () => {
     expect(result.warning).not.toBeNull();
   });
 
+  it("rejects self-grounding when copied evidence does not support the question", () => {
+    const evidence = [{ id: "onboarding", text: "Create an account with an email address and password." }];
+    const result = verifyGroundedness(
+      "Create an account with an email address and password.",
+      evidence,
+      "Can I pay an invoice using cryptocurrency?",
+    );
+    expect(result.grounded).toBe(false);
+    expect(result.querySupportScore).toBeLessThan(0.15);
+  });
+
+  it("requires query-to-evidence support as well as answer overlap", () => {
+    const evidence = [{ id: "billing", text: "Invoices are issued monthly and support credit-card or bank-transfer payment." }];
+    const result = verifyGroundedness(
+      "Invoices are issued monthly and support credit-card or bank-transfer payment.",
+      evidence,
+      "When is my monthly invoice issued?",
+    );
+    expect(result.grounded).toBe(true);
+    expect(result.querySupportScore).toBeGreaterThanOrEqual(0.15);
+  });
+
   it("never claims to guarantee factual correctness in its warning text", () => {
     const result = verifyGroundedness("x", []);
     expect(result.warning?.toLowerCase()).not.toContain("guarantee");
