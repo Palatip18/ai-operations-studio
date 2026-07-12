@@ -10,7 +10,7 @@ import {
   type UiLocale,
 } from "@/lib/ui-i18n";
 
-type Module = "chat" | "knowledge" | "workflow" | "agent" | "support" | "settings";
+type Module = "chat" | "knowledge" | "workflow" | "agent" | "support" | "analytics" | "settings";
 type WorkflowStep = { step: string; detail: string; status: string };
 type AgentPlanStep = { tool: string; reason: string };
 type AgentStepTrace = {
@@ -94,9 +94,10 @@ const moduleIds: Exclude<Module, "chat">[] = [
   "knowledge",
   "workflow",
   "agent",
+  "analytics",
   "settings",
 ];
-const moduleCopyIndex: Record<Exclude<Module, "chat" | "settings">, number> = {
+const moduleCopyIndex: Record<Exclude<Module, "chat" | "settings" | "analytics">, number> = {
   knowledge: 0,
   workflow: 1,
   agent: 2,
@@ -108,8 +109,8 @@ export function Studio() {
   const modules = moduleIds.map((id, index) => ({
     id,
     number: String(index + 1).padStart(2, "0"),
-    label: id === "settings" ? locale === "th" ? "ตั้งค่าพฤติกรรม AI" : locale === "zh" ? "AI 行为设置" : "AI Behavior Settings" : copy.modules[moduleCopyIndex[id]][0],
-    description: id === "settings" ? locale === "th" ? "บทบาท น้ำเสียง หลักคิด และกฎความปลอดภัย" : locale === "zh" ? "角色、语气、原则与安全规则" : "Role, tone, principles, and safety rules" : copy.modules[moduleCopyIndex[id]][1],
+    label: id === "settings" ? locale === "th" ? "ตั้งค่าพฤติกรรม AI" : locale === "zh" ? "AI 行为设置" : "AI Behavior Settings" : id === "analytics" ? locale === "th" ? "วิเคราะห์ปัญหาลูกค้า" : locale === "zh" ? "客户问题分析" : "Support Analytics" : copy.modules[moduleCopyIndex[id]][0],
+    description: id === "settings" ? locale === "th" ? "บทบาท น้ำเสียง หลักคิด และกฎความปลอดภัย" : locale === "zh" ? "角色、语气、原则与安全规则" : "Role, tone, principles, and safety rules" : id === "analytics" ? locale === "th" ? "รายวัน รายสัปดาห์ รายเดือน และทีมที่ต้องปรับปรุง" : locale === "zh" ? "每日、每周、每月趋势与改进负责人" : "Daily, weekly, monthly trends and improvement owners" : copy.modules[moduleCopyIndex[id]][1],
   }));
   const [active, setActive] = useState<Module>("support");
   const [view, setView] = useState<"customer" | "internal">("customer");
@@ -276,6 +277,8 @@ export function Studio() {
               <WorkflowDemo locale={locale} />
             ) : active === "agent" ? (
               <AgentDemo locale={locale} />
+            ) : active === "analytics" ? (
+              <SupportAnalyticsDemo locale={locale} />
             ) : <BehaviorSettingsDemo locale={locale} />}
           </div>
         </section>
@@ -1468,6 +1471,107 @@ function AgentDemo({ locale }: { locale: UiLocale }) {
           {loading ? copy.running : copy.runCopilot}
         </button>
       </form>
+    </div>
+  );
+}
+
+type AnalyticsPeriod = "day" | "week" | "month";
+type AnalyticsResult = {
+  simulated: true;
+  period: AnalyticsPeriod;
+  generatedAt: string;
+  source: { type: string; retainedEvents: number; containsCustomerText: boolean; containsCustomerIdentifiers: boolean };
+  metrics: { totalInteractions: number; autoResponded: number; escalated: number; automationRate: number; topIssue: string };
+  issues: Array<{ intent: string; label: string; count: number; share: number; previousCount: number; change: number; destination: string; recommendation: string }>;
+  trend: Array<{ date: string; count: number }>;
+};
+
+function SupportAnalyticsDemo({ locale }: { locale: UiLocale }) {
+  const [period, setPeriod] = useState<AnalyticsPeriod>("week");
+  const [data, setData] = useState<AnalyticsResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [dispatchResult, setDispatchResult] = useState<{ reportId: string; recipients: string[]; status: string } | null>(null);
+  const [dispatching, setDispatching] = useState(false);
+  const labels = locale === "th" ? {
+    title: "วิเคราะห์ปัญหาลูกค้า", intro: "บันทึกเหตุการณ์แบบไม่เก็บข้อความหรือข้อมูลระบุตัวลูกค้า เพื่อดูแนวโน้มและส่งรายงานให้ทีมที่เกี่ยวข้อง", day: "วันนี้", week: "7 วัน", month: "30 วัน", interactions: "การติดต่อทั้งหมด", auto: "ตอบอัตโนมัติ", escalated: "ส่งตรวจสอบ", automation: "อัตราตอบอัตโนมัติ", topIssue: "ปัญหาที่พบมากที่สุด", trend: "แนวโน้มจำนวนปัญหา", breakdown: "ปัญหาและสัดส่วน", owner: "ทีมที่เกี่ยวข้อง", action: "ข้อเสนอแนะเพื่อปรับปรุง", send: "ส่งรายงานจำลอง", sending: "กำลังจัดทำรายงาน...", sent: "สร้างรายงานและเข้าคิวเรียบร้อย", privacy: "ไม่เก็บข้อความ User ID เบอร์โทร หรือข้อมูลธุรกรรมของลูกค้า", simulated: "ข้อมูลจำลอง + เหตุการณ์จากเดโม", noData: "ยังไม่มีข้อมูลในช่วงเวลานี้",
+  } : locale === "zh" ? {
+    title: "客户问题分析", intro: "记录不含客户文本或身份信息的事件，用于趋势分析和改进分派", day: "今天", week: "7 天", month: "30 天", interactions: "总咨询量", auto: "自动回复", escalated: "转交审核", automation: "自动回复率", topIssue: "最常见问题", trend: "问题趋势", breakdown: "问题分布", owner: "负责团队", action: "改进建议", send: "发送模拟报告", sending: "正在生成报告...", sent: "报告已创建并进入队列", privacy: "不保存客户消息、User ID、电话或交易资料", simulated: "模拟历史 + 演示事件", noData: "此期间暂无数据",
+  } : {
+    title: "Support Analytics", intro: "Privacy-safe event logging for trend analysis and routing improvement reports to the responsible teams.", day: "Today", week: "7 days", month: "30 days", interactions: "Total interactions", auto: "Auto-responded", escalated: "Escalated", automation: "Automation rate", topIssue: "Top issue", trend: "Issue-volume trend", breakdown: "Issue mix", owner: "Responsible team", action: "Improvement recommendation", send: "Dispatch simulated report", sending: "Preparing report...", sent: "Report created and queued", privacy: "No customer message, User ID, phone number, or transaction data is stored", simulated: "Demo history + live demo events", noData: "No events in this period",
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/support/analytics?period=${period}`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Analytics request failed");
+        return response.json() as Promise<AnalyticsResult>;
+      })
+      .then((result) => { if (!cancelled) setData(result); })
+      .catch(() => { if (!cancelled) setError(locale === "th" ? "โหลดรายงานไม่สำเร็จ กรุณาลองใหม่ค่ะ" : "Unable to load analytics."); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [period, locale]);
+
+  async function dispatchReport() {
+    setDispatching(true);
+    setError("");
+    try {
+      const response = await fetch("/api/support/analytics", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ period }) });
+      if (!response.ok) throw new Error("Dispatch failed");
+      setDispatchResult(await response.json() as { reportId: string; recipients: string[]; status: string });
+    } catch {
+      setError(locale === "th" ? "สร้างรายงานไม่สำเร็จ กรุณาลองใหม่ค่ะ" : "Unable to dispatch the report.");
+    } finally {
+      setDispatching(false);
+    }
+  }
+
+  const maxTrend = Math.max(1, ...(data?.trend.map((item) => item.count) ?? [1]));
+  return (
+    <div className="space-y-5">
+      <div className="rounded-xl border border-accent/20 bg-accent/5 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div><p className="text-lg font-semibold text-foreground">{labels.title}</p><p className="mt-1 max-w-3xl text-sm leading-6 text-muted">{labels.intro}</p></div>
+          <span className="rounded-full border border-accent/20 bg-black/10 px-3 py-1 font-mono text-[10px] text-accent-secondary">{labels.simulated}</span>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">{(["day", "week", "month"] as const).map((value) => <button key={value} type="button" onClick={() => { setLoading(true); setError(""); setDispatchResult(null); setPeriod(value); }} className={`kb-focusable min-h-[38px] rounded-lg px-4 text-xs ${period === value ? "bg-accent font-semibold text-[#07101F]" : "border border-white/10 text-muted"}`}>{labels[value]}</button>)}</div>
+      </div>
+
+      {loading ? <div className="rounded-xl border border-white/10 p-8 text-center text-sm text-muted">Loading analytics...</div> : error && !data ? <div className="rounded-xl border border-error/20 bg-error/5 p-4 text-sm text-error">{error}</div> : data ? <>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            [labels.interactions, data.metrics.totalInteractions, "text-accent"],
+            [labels.auto, data.metrics.autoResponded, "text-success"],
+            [labels.escalated, data.metrics.escalated, "text-warning"],
+            [labels.automation, `${data.metrics.automationRate}%`, "text-accent-secondary"],
+          ].map(([label, value, color]) => <div key={String(label)} className="rounded-xl border border-white/10 bg-black/10 p-4"><p className="text-xs text-muted">{label}</p><p className={`mt-2 font-mono text-2xl font-semibold ${color}`}>{value}</p></div>)}
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-[1fr_1.3fr]">
+          <section className="rounded-xl border border-white/10 bg-black/10 p-4">
+            <p className="text-xs text-muted">{labels.topIssue}</p><p className="mt-2 text-xl font-semibold text-foreground">{data.metrics.topIssue}</p>
+            <p className="mt-5 font-mono text-[10px] uppercase tracking-wider text-accent">{labels.trend}</p>
+            <div className="mt-4 flex h-32 items-end gap-1" aria-label={labels.trend}>{data.trend.map((item) => <div key={item.date} className="group flex min-w-0 flex-1 flex-col items-center justify-end gap-1"><span className="text-[9px] text-muted opacity-0 transition group-hover:opacity-100">{item.count}</span><div className="w-full rounded-t bg-accent/70" style={{ height: `${Math.max(5, (item.count / maxTrend) * 100)}%` }} title={`${item.date}: ${item.count}`} /></div>)}</div>
+          </section>
+          <section className="rounded-xl border border-white/10 bg-black/10 p-4">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-accent">{labels.breakdown}</p>
+            <div className="mt-4 space-y-3">{data.issues.slice(0, 7).map((issue) => <div key={issue.intent}><div className="flex items-center justify-between gap-3 text-xs"><span className="truncate text-foreground">{issue.label}</span><span className="font-mono text-muted">{issue.count} · {issue.share}%</span></div><div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/5"><div className="h-full rounded-full bg-accent-secondary" style={{ width: `${issue.share}%` }} /></div></div>)}</div>
+          </section>
+        </div>
+
+        <section className="overflow-hidden rounded-xl border border-white/10 bg-black/10">
+          <div className="border-b border-white/10 px-4 py-3"><p className="font-mono text-[10px] uppercase tracking-wider text-accent">{labels.owner} · {labels.action}</p></div>
+          <div className="divide-y divide-white/10">{data.issues.slice(0, 6).map((issue) => <div key={issue.intent} className="grid gap-2 px-4 py-3 text-xs md:grid-cols-[1fr_1fr_2fr]"><span className="font-medium text-foreground">{issue.label} ({issue.count})</span><span className="text-accent-secondary">{issue.destination}</span><span className="leading-5 text-muted">{issue.recommendation}</span></div>)}</div>
+        </section>
+
+        <div className="rounded-xl border border-success/15 bg-success/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-medium text-success">Privacy-safe analytics</p><p className="mt-1 text-xs leading-5 text-muted">{labels.privacy} · {data.source.retainedEvents} events retained in this demo instance.</p></div><button type="button" onClick={dispatchReport} disabled={dispatching} className="kb-focusable min-h-[40px] rounded-lg bg-accent px-4 text-xs font-semibold text-[#07101F] disabled:opacity-50">{dispatching ? labels.sending : labels.send}</button></div>
+          {dispatchResult && <div className="mt-3 rounded-lg border border-success/20 bg-black/10 p-3 text-xs text-muted"><span className="font-semibold text-success">{labels.sent}</span> · {dispatchResult.reportId} · {dispatchResult.status}<div className="mt-1">{dispatchResult.recipients.join(" · ")}</div></div>}
+          {error && <p className="mt-3 text-xs text-error">{error}</p>}
+        </div>
+      </> : <p className="text-sm text-muted">{labels.noData}</p>}
     </div>
   );
 }

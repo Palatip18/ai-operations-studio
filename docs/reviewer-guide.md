@@ -34,6 +34,8 @@ Then switch to **Internal AI Operations → Support Copilot** to inspect the det
 
 Open **Internal AI Operations → AI Behavior Settings** to inspect the active role, persona, tone, response principles, customer-data rules, escalation boundaries, prohibited customer-visible terminology, and localized response previews. These controls are versioned in code and feed the live localization prompt; the panel is inspectable rather than an ungoverned production prompt editor.
 
+Open **Internal AI Operations → Support Analytics** to compare today, 7-day, and 30-day issue volume; reconcile auto-response and escalation counts; identify the most frequent issue; and inspect the responsible team and improvement recommendation. The dispatch button creates a structured simulated report and recipient list without sending to a real external system.
+
 ### 3. Promotion and responsible-use boundaries
 
 Select the bonus-withdrawal and responsible-use scenarios.
@@ -70,6 +72,8 @@ Recommended files:
 | Groundedness heuristic | `src/lib/verifier.ts` |
 | Response composition | `src/lib/response-composer.ts` |
 | AI behavior policy | `src/lib/support-behavior.ts` |
+| Event analytics and routing | `src/lib/support-analytics.ts` |
+| Protected analytics API | `src/app/api/support/analytics/route.ts` |
 | Simulated integration | `src/lib/support-handoff.ts` |
 | Simulated transaction lookup | `src/lib/support-backoffice.ts` |
 | Signed customer context | `src/lib/support-customer.ts` |

@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-197_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-205_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
@@ -39,9 +39,15 @@ The consolidated AI Support Chat combines six pieces, each earning its place for
 ## Product surfaces
 
 - **Live Chat (default)** — a customer-facing simulation containing only conversation history, natural responses, common-question shortcuts, and a demo case reference when review is required. Internal intent, risk, RAG scores, decision labels, and execution traces are hidden.
-- **Internal AI Operations** — a reviewer-facing workspace containing the Support AI monitor, Knowledge/RAG explorer, deterministic workflow automation, bounded Agentic Copilot, and a versioned AI Behavior Settings panel. This is where technical evidence and evaluation details remain inspectable.
+- **Internal AI Operations** — a reviewer-facing workspace containing the Support AI monitor, Knowledge/RAG explorer, deterministic workflow automation, bounded Agentic Copilot, privacy-safe Support Analytics, and a versioned AI Behavior Settings panel. This is where technical evidence and evaluation details remain inspectable.
 
 This separation demonstrates that internal AI observability can remain available to operations and engineering teams without leaking implementation details into the customer experience.
+
+### Support event analytics and improvement routing
+
+Every completed support interaction records only operational dimensions: timestamp, intent, risk, decision, language, and responsible destination. Customer messages, User IDs, phone numbers, transaction references, and customer context are not stored in analytics events. The protected `GET /api/support/analytics` route aggregates daily, 7-day, or 30-day volume, automation, escalation, top-issue, trend, and issue-mix metrics. The internal dashboard maps each recurring problem to an accountable team and a concrete improvement recommendation.
+
+`POST /api/support/analytics` demonstrates report dispatch by creating a structured simulated report, routing the highest-volume issues to the relevant fictional teams, and returning a queued report reference. This checkpoint uses seeded fictional history plus a bounded in-memory event store. It resets across serverless instances and does not claim durable production analytics, scheduled delivery, or a real email/ticket integration; those require persistent storage and an authenticated delivery adapter.
 
 ### Internal AI behavior control plane
 

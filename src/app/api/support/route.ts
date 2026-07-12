@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { isAuthenticatedRequest } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { runSupportAgent } from "@/lib/support-agent";
+import { runSupportAgent, type SupportResult } from "@/lib/support-agent";
+import { recordSupportEvent } from "@/lib/support-analytics";
 import { createCustomerContextToken, customerContextCookieOptions, findDemoCustomer, readCustomerContext, SUPPORT_CUSTOMER_COOKIE } from "@/lib/support-customer";
 
-function verificationOnlyResult(answer: string, customerVerificationRequired: boolean) {
+function verificationOnlyResult(answer: string, customerVerificationRequired: boolean): SupportResult {
   return {
     answer,
     customerVerificationRequired,
@@ -15,7 +16,7 @@ function verificationOnlyResult(answer: string, customerVerificationRequired: bo
       risk: "LOW",
       steps: [{ tool: "verify_customer_user_id", input: { source: "conversation" }, outputSummary: answer, resultCount: customerVerificationRequired ? 0 : 1 }],
       sources: [],
-      verifier: { applicable: false, grounded: false, groundednessScore: 0, supportingSourceIds: [], warning: null },
+      verifier: { applicable: false, grounded: false, groundednessScore: 0, supportingSourceIds: [], querySupportScore: 1, warning: null },
       decision: "AUTO_RESPOND",
       escalationReason: null,
       latencyMs: 0,
@@ -60,9 +61,12 @@ export async function POST(request: Request) {
       ? `ได้ค่ะ แอดมินตรวจสอบยูสเซอร์ ${verifiedCustomer.userId} เรียบร้อยแล้วนะคะ ${result.answer}`
       : `User ${verifiedCustomer.userId} is verified for this chat session. ${result.answer}`;
     result.trace.customerScope = verifiedCustomer.userId;
+    if (!result.customerVerificationRequired) recordSupportEvent(result.trace);
     const response = NextResponse.json(result);
     response.cookies.set(SUPPORT_CUSTOMER_COOKIE, createCustomerContextToken(verifiedCustomer), customerContextCookieOptions);
     return response;
   }
-  return NextResponse.json(await runSupportAgent(message, previousUserMessages, customer?.userId ?? null));
+  const result = await runSupportAgent(message, previousUserMessages, customer?.userId ?? null);
+  if (!result.customerVerificationRequired) recordSupportEvent(result.trace);
+  return NextResponse.json(result);
 }
