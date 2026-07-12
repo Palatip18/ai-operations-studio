@@ -1,0 +1,59 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+export type UiLocale = "en" | "th" | "zh";
+
+export const uiCopy = {
+  en: {
+    subtitle: "Personal portfolio prototype", live: "Live AI · server-side key", safe: "Safe demo · no key required", signOut: "Sign out",
+    eyebrow: "Applied AI · Operations", hero: "From messy work to clear, auditable flow.", intro: "A privacy-safe demonstration of AI implementation: route tasks to tools, retrieve grounded answers, and automate support decisions.",
+    interactive: "Interactive portfolio demo", prototype: "Prototype", footer: "Built as a personal portfolio prototype. No client or employer data.",
+    modules: [["AI Chat","Tool routing"],["Knowledge Base","Grounded retrieval"],["Workflow","Policy automation"],["Agentic Copilot","Plan → act → verify"],["Support Copilot","Auto-respond or escalate"]],
+    loginSubtitle: "Password-gated portfolio demo", loginTitle: "Enter demo access", loginIntro: "This prototype uses a shared demo password and contains only fictional, domain-neutral sample content.", password: "Demo password", passwordPlaceholder: "Enter the demo password", checking: "Checking…", unlock: "Unlock demo", loginFooter: "Portfolio review access — not production authentication.", loginError: "Unable to sign in. Please try again.", networkError: "Network error. Please try again.",
+    supportTitle: "Agentic Customer Support Copilot", supportIntro: "Designed to target up to 80–90% automation of repetitive, low-risk inquiries when the knowledge base is sufficiently complete, validated, and maintained.", supportLimit: "A controlled-pilot target, not a production guarantee. Complex, sensitive, disputed, or high-risk cases remain with human agents.",
+    supportEmpty: "Choose a scenario or ask your own support question.", fictional: "All customers, requests, and documents are fictional.", processing: "Classifying → retrieving → verifying → deciding…", placeholder: "Ask a customer-support question…", run: "Run support copilot", running: "Running…", trace: "Execution trace", intent: "Intent", risk: "Risk", reason: "Escalation reason", tools: "Tool calls", sources: "Retrieved sources", verifier: "Verifier", usage: "Estimated usage", language: "Language",
+    scenarios: [["FAQ", "How do I create a new account?"],["Troubleshooting", "The product won't load, what should I do?"],["Policy with citations", "Can I get a refund if I cancel this month?"],["Product vision", "Why was this system built?"],["Roadmap", "How far could this platform be developed in the future?"],["Insufficient evidence", "Do you support hardware security key multi-factor authentication?"],["Financial dispute", "I was charged twice and want to dispute the unauthorized charge."],["Angry complaint", "This is unacceptable and I will report this publicly."]],
+  },
+  th: {
+    subtitle: "ต้นแบบผลงานส่วนตัว", live: "AI ใช้งานจริง · คีย์ฝั่งเซิร์ฟเวอร์", safe: "เดโมปลอดภัย · ไม่ต้องใช้คีย์", signOut: "ออกจากระบบ",
+    eyebrow: "AI ประยุกต์ · งานปฏิบัติการ", hero: "เปลี่ยนงานที่ซับซ้อนให้เป็นกระบวนการที่ชัดเจนและตรวจสอบได้", intro: "เดโมการนำ AI ไปใช้โดยไม่เปิดเผยข้อมูลจริง: เลือกเครื่องมือ ค้นคำตอบที่มีหลักฐาน และตัดสินใจงานบริการลูกค้าอย่างปลอดภัย",
+    interactive: "เดโมผลงานแบบโต้ตอบ", prototype: "ต้นแบบ", footer: "ผลงานต้นแบบส่วนตัว ไม่มีข้อมูลลูกค้าหรือนายจ้าง",
+    modules: [["แชต AI","เลือกใช้เครื่องมือ"],["ฐานความรู้","ค้นคำตอบพร้อมหลักฐาน"],["เวิร์กโฟลว์","กฎและระบบอัตโนมัติ"],["Agentic Copilot","วางแผน → ลงมือ → ตรวจสอบ"],["ผู้ช่วยบริการลูกค้า","ตอบอัตโนมัติหรือส่งต่อ"]],
+    loginSubtitle: "เดโมผลงานที่มีรหัสผ่าน", loginTitle: "เข้าสู่เดโม", loginIntro: "ต้นแบบนี้ใช้รหัสผ่านร่วมและมีเฉพาะข้อมูลตัวอย่างสมมติที่เป็นกลาง", password: "รหัสผ่านเดโม", passwordPlaceholder: "กรอกรหัสผ่านเดโม", checking: "กำลังตรวจสอบ…", unlock: "เปิดเดโม", loginFooter: "ใช้สำหรับตรวจผลงาน ไม่ใช่ระบบยืนยันตัวตนระดับ Production", loginError: "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่", networkError: "เกิดปัญหาเครือข่าย กรุณาลองใหม่",
+    supportTitle: "AI ผู้ช่วยบริการลูกค้าแบบ Agentic", supportIntro: "ออกแบบเพื่อมุ่งรองรับคำถามซ้ำและความเสี่ยงต่ำได้สูงสุด 80–90% เมื่อฐานความรู้ครบถ้วน ถูกตรวจสอบ และได้รับการดูแลต่อเนื่อง", supportLimit: "เป็นเป้าหมายสำหรับการทดลองแบบควบคุม ไม่ใช่คำรับรอง Production เคสซับซ้อน อ่อนไหว มีข้อพิพาท หรือเสี่ยงสูงยังต้องใช้เจ้าหน้าที่",
+    supportEmpty: "เลือกสถานการณ์ตัวอย่างหรือถามคำถามบริการลูกค้า", fictional: "ลูกค้า คำขอ และเอกสารทั้งหมดเป็นข้อมูลสมมติ", processing: "จำแนก → ค้นข้อมูล → ตรวจสอบ → ตัดสินใจ…", placeholder: "ถามคำถามบริการลูกค้า…", run: "เรียกใช้ผู้ช่วย CS", running: "กำลังทำงาน…", trace: "รายละเอียดการทำงาน", intent: "เจตนา", risk: "ความเสี่ยง", reason: "เหตุผลที่ส่งต่อ", tools: "เครื่องมือที่ใช้", sources: "แหล่งข้อมูล", verifier: "ผลตรวจหลักฐาน", usage: "การใช้งานโดยประมาณ", language: "ภาษา",
+    scenarios: [["คำถามทั่วไป", "ฉันสมัครบัญชีอย่างไร"],["แก้ปัญหา", "เข้าใช้งานไม่ได้ ควรทำอย่างไร"],["นโยบายพร้อมอ้างอิง", "ถ้ายกเลิกเดือนนี้ ขอคืนเงินได้ไหม"],["เหตุผลที่สร้างระบบ", "ระบบนี้สร้างมาทำไม"],["แผนพัฒนาต่อ", "ระบบนี้พัฒนาต่อเป็นแพลตฟอร์มองค์กรได้อย่างไร"],["ข้อมูลไม่เพียงพอ", "รองรับกุญแจความปลอดภัยแบบฮาร์ดแวร์หรือไม่"],["ข้อพิพาททางการเงิน", "ฉันต้องการโต้แย้งรายการที่ไม่ได้ทำ"],["ลูกค้าโกรธ", "เรื่องนี้รับไม่ได้ ฉันจะร้องเรียนต่อสาธารณะ"]],
+  },
+  zh: {
+    subtitle: "个人作品集原型", live: "实时 AI · 服务端密钥", safe: "安全演示 · 无需密钥", signOut: "退出",
+    eyebrow: "应用 AI · 运营", hero: "把复杂工作变成清晰、可审计的流程", intro: "隐私安全的 AI 实施演示：调用工具、检索有依据的答案，并自动化客服决策。",
+    interactive: "交互式作品集演示", prototype: "原型", footer: "个人作品集原型，不包含客户或雇主数据。",
+    modules: [["AI 对话","工具路由"],["知识库","有依据的检索"],["工作流","策略自动化"],["Agentic Copilot","规划 → 执行 → 验证"],["客服 Copilot","自动回复或转人工"]],
+    loginSubtitle: "密码保护的作品集演示", loginTitle: "进入演示", loginIntro: "此原型使用共享演示密码，仅包含虚构且中立的示例内容。", password: "演示密码", passwordPlaceholder: "请输入演示密码", checking: "正在验证…", unlock: "解锁演示", loginFooter: "仅供作品集评审，不是生产级身份验证。", loginError: "登录失败，请重试。", networkError: "网络错误，请重试。",
+    supportTitle: "Agentic AI 客服 Copilot", supportIntro: "当知识库足够完整、经过验证并持续维护时，目标是自动处理最多 80–90% 的重复、低风险咨询。", supportLimit: "这是受控试点目标，不是生产保证。复杂、敏感、有争议或高风险事件仍由人工客服处理。",
+    supportEmpty: "请选择示例或输入客服问题。", fictional: "所有客户、请求和文档均为虚构数据。", processing: "分类 → 检索 → 验证 → 决策…", placeholder: "请输入客服问题…", run: "运行客服 Copilot", running: "运行中…", trace: "执行轨迹", intent: "意图", risk: "风险", reason: "转人工原因", tools: "工具调用", sources: "检索来源", verifier: "验证结果", usage: "预计用量", language: "语言",
+    scenarios: [["常见问题", "如何创建账户？"],["故障排除", "页面无法加载，我该怎么办？"],["带引用的政策", "本月取消可以退款吗？"],["产品愿景", "为什么要创建这个系统？"],["发展路线", "这个平台未来可以发展到什么程度？"],["证据不足", "是否支持硬件安全密钥多重验证？"],["财务争议", "这是未经授权的交易，我要提出争议。"],["愤怒投诉", "这不可接受，我会公开投诉。"]],
+  },
+} as const;
+
+export function useUiLocale() {
+  const [locale, setLocaleState] = useState<UiLocale>("en");
+  useEffect(() => {
+    const saved = window.localStorage.getItem("aios-language") as UiLocale | null;
+    const detected = saved && saved in uiCopy ? saved : navigator.language.startsWith("th") ? "th" : navigator.language.startsWith("zh") ? "zh" : "en";
+    queueMicrotask(() => setLocaleState(detected));
+  }, []);
+  function setLocale(next: UiLocale) {
+    setLocaleState(next);
+    window.localStorage.setItem("aios-language", next);
+    document.documentElement.lang = next === "zh" ? "zh-CN" : next;
+  }
+  return { locale, setLocale, copy: uiCopy[locale] };
+}
+
+export function LanguageSwitcher({ locale, onChange }: { locale: UiLocale; onChange: (locale: UiLocale) => void }) {
+  return <div className="flex rounded-full border border-white/10 bg-white/[.03] p-0.5" aria-label="Language">
+    {(["en", "th", "zh"] as UiLocale[]).map((item) => <button key={item} type="button" onClick={() => onChange(item)} className={`rounded-full px-2.5 py-1 text-[11px] transition ${locale === item ? "bg-green-300 text-[#07100f]" : "text-[#90a9a0] hover:text-green-200"}`}>{item === "en" ? "EN" : item === "th" ? "ไทย" : "中文"}</button>)}
+  </div>;
+}
