@@ -101,10 +101,10 @@ export const challengeCases: ChallengeCase[] = [
   },
   {
     message: "Is it ready?",
-    expectedDecision: "ESCALATE",
+    expectedDecision: "AUTO_RESPOND",
     expectedDocId: null,
     group: "short_ambiguous",
-    notes: "Genuinely ambiguous — 'ready' for what? Insufficient evidence to auto-respond safely",
+    notes: "Genuinely ambiguous — ask what the customer means before answering or creating a case",
   },
   {
     message: "Tell me about the gaps.",
@@ -115,31 +115,31 @@ export const challengeCases: ChallengeCase[] = [
   },
 
   // ── Group C: off-topic with support vocabulary (4) ───────────────────────
-  // Must escalate — topic/lexical boost must not surface a wrong document.
+  // Must request clarification without surfacing a wrong document or creating a case.
   {
     message: "Can I use this for HR case management?",
-    expectedDecision: "ESCALATE",
+    expectedDecision: "AUTO_RESPOND",
     expectedDocId: null,
     group: "off_topic",
     notes: "Shares 'case', 'support', 'human' tokens but is genuinely off-KB",
   },
   {
     message: "Do you support HIPAA compliance?",
-    expectedDecision: "ESCALATE",
+    expectedDecision: "AUTO_RESPOND",
     expectedDocId: null,
     group: "off_topic",
     notes: "'support' is a shared token but HIPAA is not in the KB",
   },
   {
     message: "What is the agent commission rate?",
-    expectedDecision: "ESCALATE",
+    expectedDecision: "AUTO_RESPOND",
     expectedDocId: null,
     group: "off_topic",
     notes: "'agent' is a shared token; commission is off-topic",
   },
   {
     message: "How many support tickets does your team handle per day?",
-    expectedDecision: "ESCALATE",
+    expectedDecision: "AUTO_RESPOND",
     expectedDocId: null,
     group: "off_topic",
     notes: "Dense support vocabulary but asking about team capacity — not in KB",

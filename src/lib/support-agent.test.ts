@@ -45,6 +45,18 @@ describe("decideSupportPolicy (pure policy logic)", () => {
 });
 
 describe("runSupportAgent (integration, deterministic mode)", () => {
+  it("asks a focused clarification instead of guessing or creating a case", async () => {
+    for (const message of ["คือไรครับ", "ยังไม่ได้บอกอะไรเลยครับ"]) {
+      const result = await runSupportAgent(message);
+      expect(result.trace.intent).toBe("unknown");
+      expect(result.trace.decision).toBe("AUTO_RESPOND");
+      expect(result.clarificationRequired).toBe(true);
+      expect(result.handoff).toBeNull();
+      expect(result.answer).toMatch(/ฝากเงิน.*ถอนเงิน.*โปรโมชั่น.*ปัญหาเกม/);
+      expect(result.trace.steps.some((step) => step.tool === "request_clarification")).toBe(true);
+    }
+  });
+
   it("auto-responds to a routine FAQ with a grounded source", async () => {
     const { answer, trace } = await runSupportAgent("How do I create a new account?");
     expect(trace.intent).toBe("account_onboarding");

@@ -59,7 +59,7 @@ export type SupportTrace = {
   customerScope: string | null;
 };
 
-export type SupportResult = { answer: string; customerVerificationRequired?: boolean; slipUploadRequired?: boolean; transaction?: BackofficeTransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
+export type SupportResult = { answer: string; customerVerificationRequired?: boolean; slipUploadRequired?: boolean; clarificationRequired?: boolean; transaction?: BackofficeTransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
 
 const WORKFLOW_INTENTS = new Set<Intent>(["request_status", "account_onboarding"]);
 
@@ -173,6 +173,17 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   const verifier = verifyGroundedness(answer, groundingEvidence, processingMessage);
   const mandatory = checkMandatoryEscalation(processingMessage, intent);
   let { decision, escalationReason } = decideSupportPolicy(mandatory, verifier, risk, intent);
+  const clarificationRequired = intent === "unknown" && !mandatory.escalate;
+  if (clarificationRequired) {
+    decision = "AUTO_RESPOND";
+    escalationReason = null;
+    steps.push({
+      tool: "request_clarification",
+      input: { reason: "ambiguous_request", supportedTopics: ["deposit", "withdrawal", "promotion", "game"] },
+      outputSummary: "Asked the customer to clarify the issue before answering or creating a case.",
+      resultCount: 0,
+    });
+  }
   if (customerVerificationRequired) {
     decision = "AUTO_RESPOND";
     escalationReason = null;
@@ -245,7 +256,13 @@ export async function runSupportAgent(message: string, previousUserMessages: str
     tone,
     handoffId: handoff?.handoffId ?? null
   });
-  if (customerVerificationRequired) {
+  if (clarificationRequired) {
+    safeAnswer = multilingual.language === "th"
+      ? "ขออภัยค่ะ แอดมินยังไม่แน่ใจว่าลูกค้าต้องการสอบถามเรื่องไหน รบกวนแจ้งเพิ่มเติมได้ไหมคะว่าเป็นเรื่องฝากเงิน ถอนเงิน โปรโมชั่น หรือปัญหาเกม และเกิดปัญหาอย่างไรบ้างคะ"
+      : multilingual.language === "zh"
+        ? "抱歉，我还不确定您想咨询哪一类问题。请说明是存款、提款、促销还是游戏问题，并补充具体情况。"
+        : "Sorry, I’m not yet sure which issue you need help with. Please clarify whether it concerns a deposit, withdrawal, promotion, or game, and briefly describe what happened.";
+  } else if (customerVerificationRequired) {
     safeAnswer = multilingual.language === "th"
       ? "ได้ค่ะ รบกวนแจ้งยูสเซอร์หรือเบอร์โทรที่ลงทะเบียนไว้ให้แอดมินหน่อยนะคะ แอดมินจะได้ตรวจสอบรายการให้ตรงบัญชีค่ะ"
       : multilingual.language === "zh"
@@ -270,6 +287,7 @@ export async function runSupportAgent(message: string, previousUserMessages: str
 
   return {
     answer: safeAnswer,
+    clarificationRequired,
     customerVerificationRequired,
     slipUploadRequired,
     transaction,

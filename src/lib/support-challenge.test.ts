@@ -47,7 +47,7 @@ describe("challenge suite — Group A: portfolio paraphrases (priority queries)"
 });
 
 describe("challenge suite — Group C: off-topic precision guard", () => {
-  it("all four off-topic queries escalate (metadata boost must not surface wrong docs)", async () => {
+  it("all four off-topic queries request clarification without surfacing wrong documents", async () => {
     const suite = await runChallengeSuite();
     const groupC = suite.results.filter((r) => r.group === "off_topic");
     expect(groupC.length).toBe(4);

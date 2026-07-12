@@ -61,12 +61,12 @@ export async function POST(request: Request) {
       ? `ได้ค่ะ แอดมินตรวจสอบยูสเซอร์ ${verifiedCustomer.userId} เรียบร้อยแล้วนะคะ ${result.answer}`
       : `User ${verifiedCustomer.userId} is verified for this chat session. ${result.answer}`;
     result.trace.customerScope = verifiedCustomer.userId;
-    if (!result.customerVerificationRequired) recordSupportEvent(result.trace);
+    if (!result.customerVerificationRequired && !result.clarificationRequired) recordSupportEvent(result.trace);
     const response = NextResponse.json(result);
     response.cookies.set(SUPPORT_CUSTOMER_COOKIE, createCustomerContextToken(verifiedCustomer), customerContextCookieOptions);
     return response;
   }
   const result = await runSupportAgent(message, previousUserMessages, customer?.userId ?? null);
-  if (!result.customerVerificationRequired) recordSupportEvent(result.trace);
+  if (!result.customerVerificationRequired && !result.clarificationRequired) recordSupportEvent(result.trace);
   return NextResponse.json(result);
 }

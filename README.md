@@ -4,7 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-open-86efac?style=for-the-badge&logo=vercel&logoColor=07100f)](https://ai-operations-studio-black.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Tests](https://img.shields.io/badge/tests-205_passing-4ade80?style=flat-square)](#quality-checks)
+[![Tests](https://img.shields.io/badge/tests-206_passing-4ade80?style=flat-square)](#quality-checks)
 
 **[Open the live demo →](https://ai-operations-studio-black.vercel.app)**
 
@@ -48,6 +48,8 @@ This separation demonstrates that internal AI observability can remain available
 Every completed support interaction records only operational dimensions: timestamp, intent, risk, decision, language, and responsible destination. Customer messages, User IDs, phone numbers, transaction references, and customer context are not stored in analytics events. The protected `GET /api/support/analytics` route aggregates daily, 7-day, or 30-day volume, automation, escalation, top-issue, trend, and issue-mix metrics. The internal dashboard maps each recurring problem to an accountable team and a concrete improvement recommendation.
 
 Each event is also classified into a privacy-safe learning case: `AI_RESOLVED` records the grounded sources and tools that successfully answered the issue, while `EMPLOYEE_REVIEW` records a reason code such as high risk, policy boundary, knowledge gap, or back-office exception. The dashboard exposes recent case metadata and an improvement backlog ranked by employee-review volume, allowing the team to expand knowledge, evaluation coverage, policy, or integrations without retaining the customer's conversation.
+
+Ambiguous messages are not guessed, marked resolved, or escalated automatically. The assistant returns a focused clarification question covering deposit, withdrawal, promotion, or game issues; no support case or completed analytics event is created until the customer provides enough context.
 
 `POST /api/support/analytics` demonstrates report dispatch by creating a structured simulated report, routing the highest-volume issues to the relevant fictional teams, and returning a queued report reference. This checkpoint uses seeded fictional history plus a bounded in-memory event store. It resets across serverless instances and does not claim durable production analytics, scheduled delivery, or a real email/ticket integration; those require persistent storage and an authenticated delivery adapter.
 

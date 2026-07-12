@@ -75,7 +75,7 @@ type TransactionResult = {
   safeReason?: string;
   reviewRequired: boolean;
 };
-type SupportResult = { answer: string; customerVerificationRequired?: boolean; slipUploadRequired?: boolean; transaction?: TransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
+type SupportResult = { answer: string; customerVerificationRequired?: boolean; slipUploadRequired?: boolean; clarificationRequired?: boolean; transaction?: TransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
 type SlipApiResult = {
   verification: { simulated: true; status: "VERIFIED" | "REJECTED" | "DUPLICATE"; slipReference: string; extracted: { amount: number | null; currency: "THB"; transferReference: string | null; destinationAccount: string | null }; confidence: number; reason: string };
   reconciliation: { simulated: true; accepted: boolean; status: "MATCHED_PENDING_CREDIT" | "NOT_SENT"; backofficeReference?: string; idempotent: boolean };

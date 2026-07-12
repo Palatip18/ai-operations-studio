@@ -31,6 +31,8 @@ Analytics events contain timestamp, intent, risk, decision, response language, a
 
 The learning-case registry additionally stores groundedness score, knowledge source IDs, tool names, resolution path, reason code, and a development signal. These are operational metadata rather than customer content.
 
+Ambiguous requests that still require customer clarification are not recorded as completed `AI_RESOLVED` cases and do not create `EMPLOYEE_REVIEW` cases. They enter a clarification turn first; a completed analytics event is recorded only after enough context exists to produce a real outcome.
+
 ## Routing model
 
 Examples include:
