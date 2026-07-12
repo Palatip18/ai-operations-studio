@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { isAuthenticatedRequest } from "@/lib/auth";
 import { runLiveAssistant } from "@/lib/llm";
 import { executeTool, routeTool } from "@/lib/tools";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  if (!isAuthenticatedRequest(request)) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const rate = checkRateLimit(request, "chat", 12, 10 * 60 * 1000);
   if (!rate.allowed) return NextResponse.json({ error: "Demo request limit reached. Please try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfter) } });
   const body = (await request.json()) as { message?: string };
