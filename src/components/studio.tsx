@@ -1484,9 +1484,7 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
   const [history, setHistory] = useState<SupportHistoryEntry[]>([]);
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
   const [customer, setCustomer] = useState<DemoCustomer | null>(null);
-  const [userId, setUserId] = useState("");
   const [verificationLoading, setVerificationLoading] = useState(true);
-  const [verificationError, setVerificationError] = useState("");
   const [quickTopicsOpen, setQuickTopicsOpen] = useState(false);
   const [slipFile, setSlipFile] = useState<File | null>(null);
   const [slipLoading, setSlipLoading] = useState(false);
@@ -1562,7 +1560,16 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
         throw new Error();
       }
 
-      setResult(await response.json());
+      const data = await response.json() as SupportResult;
+      setResult(data);
+      if (!customer && data.trace.customerScope) {
+        fetch("/api/support/customer")
+          .then((profileResponse) => profileResponse.json())
+          .then((profile: { verified?: boolean; customer?: DemoCustomer }) => {
+            if (profile.verified && profile.customer) setCustomer(profile.customer);
+          })
+          .catch(() => {});
+      }
     } catch {
       setErrorText(copy.errorAlert || "An error occurred.");
     } finally {
@@ -1578,32 +1585,6 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
   async function selectScenario(prompt: string) {
     setQuickTopicsOpen(false);
     await run(prompt);
-  }
-
-  async function verifyCustomer(event: FormEvent) {
-    event.preventDefault();
-    const candidate = userId.trim().toUpperCase();
-    if (!candidate || verificationLoading) return;
-    setVerificationLoading(true);
-    setVerificationError("");
-    try {
-      const response = await fetch("/api/support/customer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: candidate }),
-      });
-      const data = await response.json() as { customer?: DemoCustomer; error?: string };
-      if (!response.ok || !data.customer) throw new Error(data.error || "Verification failed");
-      const pendingLookup = submittedMessage && result?.customerVerificationRequired ? submittedMessage : null;
-      setCustomer(data.customer);
-      setUserId("");
-      if (pendingLookup) await run(pendingLookup);
-      else clearConversation();
-    } catch (error) {
-      setVerificationError(error instanceof Error ? error.message : "Verification failed");
-    } finally {
-      setVerificationLoading(false);
-    }
   }
 
   async function changeCustomer() {
@@ -1743,29 +1724,11 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
           </div>
         )}
         {!customer && !verificationLoading && !submittedMessage && history.length === 0 && (
-          <div className="max-w-[95%] space-y-3 rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] p-4 sm:max-w-[85%]">
+          <div className="max-w-[95%] rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] p-4 sm:max-w-[85%]">
             <div className="text-sm leading-6 text-foreground">
-              {locale === "th" ? "สวัสดีครับ สอบถามข้อมูลทั่วไป โปรโมชั่น หรือปัญหาเกมได้เลย หากต้องการให้ตรวจสอบรายการฝาก–ถอน กรุณายืนยัน User ID เพื่อให้ผมเปิดดูข้อมูลได้ตรงบัญชีครับ" : locale === "zh" ? "您好，您可以直接咨询一般信息、促销或游戏问题。如需查询存款或提款记录，请验证 User ID，以便我查看正确账户。" : "Hello. You can ask general, promotion, or game questions right away. To check a deposit or withdrawal, verify the User ID so I access the correct account."}
+              {locale === "th" ? "สวัสดีครับ สอบถามข้อมูลทั่วไป โปรโมชั่น หรือปัญหาเกมได้เลย หากต้องการตรวจสอบรายการฝาก–ถอน ผมจะขอ User ID ในบทสนทนา และคุณสามารถพิมพ์ตอบในช่องแชตได้เลยครับ" : locale === "zh" ? "您好，您可以直接咨询一般信息、促销或游戏问题。如需查询存款或提款，我会在对话中询问 User ID，您直接在聊天框回复即可。" : "Hello. Ask general, promotion, or game questions right away. If a deposit or withdrawal lookup is needed, I’ll ask for the User ID in the conversation—just reply in the normal chat box."}
             </div>
-            <form onSubmit={verifyCustomer} className="rounded-xl border border-white/10 bg-[#07101F] p-3">
-              <label className="block text-xs font-medium text-muted" htmlFor={`support-user-${customerView ? "customer" : "internal"}`}>User ID</label>
-              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                <input
-                  id={`support-user-${customerView ? "customer" : "internal"}`}
-                  value={userId}
-                  onChange={(event) => setUserId(event.target.value)}
-                  placeholder="USER-RAY01"
-                  autoComplete="off"
-                  className="kb-focusable min-h-[44px] min-w-0 flex-1 rounded-lg border border-white/10 bg-black/20 px-3 font-mono text-sm uppercase text-foreground outline-none placeholder:text-muted/40"
-                />
-                <button type="submit" disabled={!userId.trim() || verificationLoading} className="kb-focusable min-h-[44px] rounded-lg bg-accent px-4 text-sm font-semibold text-[#07101F] disabled:opacity-50">
-                  {locale === "th" ? "ยืนยัน" : locale === "zh" ? "验证" : "Verify"}
-                </button>
-              </div>
-              <p className="mt-2 text-xs text-muted/60">Demo: USER-RAY01 · USER-MALI02</p>
-              {verificationError && <p className="mt-2 text-xs text-error">{verificationError}</p>}
-              <p className="mt-2 text-[11px] leading-5 text-muted/50">{locale === "th" ? "ไม่ต้องส่งรหัสผ่าน OTP หรือเลขบัญชีธนาคาร" : locale === "zh" ? "请勿发送密码、OTP 或银行账号。" : "Do not send a password, OTP, or bank-account number."}</p>
-            </form>
+            <p className="mt-2 text-xs text-muted/55">Demo User: USER-RAY01 · USER-MALI02</p>
           </div>
         )}
         {customer && history.length === 0 && !submittedMessage && !errorText && (
@@ -1822,27 +1785,6 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
               </span>}
               {result.answer}
             </div>
-
-            {!customer && result.customerVerificationRequired && (
-              <form onSubmit={verifyCustomer} className="rounded-xl border border-accent/20 bg-accent/5 p-3">
-                <label className="block text-xs font-medium text-foreground" htmlFor={`support-user-request-${customerView ? "customer" : "internal"}`}>User ID</label>
-                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                  <input
-                    id={`support-user-request-${customerView ? "customer" : "internal"}`}
-                    value={userId}
-                    onChange={(event) => setUserId(event.target.value)}
-                    placeholder="USER-RAY01"
-                    autoComplete="off"
-                    className="kb-focusable min-h-[44px] min-w-0 flex-1 rounded-lg border border-white/10 bg-black/20 px-3 font-mono text-sm uppercase text-foreground outline-none"
-                  />
-                  <button type="submit" disabled={!userId.trim() || verificationLoading} className="kb-focusable min-h-[44px] rounded-lg bg-accent px-4 text-sm font-semibold text-[#07101F] disabled:opacity-50">
-                    {verificationLoading ? copy.checking : locale === "th" ? "ยืนยันและตรวจสอบ" : locale === "zh" ? "验证并查询" : "Verify and check"}
-                  </button>
-                </div>
-                <p className="mt-2 text-xs text-muted/60">Demo: USER-RAY01 · USER-MALI02</p>
-                {verificationError && <p className="mt-2 text-xs text-error">{verificationError}</p>}
-              </form>
-            )}
 
             {customer && result.slipUploadRequired && !slipResult && (
               <form onSubmit={uploadSlip} className="rounded-xl border border-accent/20 bg-accent/5 p-3">

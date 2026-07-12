@@ -179,6 +179,21 @@ describe("agent trace redaction", () => {
     const response = await supportRoute(new Request("http://localhost/api/support", { method: "POST", headers: { "content-type": "application/json", cookie: cookie(), "x-forwarded-for": "203.0.113.29" }, body: JSON.stringify({ message: "hello" }) }));
     expect(response.status).toBe(200);
   });
+
+  it("accepts a User ID through the normal conversation and resumes the pending lookup", async () => {
+    const issue = "ฝากเงินไม่เข้า ช่วยตรวจสอบให้หน่อย";
+    const requestUser = await supportRoute(new Request("http://localhost/api/support", { method: "POST", headers: { "content-type": "application/json", cookie: cookie(), "x-forwarded-for": "203.0.113.32" }, body: JSON.stringify({ message: issue }) }));
+    const requestBody = await requestUser.json();
+    expect(requestBody.customerVerificationRequired).toBe(true);
+
+    const verify = await supportRoute(new Request("http://localhost/api/support", { method: "POST", headers: { "content-type": "application/json", cookie: cookie(), "x-forwarded-for": "203.0.113.33" }, body: JSON.stringify({ message: "USER-RAY01", previousUserMessages: [issue] }) }));
+    expect(verify.status).toBe(200);
+    expect(verify.headers.get("set-cookie")).toContain(`${SUPPORT_CUSTOMER_COOKIE}=`);
+    const verifiedBody = await verify.json();
+    expect(verifiedBody.trace.customerScope).toBe("USER-RAY01");
+    expect(verifiedBody.slipUploadRequired).toBe(true);
+    expect(verifiedBody.answer).toContain("ยืนยัน User USER-RAY01");
+  });
 });
 
 describe("support agent trace redaction", () => {
