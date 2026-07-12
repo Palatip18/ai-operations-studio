@@ -69,7 +69,7 @@ The support flow now uses a protected external-style adapter at `POST /api/suppo
 
 - Live Chat accepts general, promotion, and game questions without a User ID.
 - A fictional User ID is requested only when the assistant needs account-scoped or transaction data.
-- Verification creates a signed HttpOnly customer-context cookie that expires after 30 minutes.
+- Verification creates a signed HttpOnly browser-session customer-context cookie. It is reused for later messages, cleared on End chat/change user or logout, and has an eight-hour cryptographic safety expiry.
 - `/api/support/status` returns `403` when customer context is absent or invalid; `/api/support` remains available for general questions and responds with a verification request instead of accessing private data.
 - Every transaction record has an internal owner User ID; lookup returns no transaction data when the verified user does not own that reference.
 - Token signatures and expiry are unit-tested, including tamper rejection.

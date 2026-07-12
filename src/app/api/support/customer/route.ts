@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAuthenticatedRequest } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { createCustomerContextToken, customerContextCookieOptions, findDemoCustomer, readCustomerContext, SUPPORT_CUSTOMER_COOKIE, SUPPORT_CUSTOMER_MAX_AGE_SECONDS } from "@/lib/support-customer";
+import { createCustomerContextToken, customerContextCookieOptions, findDemoCustomer, readCustomerContext, SUPPORT_CUSTOMER_COOKIE } from "@/lib/support-customer";
 
 export async function GET(request: Request) {
   if (!isAuthenticatedRequest(request)) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const customer = findDemoCustomer(userId);
   if (!customer) return NextResponse.json({ error: "Demo user was not found." }, { status: 404 });
   const response = NextResponse.json({ verified: true, customer });
-  response.cookies.set(SUPPORT_CUSTOMER_COOKIE, createCustomerContextToken(customer), { ...customerContextCookieOptions, maxAge: SUPPORT_CUSTOMER_MAX_AGE_SECONDS });
+  response.cookies.set(SUPPORT_CUSTOMER_COOKIE, createCustomerContextToken(customer), customerContextCookieOptions);
   return response;
 }
 
@@ -30,4 +30,3 @@ export async function DELETE(request: Request) {
   response.cookies.set(SUPPORT_CUSTOMER_COOKIE, "", { ...customerContextCookieOptions, maxAge: 0 });
   return response;
 }
-

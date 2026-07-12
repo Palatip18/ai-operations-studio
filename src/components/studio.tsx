@@ -1647,7 +1647,7 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
     <div className={`flex min-h-[610px] flex-col ${customerView ? "p-4 sm:p-6" : ""}`}>
       {customer && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-success/20 bg-success/5 px-4 py-3 text-xs">
         <div><span className="font-semibold text-success">{customer.displayName}</span><span className="ml-2 font-mono text-muted">{customer.userId} · {customer.tier}</span></div>
-        <button type="button" onClick={changeCustomer} className="kb-focusable min-h-[34px] rounded-lg border border-white/10 px-3 text-muted hover:text-foreground">{locale === "th" ? "เปลี่ยนผู้ใช้" : locale === "zh" ? "切换用户" : "Change user"}</button>
+        <button type="button" onClick={changeCustomer} className="kb-focusable min-h-[34px] rounded-lg border border-white/10 px-3 text-muted hover:text-foreground">{locale === "th" ? "จบแชต / เปลี่ยนผู้ใช้" : locale === "zh" ? "结束对话 / 切换用户" : "End chat / change user"}</button>
       </div>}
       {!customerView && <div className="mb-5 rounded-xl border border-white/10 bg-[#07101F] p-4">
         <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-accent">

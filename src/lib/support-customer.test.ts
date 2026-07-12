@@ -16,7 +16,8 @@ describe("simulated support customer context", () => {
     expect(customer).not.toBeNull();
     const token = createCustomerContextToken(customer!, 1_000);
     expect(verifyCustomerContextToken(token, 2_000)?.userId).toBe("USER-RAY01");
-    expect(verifyCustomerContextToken(token, 1_000 + 31 * 60 * 1_000)).toBeNull();
+    expect(verifyCustomerContextToken(token, 1_000 + 7 * 60 * 60 * 1_000)?.userId).toBe("USER-RAY01");
+    expect(verifyCustomerContextToken(token, 1_000 + 9 * 60 * 60 * 1_000)).toBeNull();
   });
 
   it("rejects a modified customer token", () => {

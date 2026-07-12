@@ -151,6 +151,15 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     expect(promotion.answer).not.toContain("User ID");
   });
 
+  it("reuses one verified customer scope across multiple turns in the same chat session", async () => {
+    const first = await runSupportAgent("Please check withdrawal WDL-2001", [], "USER-RAY01");
+    const second = await runSupportAgent("ฝากเงิน DEP-1001 ยังไม่เข้า", ["Please check withdrawal WDL-2001"], "USER-RAY01");
+    expect(first.customerVerificationRequired).toBe(false);
+    expect(second.customerVerificationRequired).toBe(false);
+    expect(first.trace.customerScope).toBe("USER-RAY01");
+    expect(second.trace.customerScope).toBe("USER-RAY01");
+  });
+
   it("treats a Thai deposit correction as the current topic instead of repeating withdrawal guidance", async () => {
     const result = await runSupportAgent(
       "ไม่ใช่ถอน ฝากไม่เข้า",

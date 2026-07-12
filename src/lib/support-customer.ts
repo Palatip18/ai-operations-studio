@@ -1,7 +1,9 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const SUPPORT_CUSTOMER_COOKIE = "support_customer";
-export const SUPPORT_CUSTOMER_MAX_AGE_SECONDS = 30 * 60;
+// Browser-session customer context, with an 8-hour cryptographic safety cap.
+// The cookie itself has no Max-Age and is explicitly cleared on End chat or logout.
+export const SUPPORT_CUSTOMER_MAX_AGE_SECONDS = 8 * 60 * 60;
 
 export type DemoCustomer = {
   userId: string;
@@ -65,4 +67,3 @@ export const customerContextCookieOptions = {
   sameSite: "lax" as const,
   path: "/api/support",
 };
-
