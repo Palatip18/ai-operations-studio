@@ -21,6 +21,8 @@ describe("support analytics API", () => {
     expect(payload.period).toBe("week");
     expect(payload.source.containsCustomerText).toBe(false);
     expect(payload.metrics.totalInteractions).toBeGreaterThan(0);
+    expect(payload.learning.recentCases.length).toBeGreaterThan(0);
+    expect(payload.learning.aiResolvedCases + payload.learning.employeeReviewCases).toBe(payload.metrics.totalInteractions);
   });
 
   it("creates an authenticated simulated dispatch record", async () => {

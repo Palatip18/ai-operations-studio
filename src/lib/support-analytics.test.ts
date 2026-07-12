@@ -44,6 +44,8 @@ describe("support analytics", () => {
     expect(serialized).not.toContain("USER-SHOULD-NOT-BE-STORED");
     expect(serialized).not.toMatch(/message|customerScope|phone/i);
     expect(event.destination).toBe("Payments Operations");
+    expect(event.resolutionPath).toBe("EMPLOYEE_REVIEW");
+    expect(event.reasonCode).toBe("HIGH_RISK");
   });
 
   it("identifies the highest-volume issue and its responsible team", () => {
@@ -51,6 +53,9 @@ describe("support analytics", () => {
     expect(report.metrics.topIssue).toBe("Deposit & withdrawal");
     expect(report.issues[0].destination).toBe("Payments Operations");
     expect(report.issues[0].recommendation).toMatch(/gateway|transaction/i);
+    expect(report.learning.aiResolvedCases + report.learning.employeeReviewCases).toBe(report.metrics.totalInteractions);
+    expect(report.learning.recentCases.every((item) => item.resolutionPath === "AI_RESOLVED" || item.resolutionPath === "EMPLOYEE_REVIEW")).toBe(true);
+    expect(report.learning.improvementBacklog[0].employeeReviewCount).toBeGreaterThan(0);
   });
 
   it("creates a simulated report routed to responsible teams", () => {

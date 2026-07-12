@@ -1484,6 +1484,12 @@ type AnalyticsResult = {
   metrics: { totalInteractions: number; autoResponded: number; escalated: number; automationRate: number; topIssue: string };
   issues: Array<{ intent: string; label: string; count: number; share: number; previousCount: number; change: number; destination: string; recommendation: string }>;
   trend: Array<{ date: string; count: number }>;
+  learning: {
+    aiResolvedCases: number;
+    employeeReviewCases: number;
+    recentCases: Array<{ caseId: string; occurredAt: string; issue: string; risk: string; resolutionPath: "AI_RESOLVED" | "EMPLOYEE_REVIEW"; reasonCode: string; destination: string; groundednessScore: number; knowledgeSourceIds: string[]; toolsUsed: string[]; improvementSignal: string }>;
+    improvementBacklog: Array<{ intent: string; issue: string; aiResolvedCount: number; employeeReviewCount: number; reviewRate: number; owner: string; recommendation: string }>;
+  };
 };
 
 function SupportAnalyticsDemo({ locale }: { locale: UiLocale }) {
@@ -1494,11 +1500,11 @@ function SupportAnalyticsDemo({ locale }: { locale: UiLocale }) {
   const [dispatchResult, setDispatchResult] = useState<{ reportId: string; recipients: string[]; status: string } | null>(null);
   const [dispatching, setDispatching] = useState(false);
   const labels = locale === "th" ? {
-    title: "วิเคราะห์ปัญหาลูกค้า", intro: "บันทึกเหตุการณ์แบบไม่เก็บข้อความหรือข้อมูลระบุตัวลูกค้า เพื่อดูแนวโน้มและส่งรายงานให้ทีมที่เกี่ยวข้อง", day: "วันนี้", week: "7 วัน", month: "30 วัน", interactions: "การติดต่อทั้งหมด", auto: "ตอบอัตโนมัติ", escalated: "ส่งตรวจสอบ", automation: "อัตราตอบอัตโนมัติ", topIssue: "ปัญหาที่พบมากที่สุด", trend: "แนวโน้มจำนวนปัญหา", breakdown: "ปัญหาและสัดส่วน", owner: "ทีมที่เกี่ยวข้อง", action: "ข้อเสนอแนะเพื่อปรับปรุง", send: "ส่งรายงานจำลอง", sending: "กำลังจัดทำรายงาน...", sent: "สร้างรายงานและเข้าคิวเรียบร้อย", privacy: "ไม่เก็บข้อความ User ID เบอร์โทร หรือข้อมูลธุรกรรมของลูกค้า", simulated: "ข้อมูลจำลอง + เหตุการณ์จากเดโม", noData: "ยังไม่มีข้อมูลในช่วงเวลานี้",
+    title: "วิเคราะห์ปัญหาลูกค้า", intro: "บันทึกเหตุการณ์แบบไม่เก็บข้อความหรือข้อมูลระบุตัวลูกค้า เพื่อดูแนวโน้มและส่งรายงานให้ทีมที่เกี่ยวข้อง", day: "วันนี้", week: "7 วัน", month: "30 วัน", interactions: "การติดต่อทั้งหมด", auto: "AI แก้ได้เอง", escalated: "ส่งต่อพนักงาน", automation: "อัตราที่ AI แก้ได้", topIssue: "ปัญหาที่พบมากที่สุด", trend: "แนวโน้มจำนวนปัญหา", breakdown: "ปัญหาและสัดส่วน", owner: "ทีมที่เกี่ยวข้อง", action: "ข้อเสนอแนะเพื่อปรับปรุง", learningLog: "ทะเบียนเคสเพื่อพัฒนา AI", resolved: "AI แก้ได้เอง", employee: "ต้องส่งต่อพนักงาน", reason: "เหตุผล/สัญญาณพัฒนา", backlog: "รายการที่ควรนำไปปรับปรุงระบบ", send: "ส่งรายงานจำลอง", sending: "กำลังจัดทำรายงาน...", sent: "สร้างรายงานและเข้าคิวเรียบร้อย", privacy: "ไม่เก็บข้อความ User ID เบอร์โทร หรือข้อมูลธุรกรรมของลูกค้า", simulated: "ข้อมูลจำลอง + เหตุการณ์จากเดโม", noData: "ยังไม่มีข้อมูลในช่วงเวลานี้",
   } : locale === "zh" ? {
-    title: "客户问题分析", intro: "记录不含客户文本或身份信息的事件，用于趋势分析和改进分派", day: "今天", week: "7 天", month: "30 天", interactions: "总咨询量", auto: "自动回复", escalated: "转交审核", automation: "自动回复率", topIssue: "最常见问题", trend: "问题趋势", breakdown: "问题分布", owner: "负责团队", action: "改进建议", send: "发送模拟报告", sending: "正在生成报告...", sent: "报告已创建并进入队列", privacy: "不保存客户消息、User ID、电话或交易资料", simulated: "模拟历史 + 演示事件", noData: "此期间暂无数据",
+    title: "客户问题分析", intro: "记录不含客户文本或身份信息的事件，用于趋势分析和改进分派", day: "今天", week: "7 天", month: "30 天", interactions: "总咨询量", auto: "AI 已解决", escalated: "转人工审核", automation: "AI 解决率", topIssue: "最常见问题", trend: "问题趋势", breakdown: "问题分布", owner: "负责团队", action: "改进建议", learningLog: "AI 学习案例日志", resolved: "AI 已解决", employee: "需要人工审核", reason: "原因/改进信号", backlog: "系统改进清单", send: "发送模拟报告", sending: "正在生成报告...", sent: "报告已创建并进入队列", privacy: "不保存客户消息、User ID、电话或交易资料", simulated: "模拟历史 + 演示事件", noData: "此期间暂无数据",
   } : {
-    title: "Support Analytics", intro: "Privacy-safe event logging for trend analysis and routing improvement reports to the responsible teams.", day: "Today", week: "7 days", month: "30 days", interactions: "Total interactions", auto: "Auto-responded", escalated: "Escalated", automation: "Automation rate", topIssue: "Top issue", trend: "Issue-volume trend", breakdown: "Issue mix", owner: "Responsible team", action: "Improvement recommendation", send: "Dispatch simulated report", sending: "Preparing report...", sent: "Report created and queued", privacy: "No customer message, User ID, phone number, or transaction data is stored", simulated: "Demo history + live demo events", noData: "No events in this period",
+    title: "Support Analytics", intro: "Privacy-safe event logging for trend analysis and routing improvement reports to the responsible teams.", day: "Today", week: "7 days", month: "30 days", interactions: "Total interactions", auto: "AI resolved", escalated: "Employee review", automation: "AI resolution rate", topIssue: "Top issue", trend: "Issue-volume trend", breakdown: "Issue mix", owner: "Responsible team", action: "Improvement recommendation", learningLog: "Case-learning log", resolved: "AI resolved", employee: "Employee review", reason: "Reason / learning signal", backlog: "System-improvement backlog", send: "Dispatch simulated report", sending: "Preparing report...", sent: "Report created and queued", privacy: "No customer message, User ID, phone number, or transaction data is stored", simulated: "Demo history + live demo events", noData: "No events in this period",
   };
 
   useEffect(() => {
@@ -1564,6 +1570,16 @@ function SupportAnalyticsDemo({ locale }: { locale: UiLocale }) {
         <section className="overflow-hidden rounded-xl border border-white/10 bg-black/10">
           <div className="border-b border-white/10 px-4 py-3"><p className="font-mono text-[10px] uppercase tracking-wider text-accent">{labels.owner} · {labels.action}</p></div>
           <div className="divide-y divide-white/10">{data.issues.slice(0, 6).map((issue) => <div key={issue.intent} className="grid gap-2 px-4 py-3 text-xs md:grid-cols-[1fr_1fr_2fr]"><span className="font-medium text-foreground">{issue.label} ({issue.count})</span><span className="text-accent-secondary">{issue.destination}</span><span className="leading-5 text-muted">{issue.recommendation}</span></div>)}</div>
+        </section>
+
+        <section className="overflow-hidden rounded-xl border border-white/10 bg-black/10">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3"><p className="font-mono text-[10px] uppercase tracking-wider text-accent">{labels.learningLog}</p><div className="flex gap-2 text-[10px]"><span className="rounded-full border border-success/20 bg-success/5 px-2 py-1 text-success">{labels.resolved} {data.learning.aiResolvedCases}</span><span className="rounded-full border border-warning/20 bg-warning/5 px-2 py-1 text-warning">{labels.employee} {data.learning.employeeReviewCases}</span></div></div>
+          <div className="max-h-72 divide-y divide-white/10 overflow-y-auto">{data.learning.recentCases.map((item) => <div key={item.caseId} className="grid gap-2 px-4 py-3 text-xs md:grid-cols-[1fr_1.2fr_1fr_2fr]"><div><p className="font-mono text-[10px] text-muted">{item.caseId}</p><p className="mt-1 text-foreground">{item.issue}</p></div><span className={item.resolutionPath === "AI_RESOLVED" ? "text-success" : "text-warning"}>{item.resolutionPath === "AI_RESOLVED" ? labels.resolved : labels.employee}</span><span className="font-mono text-[10px] text-muted">{item.reasonCode}<br />grounded {Math.round(item.groundednessScore * 100)}%</span><span className="leading-5 text-muted">{item.improvementSignal}</span></div>)}</div>
+        </section>
+
+        <section className="rounded-xl border border-warning/15 bg-warning/5 p-4">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-warning">{labels.backlog}</p>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">{data.learning.improvementBacklog.slice(0, 6).map((item) => <div key={item.intent} className="rounded-lg border border-white/10 bg-black/10 p-3 text-xs"><div className="flex justify-between gap-3"><span className="font-medium text-foreground">{item.issue}</span><span className="font-mono text-warning">{item.employeeReviewCount} / {item.aiResolvedCount + item.employeeReviewCount}</span></div><p className="mt-2 text-accent-secondary">{item.owner}</p><p className="mt-1 leading-5 text-muted">{item.recommendation}</p></div>)}</div>
         </section>
 
         <div className="rounded-xl border border-success/15 bg-success/5 p-4">

@@ -8,6 +8,7 @@ The internal dashboard answers four recurring operating questions:
 2. Which issue types were most common?
 3. What share was answered automatically versus sent for review?
 4. Which team should receive each recurring issue and what should it improve?
+5. Which cases did AI resolve itself, and which cases still required employee review?
 
 ## Metric definitions
 
@@ -19,12 +20,16 @@ The internal dashboard answers four recurring operating questions:
 | Automation rate | Auto-responded divided by total interactions |
 | Top issue | Intent with the highest event count in the selected window |
 | Issue share | Intent count divided by total interactions |
+| AI-resolved case | Final decision is `AUTO_RESPOND`; stores source/tool metadata for regression coverage |
+| Employee-review case | Final decision is `ESCALATE`; stores a safe reason code and improvement owner |
 
 All cards, trends, and issue rows use the same filtered event set so totals reconcile.
 
 ## Privacy boundary
 
 Analytics events contain timestamp, intent, risk, decision, response language, and responsible destination only. They do not contain customer messages, User IDs, phone numbers, transaction references, uploaded images, or trace payloads.
+
+The learning-case registry additionally stores groundedness score, knowledge source IDs, tool names, resolution path, reason code, and a development signal. These are operational metadata rather than customer content.
 
 ## Routing model
 

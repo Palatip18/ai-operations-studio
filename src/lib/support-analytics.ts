@@ -11,6 +11,12 @@ export type SupportEvent = {
   decision: SupportDecision;
   language: string;
   destination: string;
+  resolutionPath: "AI_RESOLVED" | "EMPLOYEE_REVIEW";
+  reasonCode: "GROUNDED_AI_RESPONSE" | "HIGH_RISK" | "POLICY_BOUNDARY" | "KNOWLEDGE_GAP" | "BACKOFFICE_EXCEPTION";
+  groundednessScore: number;
+  knowledgeSourceIds: string[];
+  toolsUsed: string[];
+  improvementSignal: string;
 };
 
 export type IssueMetric = {
@@ -78,6 +84,12 @@ function seedDemoHistory(now = Date.now()) {
         decision: index % pattern.escalationEvery === 0 ? "ESCALATE" : "AUTO_RESPOND",
         language: index % 5 === 0 ? "en" : "th",
         destination: issueModel(pattern.intent).destination,
+        resolutionPath: index % pattern.escalationEvery === 0 ? "EMPLOYEE_REVIEW" : "AI_RESOLVED",
+        reasonCode: index % pattern.escalationEvery === 0 ? pattern.risk === "HIGH" ? "HIGH_RISK" : pattern.intent === "unknown" ? "KNOWLEDGE_GAP" : "POLICY_BOUNDARY" : "GROUNDED_AI_RESPONSE",
+        groundednessScore: index % pattern.escalationEvery === 0 ? 0.48 : 0.91,
+        knowledgeSourceIds: pattern.intent === "unknown" ? [] : [`demo-${pattern.intent}-knowledge`],
+        toolsUsed: pattern.intent === "deposit_withdrawal" ? ["search_knowledge", "lookup_transaction_status"] : ["search_knowledge"],
+        improvementSignal: index % pattern.escalationEvery === 0 ? issueModel(pattern.intent).recommendation : "Reuse this grounded AI-resolution pattern in evaluation coverage.",
       });
     }
   }
@@ -93,6 +105,22 @@ export function recordSupportEvent(trace: SupportTrace, now = Date.now()): Suppo
     decision: trace.decision,
     language: trace.language,
     destination: issueModel(trace.intent).destination,
+    resolutionPath: trace.decision === "AUTO_RESPOND" ? "AI_RESOLVED" : "EMPLOYEE_REVIEW",
+    reasonCode: trace.decision === "AUTO_RESPOND"
+      ? "GROUNDED_AI_RESPONSE"
+      : trace.risk === "HIGH"
+        ? "HIGH_RISK"
+        : /back-office|transaction status|not found/i.test(trace.escalationReason ?? "")
+          ? "BACKOFFICE_EXCEPTION"
+          : trace.verifier.grounded
+            ? "POLICY_BOUNDARY"
+            : "KNOWLEDGE_GAP",
+    groundednessScore: trace.verifier.groundednessScore,
+    knowledgeSourceIds: trace.sources.map((source) => source.id).slice(0, 5),
+    toolsUsed: trace.steps.map((step) => step.tool),
+    improvementSignal: trace.decision === "AUTO_RESPOND"
+      ? "Reuse this grounded AI-resolution pattern in evaluation coverage."
+      : issueModel(trace.intent).recommendation,
   };
   eventStore.push(event);
   if (eventStore.length > 5_000) eventStore.splice(0, eventStore.length - 5_000);
@@ -135,6 +163,37 @@ export function buildSupportAnalytics(period: AnalyticsPeriod, now = Date.now())
     .sort((left, right) => right.count - left.count);
   const escalated = current.filter((event) => event.decision === "ESCALATE").length;
   const autoResponded = current.length - escalated;
+  const learningCases = [...current]
+    .sort((left, right) => Date.parse(right.occurredAt) - Date.parse(left.occurredAt))
+    .slice(0, 12)
+    .map((event) => ({
+      caseId: event.id,
+      occurredAt: event.occurredAt,
+      issue: issueModel(event.intent).label,
+      intent: event.intent,
+      risk: event.risk,
+      resolutionPath: event.resolutionPath,
+      reasonCode: event.reasonCode,
+      destination: event.resolutionPath === "EMPLOYEE_REVIEW" ? event.destination : "AI Support",
+      groundednessScore: event.groundednessScore,
+      knowledgeSourceIds: event.knowledgeSourceIds,
+      toolsUsed: event.toolsUsed,
+      improvementSignal: event.improvementSignal,
+    }));
+  const improvementBacklog = issues.map((issue) => {
+    const related = current.filter((event) => event.intent === issue.intent);
+    const employeeReviewCount = related.filter((event) => event.resolutionPath === "EMPLOYEE_REVIEW").length;
+    const aiResolvedCount = related.length - employeeReviewCount;
+    return {
+      intent: issue.intent,
+      issue: issue.label,
+      aiResolvedCount,
+      employeeReviewCount,
+      reviewRate: related.length ? Number(((employeeReviewCount / related.length) * 100).toFixed(1)) : 0,
+      owner: issue.destination,
+      recommendation: issue.recommendation,
+    };
+  }).sort((left, right) => right.employeeReviewCount - left.employeeReviewCount || right.reviewRate - left.reviewRate);
   const trendDays = period === "day" ? 1 : period === "week" ? 7 : 30;
   const trend = Array.from({ length: trendDays }, (_, index) => {
     const dayStart = new Date(now - (trendDays - index - 1) * 86_400_000);
@@ -163,6 +222,12 @@ export function buildSupportAnalytics(period: AnalyticsPeriod, now = Date.now())
     },
     issues,
     trend,
+    learning: {
+      aiResolvedCases: autoResponded,
+      employeeReviewCases: escalated,
+      recentCases: learningCases,
+      improvementBacklog,
+    },
   };
 }
 
