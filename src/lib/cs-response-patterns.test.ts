@@ -51,7 +51,11 @@ describe("fictional CS promotion-control patterns", () => {
 
   it("localizes the fictional promotion record without an online model", async () => {
     const evidence = csPatternDocuments.find((document) => document.id === "cs-pattern-promotion-status-control")?.content ?? "";
-    await expect(localizeSupportAnswer(evidence, "th")).resolves.toContain("ศูนย์กิจกรรม");
+    const thai = await localizeSupportAnswer(evidence, "th");
+    expect(thai).toContain("เมนูศูนย์กิจกรรม");
+    expect(thai).toContain("ส่งภาพหน้าจอพร้อมเวลาที่พบปัญหา");
+    expect(thai).not.toMatch(/ระเบียน|ไม่คาดเดา/);
     await expect(localizeSupportAnswer(evidence, "zh")).resolves.toContain("活动中心");
+    await expect(localizeSupportAnswer(evidence, "en")).resolves.toContain("please share a screenshot");
   });
 });

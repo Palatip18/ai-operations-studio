@@ -135,17 +135,25 @@ export async function normalizeSupportInput(text: string): Promise<{ language: S
 }
 
 export async function localizeSupportAnswer(text: string, language: SupportedLanguage): Promise<string> {
-  if (language === "en") return text;
   if (text.includes("Weekend Reward") && text.includes("Activity Center")) {
-    return language === "th"
-      ? "จากระเบียนที่อนุมัติล่าสุด โปร Weekend Reward มีสถานะเปิดตั้งแต่วันที่ 19–26 กรกฎาคม 2026 สามารถกดรับได้ที่ศูนย์กิจกรรม และเมื่อผ่านการตรวจสอบสิทธิ์ โบนัสจะเข้ากระเป๋าโบนัสค่ะ หากข้อมูลบนหน้าโปรไม่ตรงกับระเบียนล่าสุด ระบบจะไม่คาดเดาและจะส่งให้พนักงานตรวจสอบเพิ่มเติม"
-      : "根据最新获批的记录，Weekend Reward 促销于 2026 年 7 月 19 日至 26 日开放。用户可在活动中心领取，通过资格检查后，奖金将进入奖金钱包。若促销页面与最新记录不一致，系统不会猜测，而会转交人工复核。";
+    if (language === "th") {
+      return "ตอนนี้โปร Weekend Reward เปิดให้รับตั้งแต่วันที่ 19–26 กรกฎาคม 2026 ค่ะ สามารถกดรับได้ที่เมนูศูนย์กิจกรรม หลังจากระบบตรวจสอบสิทธิ์เรียบร้อย โบนัสจะเข้ากระเป๋าโบนัสค่ะ หากกดรับไม่ได้หรือข้อมูลหน้าโปรไม่ตรงกัน รบกวนส่งภาพหน้าจอพร้อมเวลาที่พบปัญหา เพื่อให้เจ้าหน้าที่ตรวจสอบเพิ่มเติมนะคะ";
+    }
+    if (language === "zh") {
+      return "Weekend Reward 促销目前开放，活动时间为 2026 年 7 月 19 日至 26 日。您可以前往活动中心领取；通过资格检查后，奖金会发放到奖金钱包。如无法领取或页面信息不一致，请提供问题截图和发生时间，以便客服进一步核查。";
+    }
+    return "The Weekend Reward is currently open from 19–26 July 2026. You can claim it from the Activity Center, and the reward will be added to the Bonus Wallet after the eligibility check. If you cannot claim it or the promotion page shows different information, please share a screenshot and the approximate time so the support team can review it.";
   }
   if (text.includes("limited-capacity") || (text.includes("limited") && text.includes("retry"))) {
-    return language === "th"
-      ? "โปรตัวอย่างนี้มีจำนวนจำกัด ระบบจะลองตรวจสอบสิทธิ์ให้อีกครั้งเพียงหนึ่งรอบโดยไม่รับประกันการจองสิทธิ์ หากยังรับไม่ได้จะหยุดการลองซ้ำ เก็บสถานะที่พบ และส่งให้พนักงานตรวจสอบเพื่อไม่ให้ลูกค้าติดอยู่ในวงจรเดิมค่ะ"
-      : "该促销名额有限。系统只会再检查一次资格，不承诺保留名额；若仍无法领取，将停止重复尝试、保留当前状态，并转交人工复核，避免用户陷入循环。";
+    if (language === "th") {
+      return "โปรนี้มีจำนวนจำกัดค่ะ แนะนำให้รอสักครู่แล้วลองกดรับอีกหนึ่งครั้ง หากยังรับไม่ได้ ไม่ต้องกดซ้ำต่อเนื่องนะคะ รบกวนส่งข้อความแจ้งเตือนที่เห็นพร้อมเวลาที่พบปัญหา เพื่อให้เจ้าหน้าที่ตรวจสอบสิทธิ์และสถานะโปรเพิ่มเติมค่ะ";
+    }
+    if (language === "zh") {
+      return "该促销名额有限。请稍等片刻后再尝试领取一次；如仍无法领取，请勿连续重复操作，并提供页面提示和发生时间，以便客服进一步核查资格与活动状态。";
+    }
+    return "This promotion has limited availability. Please wait briefly and try to claim it once more. If it still does not work, do not keep retrying; share the message shown on screen and the approximate time so the support team can check your eligibility and the promotion status.";
   }
+  if (language === "en") return text;
   const translated = await translate(text, buildSupportLocalizationInstruction(language));
   if (translated) return translated;
   return language === "th"
