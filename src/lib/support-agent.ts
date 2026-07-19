@@ -96,7 +96,7 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   const learnedIntent = resolveLearnedIntent(message);
   const intent = learnedIntent ?? classifyIntent(processingMessage);
   const risk = classifyRisk(processingMessage, intent);
-  const catalogPattern = /promotion catalog|what promotions|which promotions|promotions? (?:and bonuses )?(?:are )?(?:currently )?available|list (?:the )?(?:current )?(?:promotions|offers)|มี\s*โปร(?:อะไรบ้าง|ไหนบ้าง)|โปร(?:มี)?อะไรบ้าง/i;
+  const catalogPattern = /promotion catalog|what promotions|which promotions|promotions? (?:and bonuses )?(?:are )?(?:currently )?available|list (?:the )?(?:current )?(?:promotions|offers)|มี\s*โปร(?:อะไรบ้าง|ไหนบ้าง)|โปร(?:มี)?อะไรบ้าง|โปรโมชั่น.*อะไรบ้าง|โปร(?:โมชั่น)?.*เปิดอยู่.*อะไรบ้าง/i;
   const promotionCatalogRequest = intent === "promotion_bonus"
     && (learnedIntent === "promotion_bonus" || catalogPattern.test(processingMessage));
   const live = isOpenAIConfigured();

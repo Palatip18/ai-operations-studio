@@ -121,6 +121,13 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     expect(result.answer).not.toContain("DEMO-CS-");
   });
 
+  it("treats an explicit Thai clarification as a request for the full promotion catalog", async () => {
+    const result = await runSupportAgent("หมายถึงโปรโมชั่นที่เปิดอยู่ตอนนี้มีอะไรบ้าง");
+    expect(result.trace.intent).toBe("promotion_bonus");
+    expect(result.answer).toContain("โปรหลักให้เลือก 10 รายการ");
+    expect(result.handoff).toBeNull();
+  });
+
   it("asks for clarification before creating a case when a non-critical request is not understood", async () => {
     const result = await runSupportAgent("ช่วยดูอันนี้ให้หน่อย");
     expect(result.clarificationRequired).toBe(true);
