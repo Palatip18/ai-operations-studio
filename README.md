@@ -17,7 +17,7 @@ AI Operations Studio demonstrates how applied AI patterns can turn fictional onl
 | Customer experience | Multi-turn Live Chat with clarification-first behavior and Thai/English/Chinese responses |
 | AI workflow | Intent/risk classification → hybrid RAG → optional tools/APIs → groundedness verification → respond or review |
 | Account-scoped demo | Conversational User ID binding, protected transaction lookup, and deposit-slip verification |
-| Knowledge | 44 fictional documents, including 10 distinct promotion records across slots, live casino, sports, cashback, referral, and loyalty |
+| Knowledge | 48 fictional documents, including 10 offer records and 4 anonymized-pattern decision policies for promotion, withdrawal, KYC, and risk |
 | Internal operations | Support trace, RAG explorer, workflow demo, bounded agent, Support Analytics, and versioned AI Behavior Settings |
 | Continuous improvement | Daily/7-day/30-day issue metrics plus `AI_RESOLVED` and `EMPLOYEE_REVIEW` case-learning logs |
 | Verification | 206 automated tests across 29 test files, lint, TypeScript, production build, and Vercel runtime-error review |
@@ -30,8 +30,8 @@ AI Operations Studio demonstrates how applied AI patterns can turn fictional onl
 3. Ask about a deposit or withdrawal. The assistant requests `USER-RAY01` only when an account-scoped lookup becomes necessary and then binds the signed customer context to the current browser chat session.
 4. Run the missing-deposit or missing-withdrawal scenario to see a customer-scoped status lookup, safe reply, and simulated transaction-review reference.
 5. Send an ambiguous message such as `คือไรครับ` to confirm the assistant asks a focused clarification instead of guessing or creating a case.
-6. Switch to **Internal AI Operations**. Inspect Support Copilot's technical trace, the 44-document Knowledge Base, Support Analytics case-learning log, and AI Behavior Settings.
-7. Review the [final release QA](docs/release-qa-2026-07-13.md), [recruiter and technical-review guide](docs/reviewer-guide.md), [support analytics QA](docs/support-analytics-qa.md), [domain research QA](docs/domain-research-qa.md), [promotion research QA](docs/promotion-research-qa.md), [localization QA](docs/localization-qa.md), and [repository recovery QA](docs/repository-recovery-qa.md).
+6. Switch to **Internal AI Operations**. Inspect Support Copilot's technical trace, the 48-document Knowledge Base, Support Analytics case-learning log, and AI Behavior Settings.
+7. Review the [Thai interview talking points](docs/interview-talking-points-th.md), [recruiter and technical-review guide](docs/reviewer-guide.md), and the linked QA notes.
 
 Estimated review time: **3–5 minutes for the guided demo; 15–20 minutes for the technical review.**
 
@@ -124,7 +124,7 @@ The default `mock` mode is deterministic, free to run, and requires no credentia
   | Mean latency | ~1ms | ~296ms |
 
   These numbers are not the 80-90% target — see [Knowledge-quality model](#knowledge-quality-model) for why, and [Evaluation methodology](#evaluation-methodology) for full definitions.
-- Unit and integration tests cover retrieval, vector similarity, chunking, promotion-catalog routing, tool routing, evaluation, workflow policy, agent planning/verification/redaction, clarification-first behavior, multilingual conversation correction, conversational User-ID capture, chat-session customer reuse, cross-account isolation, simulated slip scanning/reconciliation, back-office lookup/handoff, privacy-safe analytics, case learning, report dispatch, and API auth — **206 tests across 29 files**, see `npm test`.
+- Unit and integration tests cover retrieval, vector similarity, chunking, promotion-catalog routing, anonymized operational-policy safety, tool routing, evaluation, workflow policy, agent planning/verification/redaction, clarification-first behavior, multilingual conversation correction, conversational User-ID capture, chat-session customer reuse, cross-account isolation, simulated slip scanning/reconciliation, back-office lookup/handoff, privacy-safe analytics, case learning, report dispatch, and API auth — **210 tests across 30 files**, see `npm test`.
 - Results are exposed through `GET /api/evaluation`, `GET /api/agent-evaluation`, `GET /api/support-evaluation`, and displayed in the UI.
 
 These figures validate only the included fictional sample set and documented thresholds; they are not claims of production accuracy.
@@ -195,7 +195,7 @@ flowchart LR
   SA --> EVT
   AE --> P
   SE --> S
-  K --> D[("44 fictional sample documents")]
+  K --> D[("48 fictional sample documents")]
   V --> O
 ```
 
@@ -444,7 +444,7 @@ src/
 ├── components/
 │   └── studio.tsx       # Live Chat plus six internal AI Operations modules
 └── lib/
-    ├── knowledge.ts              # 44 fictional documents and hybrid retrieval logic
+    ├── knowledge.ts              # 48 fictional documents and hybrid retrieval logic
     ├── workflow.ts                # Policy-based automation logic
     ├── agent.ts                   # Bounded Planner → Tool Execution → Verifier orchestrator
     ├── verifier.ts                # Groundedness scoring
@@ -457,7 +457,7 @@ src/
     ├── support-analytics.ts       # Privacy-safe events, case learning, metrics, and report routing
     ├── support-behavior.ts        # Versioned role, tone, response, data, and escalation policy
     ├── support-evaluation.ts      # 41-case Customer Support Copilot evaluation suite
-    └── *.test.ts                  # Unit and integration tests (206 across 29 files)
+    └── *.test.ts                  # Unit and integration tests (210 across 30 files)
 ```
 
 **Files an AI Engineer should inspect first:** `src/lib/support-agent.ts` (the orchestration flow and the pure `decideSupportPolicy` function), `src/lib/support-classification.ts` (deterministic policy logic), `src/lib/verifier.ts` (the groundedness heuristic and its documented limits), `src/lib/agent.ts` (the mode-aware retrieval threshold and why it exists), `src/lib/support-evaluation.ts` (how the honest, non-cherry-picked metrics table above was produced).

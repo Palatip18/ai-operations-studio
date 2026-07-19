@@ -140,4 +140,4 @@ npm test
 npm run build
 ```
 
-Current release result: **206 passing tests across 29 files**, successful lint and TypeScript checks, and a successful Next.js production build.
+Current release result: **210 passing tests across 30 files**, successful lint and TypeScript checks, and a successful Next.js production build.

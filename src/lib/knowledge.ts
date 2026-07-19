@@ -79,7 +79,7 @@ export const HYBRID_WEIGHTS = { vector: 0.55, lexical: 0.25, topic: 0.20 } as co
 export const VECTOR_PREFILTER: Record<"local" | "live", number> = { local: 0.05, live: 0.15 };
 
 // ---------------------------------------------------------------------------
-// Knowledge documents (26 total)
+// Knowledge documents (fictional portfolio corpus)
 // ---------------------------------------------------------------------------
 
 export const knowledgeDocuments: KnowledgeDocument[] = [
@@ -517,6 +517,54 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
     },
   },
   {
+    id: "fictional-promotion-eligibility-matrix",
+    title: "Promotion Eligibility Decision Matrix (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-19",
+    content: "This fictional decision matrix is synthesized from anonymized operational patterns; all offer names, values, and examples are newly created. For the Starter Match offer, a customer must be newly verified, opt in before depositing, make a first deposit of at least 200 demo credits within 5 days of registration, and have no other active deposit offer. Eligibility is limited to one verified person, account, device group, and owned payment source. A duplicate account, shared payment source, claim after the deposit, expired claim window, or overlapping offer must not be approved automatically. The assistant should identify the failed condition, explain the next safe step, and route ambiguous ownership or duplicate-account cases to human review rather than accuse the customer of abuse.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["promotion", "eligibility", "starter", "match", "opt in", "before deposit", "registration", "verified", "duplicate", "shared", "payment source", "active offer"],
+    },
+  },
+  {
+    id: "fictional-bonus-withdrawal-decision-table",
+    title: "Bonus Withdrawal Decision Table (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-19",
+    content: "This fictional decision table demonstrates withdrawal review for a promotional balance. The example Starter Match requires 6x turnover on the bonus, allows listed slot and fishing games only, excludes free-spin purchases and opposite-side activity, and permits one withdrawal after completion. The minimum withdrawal is 500 demo credits. The maximum is the lower of 8x the qualifying deposit or 12,000 demo credits. If the customer requests less than the minimum, ask them to correct the amount. If the request exceeds the cap, do not confiscate funds automatically; explain the allowed amount and route any balance treatment to the documented policy or human review. If turnover is incomplete, an excluded game was used, or a free-spin purchase is detected, create a review case with the exact failed rule. Never infer a violation from the withdrawal amount alone.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["bonus", "withdrawal", "turnover", "wagering", "minimum", "maximum", "cap", "deposit multiple", "slot", "fishing", "free spin", "one withdrawal", "remaining balance"],
+    },
+  },
+  {
+    id: "fictional-payment-ownership-kyc-policy",
+    title: "Payment Ownership and KYC Review Policy (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-19",
+    content: "This fictional policy is synthesized from anonymized operational patterns and contains no real customer or operator data. The first withdrawal requires completed identity verification and a destination account owned by the verified customer. A deposit from a third-party account, mismatched payment name, expired identity document, unsupported payment channel, or request to change the withdrawal owner must be paused for authorized review. Chat may collect only the minimum case facts and masked references; it must never request a password, OTP, full bank-account number, or identity-document image in free text. The assistant should explain why verification is needed without claiming fraud and hand off the case to the approved KYC or payment-review queue.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["kyc", "identity", "passport", "id", "expired", "payment owner", "third party", "bank account", "first withdrawal", "mismatch", "verification", "masked"],
+    },
+  },
+  {
+    id: "fictional-withdrawal-risk-review-playbook",
+    title: "Withdrawal Risk Review Playbook (Fictional)",
+    category: "Online Gaming Support",
+    updated: "2026-07-19",
+    content: "This fictional playbook demonstrates risk triage without exposing a real watchlist. Mandatory human review applies when a transaction is unauthorized or disputed, the account is already under enhanced monitoring, account and payment ownership conflict, multiple linked accounts attempt the same restricted offer, the requested withdrawal is unusually large relative to the documented profile, or the reported result conflicts with back-office status. The AI may classify, collect masked references, preserve evidence, and create a structured handoff, but it must not freeze an account, confiscate funds, accuse the customer, or approve a policy exception. The review record should include trigger category, supporting facts, policy source, action owner, and SLA; no real usernames or internal watchlist entries belong in this demo.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["risk", "withdrawal", "monitoring", "watchlist", "unauthorized", "dispute", "linked account", "large", "ownership", "conflict", "human review", "handoff"],
+    },
+  },
+  {
     id: "gaming-deposit-pending-guide",
     title: "Deposit Pending or Credit Not Received (Fictional)",
     category: "Online Gaming Support",
@@ -574,6 +622,79 @@ export const knowledgeDocuments: KnowledgeDocument[] = [
       topics: ["customer_support_faq", "operational_policy"],
       capabilityStatus: "SIMULATED",
       keywords: ["responsible", "limit", "self", "exclusion", "loss", "control", "strategy", "winning", "profit", "support"],
+    },
+  },
+  // --- Promotion-control and CS response patterns (privacy-safe portfolio data) ---
+  {
+    id: "cs-pattern-promotion-status-control",
+    title: "Promotion Status Control and Source Priority",
+    category: "Online Gaming Support",
+    updated: "2026-07-20",
+    content: "The promotion-control record uses four states: Scheduled, Open, Paused, and Closed. Weekend Reward is Open from 19 July 2026 through 26 July 2026, can be claimed in the Activity Center, and is credited to the Bonus Wallet after the eligibility check passes. Customer support may describe an offer as available only when the latest approved internal record is Open and its effective window is current. A website banner, an old chat template, or a previous campaign message is not sufficient evidence by itself. When sources conflict, the newest approved update wins; if the effective time or approval owner is missing, the assistant must not guess and should route the question for confirmation. A Closed or Paused offer must not be presented as claimable even if an older page is still visible.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["promotion status", "open", "closed", "paused", "scheduled", "available", "active", "latest update", "source priority", "effective date", "current offer"],
+    },
+  },
+  {
+    id: "cs-pattern-promotion-claim-and-credit-route",
+    title: "Promotion Claim Channel and Credit Destination",
+    category: "Online Gaming Support",
+    updated: "2026-07-20",
+    content: "Every offer record separates how a customer claims it from where the reward appears. Claim methods include automatic enrollment, an activity-center button, a message-inbox claim, or authorized support review. Credit destinations include a main balance, promotional wallet, reward inventory, or message attachment. Support must retrieve both fields before replying and must not assume that a visible promotion is credited automatically. If either field is blank or the customer reports a different destination, explain what is documented, collect a masked account reference only when needed, and create a review rather than inventing a location.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["claim", "receive", "activity center", "inbox", "automatic", "credit", "credited", "bonus wallet", "main balance", "reward inventory", "where bonus"],
+    },
+  },
+  {
+    id: "cs-pattern-tiered-customer-response",
+    title: "Tiered CS Response Pattern for Repeated Questions",
+    category: "Online Gaming Support",
+    updated: "2026-07-20",
+    content: "This response pattern prevents copy-paste repetition. On first contact, acknowledge the question, state the verified status in plain language, give one safe next step, and avoid promising an outcome. On the first follow-up, confirm that the status was checked again, explain whether anything changed, and give a realistic next checkpoint only when the policy provides one. If the customer still cannot complete the action, apologize briefly, stop asking them to repeat the same step, preserve the attempted steps and timestamps, and create a structured handoff. The tone should remain calm, concise, and respectful; do not blame the customer or expose internal team names.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["response pattern", "first contact", "follow up", "asked again", "still cannot", "repeat", "reply", "customer response", "next step", "handoff", "do not promise"],
+    },
+  },
+  {
+    id: "cs-pattern-limited-capacity-offer",
+    title: "Limited-Capacity Promotion Response Pattern",
+    category: "Online Gaming Support",
+    updated: "2026-07-20",
+    content: "For an offer with limited inventory or rapidly changing availability, the assistant may say that the activity is still operating but capacity can change. The first reply should ask the customer to wait briefly and retry once, without claiming that a place is reserved. If the customer asks again, re-check the current status before replying. If capacity remains unavailable, apologize, confirm that participation is not guaranteed, and avoid telling the customer to retry continuously. A customer who reports an error inconsistent with the status record should be handed to support with the visible message and approximate time.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["full", "capacity", "quota", "limited", "unavailable", "retry", "try again", "activity", "inventory", "no guarantee", "promotion error"],
+    },
+  },
+  {
+    id: "cs-pattern-promotion-restriction-matrix",
+    title: "Promotion Restriction and Eligible-Game Matrix",
+    category: "Online Gaming Support",
+    updated: "2026-07-20",
+    content: "The restriction matrix keeps separate fields for eligible game groups, game contribution, free-spin purchase rules, turnover basis, withdrawal limits, combination rules, and expiry. A free-spin purchase may be allowed for one offer and prohibited for another; the assistant must read the selected offer row instead of applying one global rule. If the offer name is unclear, ask which promotion is active before answering. If play history, wallet type, or exception handling must be verified, explain the relevant documented rule and send the decision to human review rather than declaring a violation.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["restriction", "eligible game", "game contribution", "free spin purchase", "turnover basis", "withdrawal limit", "combine", "stack", "expiry", "selected offer"],
+    },
+  },
+  {
+    id: "cs-pattern-deposit-mismatch-warning",
+    title: "Deposit Mismatch and Duplicate Attempt Guidance",
+    category: "Online Gaming Support",
+    updated: "2026-07-20",
+    content: "The deposit-control workflow flags a transferred amount that differs from the created request and a repeated request using the same payment evidence. The assistant should warn the customer not to submit another duplicate transaction, record that guidance was provided, and collect only a masked reference, amount, and approximate time. It must not promise an adjustment, credit funds, reject ownership, or state that money is lost. A first occurrence may be reviewed under the current payment policy; repeated or disputed cases require a structured payment handoff with the prior-warning flag and evidence summary.",
+    metadata: {
+      topics: ["customer_support_faq", "operational_policy"],
+      capabilityStatus: "SIMULATED",
+      keywords: ["wrong deposit", "amount mismatch", "duplicate deposit", "repeated request", "payment evidence", "warning", "adjustment", "masked reference", "payment review"],
     },
   },
 ];
@@ -638,6 +759,26 @@ function promotionCatalogBoost(query: string, documentId: string): number {
   return asksForPromotions && asksForCatalog ? 0.3 : 0;
 }
 
+function csPatternBoost(query: string, documentId: string): number {
+  const patterns: Array<[string, RegExp]> = [
+    ["cs-pattern-promotion-status-control", /promotion status|open|closed|paused|currently available|current offer/i],
+    ["cs-pattern-promotion-claim-and-credit-route", /claim|where.*(?:bonus|reward)|credited|credit destination|bonus wallet|activity center|inbox/i],
+    ["cs-pattern-tiered-customer-response", /follow.?up|asked again|still cannot|repeat(?:ed)? question|response pattern|reply|handoff/i],
+    ["cs-pattern-limited-capacity-offer", /capacity|quota|full|unavailable|retry|try again|limited offer/i],
+    ["cs-pattern-promotion-restriction-matrix", /eligible game|game contribution|free.?spin purchase|restriction|withdrawal limit|turnover basis/i],
+    ["cs-pattern-deposit-mismatch-warning", /deposit.*(?:mismatch|wrong|duplicate)|amount mismatch|repeated deposit|prior warning/i],
+  ];
+  const isPromotionQuestion = /promotion|bonus|offer|reward|free.?spin/i.test(query);
+  const requiresPromotionContext = /promotion-status|claim-and-credit|tiered-customer|limited-capacity/.test(documentId);
+  if (requiresPromotionContext && !isPromotionQuestion) return 0;
+  return patterns.some(([id, pattern]) => id === documentId && pattern.test(query)) ? 0.24 : 0;
+}
+
+function decisionTableBoost(query: string, documentId: string): number {
+  if (documentId !== "fictional-bonus-withdrawal-decision-table") return 0;
+  return /(?:bonus|promotion).*(?:withdrawal|turnover|free.?spin|maximum|cap)|(?:withdrawal|turnover|free.?spin|maximum|cap).*(?:bonus|promotion)/i.test(query) ? 0.3 : 0;
+}
+
 // ---------------------------------------------------------------------------
 // Retrieval result type
 // ---------------------------------------------------------------------------
@@ -697,7 +838,7 @@ export function searchKnowledge(query: string, limit = 3): KnowledgeResult[] {
           queryTopics,
           document.metadata?.topics ?? [],
         );
-        const hybrid = Math.min(1, hybridScore(vectorScore, lexicalScore, topicScore) + promotionCatalogBoost(query, document.id));
+        const hybrid = Math.min(1, hybridScore(vectorScore, lexicalScore, topicScore) + promotionCatalogBoost(query, document.id) + csPatternBoost(query, document.id) + decisionTableBoost(query, document.id));
 
         return {
           document,
@@ -774,7 +915,7 @@ export async function searchKnowledgeSemanticBatch(queries: string[], limit = 3)
             queryTopics,
             item.document.metadata?.topics ?? [],
           );
-          const hybrid = Math.min(1, hybridScore(vectorScore, lexicalScore, topicScore) + promotionCatalogBoost(query, item.document.id));
+          const hybrid = Math.min(1, hybridScore(vectorScore, lexicalScore, topicScore) + promotionCatalogBoost(query, item.document.id) + csPatternBoost(query, item.document.id) + decisionTableBoost(query, item.document.id));
 
           return {
             document: item.document,

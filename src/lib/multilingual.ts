@@ -17,6 +17,9 @@ const LOCAL_NORMALIZATIONS: Record<"th" | "zh", Array<[RegExp, string]>> = {
     [/ฝากเงิน.*(?:เงิน|เครดิต).*(?:ยัง)?ไม่เข้า|ฝากเงินแล้ว(?:เงิน|เครดิต)?ไม่เข้า|ฝากเงินไม่เข้า|เครดิต(?:ยัง)?ไม่เข้า/gi, "deposit not credited financial loss"],
     [/ถอนเงินนาน|ถอนเงินล่าช้า|ถอนเงินยังไม่สำเร็จ/gi, "withdrawal pending delayed status"],
     [/ถอนแล้วเงินไม่เข้า|ถอน(?:เงิน)?สำเร็จ(?:แล้ว)?(?:\s*แต่)?เงิน(?:ยัง)?ไม่เข้า(?:บัญชี)?|เงินถอนยังไม่เข้าบัญชี/gi, "withdrawal completed money not received financial loss"],
+    [/สถานะโปร|โปร.*(?:เปิด|ปิด|พัก)|(?:เปิด|ปิด|พัก).*โปร/gi, "promotion status open closed paused current offer"],
+    [/กดรับ.*(?:โปร|โบนัส)|(?:โปร|โบนัส).*เข้า(?:ที่ไหน|ตรงไหน)|รับโบนัสที่ไหน/gi, "promotion claim channel credit destination bonus wallet"],
+    [/สิทธิ์เต็ม|โควตาเต็ม|รับรายการไม่ได้|ยังรับโปรไม่ได้/gi, "limited promotion capacity unavailable retry follow up"],
     [/โปรโมชั่น|โปรโมชัน|โบนัส|คืนยอดเสีย|เครดิตฟรี|ฟรีสปิน|เทิร์นโอเวอร์|ยอดหมุนเวียน/gi, "promotion bonus cashback free spin turnover wagering requirement"],
     [/เกมค้าง|เกมเข้าไม่ได้|เกมมีปัญหา|รอบเกม|ค่ายเกม|ยอดเงินไม่อัปเดต/gi, "game round provider stuck error balance game support"],
     [/ยกเลิก|คืนเงิน/gi, "cancel refund"],
@@ -37,6 +40,9 @@ const LOCAL_NORMALIZATIONS: Record<"th" | "zh", Array<[RegExp, string]>> = {
     [/存款未到账|充值未到账|存款没有入账/gi, "deposit not credited financial loss"],
     [/提款延迟|提款处理中|提现很慢/gi, "withdrawal pending delayed status"],
     [/提款完成但未到账|提现成功但没收到钱/gi, "withdrawal completed money not received financial loss"],
+    [/促销状态|优惠.*(?:开放|关闭|暂停)|(?:开放|关闭|暂停).*优惠/gi, "promotion status open closed paused current offer"],
+    [/(?:促销|奖金).*(?:哪里领取|进入哪里)|在哪里领取.*(?:促销|奖金)/gi, "promotion claim channel credit destination bonus wallet"],
+    [/名额已满|无法领取|仍然无法领取/gi, "limited promotion capacity unavailable retry follow up"],
     [/促销|优惠|奖金|返水|免费旋转|流水要求/gi, "promotion bonus cashback free spin turnover wagering requirement"],
     [/游戏卡住|游戏无法打开|游戏故障|游戏回合|游戏供应商|余额未更新/gi, "game round provider stuck error balance game support"],
     [/取消|退款/gi, "cancel refund"],
@@ -130,6 +136,16 @@ export async function normalizeSupportInput(text: string): Promise<{ language: S
 
 export async function localizeSupportAnswer(text: string, language: SupportedLanguage): Promise<string> {
   if (language === "en") return text;
+  if (text.includes("Weekend Reward") && text.includes("Activity Center")) {
+    return language === "th"
+      ? "จากระเบียนที่อนุมัติล่าสุด โปร Weekend Reward มีสถานะเปิดตั้งแต่วันที่ 19–26 กรกฎาคม 2026 สามารถกดรับได้ที่ศูนย์กิจกรรม และเมื่อผ่านการตรวจสอบสิทธิ์ โบนัสจะเข้ากระเป๋าโบนัสค่ะ หากข้อมูลบนหน้าโปรไม่ตรงกับระเบียนล่าสุด ระบบจะไม่คาดเดาและจะส่งให้พนักงานตรวจสอบเพิ่มเติม"
+      : "根据最新获批的记录，Weekend Reward 促销于 2026 年 7 月 19 日至 26 日开放。用户可在活动中心领取，通过资格检查后，奖金将进入奖金钱包。若促销页面与最新记录不一致，系统不会猜测，而会转交人工复核。";
+  }
+  if (text.includes("limited-capacity") || (text.includes("limited") && text.includes("retry"))) {
+    return language === "th"
+      ? "โปรตัวอย่างนี้มีจำนวนจำกัด ระบบจะลองตรวจสอบสิทธิ์ให้อีกครั้งเพียงหนึ่งรอบโดยไม่รับประกันการจองสิทธิ์ หากยังรับไม่ได้จะหยุดการลองซ้ำ เก็บสถานะที่พบ และส่งให้พนักงานตรวจสอบเพื่อไม่ให้ลูกค้าติดอยู่ในวงจรเดิมค่ะ"
+      : "该促销名额有限。系统只会再检查一次资格，不承诺保留名额；若仍无法领取，将停止重复尝试、保留当前状态，并转交人工复核，避免用户陷入循环。";
+  }
   const translated = await translate(text, buildSupportLocalizationInstruction(language));
   if (translated) return translated;
   return language === "th"

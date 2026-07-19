@@ -8,11 +8,11 @@ describe("trilingual UI catalog", () => {
     expect(Object.keys(uiCopy.zh).sort()).toEqual(keys);
   });
 
-  it("has four focused modules, three metrics, and eight scenarios per language", () => {
+  it("has four focused modules, three metrics, and ten scenarios per language", () => {
     for (const locale of ["en", "th", "zh"] as const) {
       expect(uiCopy[locale].modules).toHaveLength(4);
       expect(uiCopy[locale].stats).toHaveLength(3);
-      expect(uiCopy[locale].scenarios).toHaveLength(8);
+      expect(uiCopy[locale].scenarios).toHaveLength(10);
     }
   });
 

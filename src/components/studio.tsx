@@ -10,7 +10,7 @@ import {
   type UiLocale,
 } from "@/lib/ui-i18n";
 
-type Module = "chat" | "knowledge" | "workflow" | "agent" | "support" | "analytics" | "settings";
+type Module = "chat" | "overview" | "knowledge" | "workflow" | "agent" | "support" | "analytics" | "impact" | "settings";
 type WorkflowStep = { step: string; detail: string; status: string };
 type AgentPlanStep = { tool: string; reason: string };
 type AgentStepTrace = {
@@ -90,32 +90,191 @@ type SupportHistoryEntry = {
 type DemoCustomer = { userId: string; displayName: string; tier: "STANDARD" | "PLUS"; status: "ACTIVE" };
 
 const moduleIds: Exclude<Module, "chat">[] = [
+  "overview",
   "support",
   "knowledge",
   "workflow",
   "agent",
   "analytics",
+  "impact",
   "settings",
 ];
-const moduleCopyIndex: Record<Exclude<Module, "chat" | "settings" | "analytics">, number> = {
+const moduleCopyIndex: Record<"knowledge" | "workflow" | "agent" | "support", number> = {
   knowledge: 0,
   workflow: 1,
   agent: 2,
   support: 3,
 };
 
+const interviewUiCopy = {
+  en: {
+    modules: {
+      overview: ["Interview Overview", "JD alignment, guided story, and four iGaming scenarios"],
+      impact: ["Business Impact & KPIs", "Projected targets, measurement plan, and honest boundaries"],
+    },
+    overview: {
+      eyebrow: "3-minute interview path",
+      title: "From an iGaming operations problem to a measurable AI workflow",
+      intro: "This functional prototype demonstrates how I frame requirements, constrain AI decisions, integrate operational systems, and measure business value. All customers, transactions, documents, and integrations are fictional or simulated.",
+      privacy: "Domain-policy examples were rewritten from anonymized operational patterns. No real operator names, URLs, user lists, internal IDs, or source values are included.",
+      impactButton: "View projected KPIs",
+      steps: ["Problem", "Requirements", "AI workflow", "Human control", "Measurement"],
+      scenariosEyebrow: "Guided scenarios",
+      scenariosTitle: "Four business cases, four controlled outcomes",
+      scenariosHint: "Select a scenario to prefill the live workflow",
+      functionalDemo: "Functional demo",
+      controlledOutcome: "Controlled outcome",
+      businessValue: "Business value",
+      openScenario: "Open scenario in Support Copilot →",
+      jdTitle: "JD alignment",
+      jd: [
+        ["Requirement Analysis", "Turns CS, payment, KYC, and risk pain points into intents, rules, evidence needs, and escalation criteria."],
+        ["End-to-End Integration", "Connects chat, customer verification, hybrid retrieval, bounded tools, back-office adapters, handoff, and analytics."],
+        ["AI Agents / RAG", "Uses traceable retrieval, citations, groundedness checks, deterministic safety policy, and capped tool calls."],
+        ["Talent Enablement", "Exposes behavior rules, execution traces, scenarios, and improvement owners so Operations can govern and learn."],
+        ["Value Delivery & Measurement", "Defines pilot targets and a measurement plan without presenting projected figures as production results."],
+      ],
+    },
+    scenarios: [
+      { area: "CS", title: "Promotion eligibility and withdrawal rules", message: "For the fictional Starter Match, I opted in before my first deposit. What eligibility, turnover, game, and withdrawal-cap rules should be checked?", outcome: "Retrieve the fictional eligibility matrix and withdrawal decision table, then explain the applicable checks with citations.", value: "Turns a long, error-prone policy lookup into a consistent answer while preserving exception review." },
+      { area: "PAYMENT", title: "Delayed withdrawal", message: "My withdrawal WDL-2001 has been pending for a long time.", outcome: "Verify user, query a scoped back-office adapter, then explain status or escalate.", value: "Reduces system switching and gives agents a complete, auditable case context." },
+      { area: "KYC", title: "Identity document update", message: "My passport has expired. How can I update my identity document?", outcome: "Classify as sensitive identity handling and route to human review without collecting documents in chat.", value: "Protects personal data and keeps regulated decisions inside an approved review flow." },
+      { area: "RISK", title: "Unauthorized transaction", message: "My gaming account shows a transaction I did not make.", outcome: "High-risk classification triggers a mandatory, bounded handoff instead of an autonomous answer.", value: "Prioritizes possible fraud while preserving evidence, reason, and ownership." },
+    ],
+    impact: {
+      eyebrow: "Projected pilot targets — estimates, not production results",
+      title: "Business Impact & Measurement Plan",
+      badge: "VALIDATE IN PILOT",
+      intro: "These ranges are hypotheses for capacity planning. Baselines must be measured from real traffic, then validated with a controlled pilot before any staffing or ROI decision.",
+      metrics: [
+        ["Routine inquiry containment", "40–60%", "Start with supported, low-risk intents only"],
+        ["First response time", "< 15 sec", "For AI-handled requests during the pilot"],
+        ["Knowledge-grounded answers", "> 90%", "On a labeled, in-scope evaluation set"],
+        ["High-risk escalation recall", "> 95%", "Prioritize safety over automation coverage"],
+        ["Manual search time", "−30–50%", "Compare agent handling time before vs. after copilot"],
+        ["Cost per resolved contact", "−15–30%", "Validate after quality and CSAT guardrails pass"],
+      ],
+      estimate: "Projected estimate",
+      confidenceTitle: "AI confidence and escalation flow",
+      confidenceIntro: "“Confidence” here is an auditable policy outcome based on evidence quality, intent/risk rules, and required context — not an invented model probability.",
+      confidenceSteps: [
+        ["Strong evidence", "Answer", "Relevant sources pass the groundedness gate and no policy rule requires review."],
+        ["Missing context", "Clarify", "Ask for the minimum safe information; do not guess or create a premature case."],
+        ["Weak evidence / high risk", "Escalate", "Create a structured human-review handoff with reason and trace."],
+      ],
+      step: "STEP",
+      rollout: [["1", "Baseline", "Volume, AHT, FCR, CSAT, escalation reasons"], ["2", "Offline evaluation", "Labeled cases for routing, retrieval, and safety"], ["3", "Shadow pilot", "AI recommends; employees retain control"], ["4", "Controlled rollout", "Expand only when quality guardrails pass"]],
+    },
+    confidencePanel: { title: "Evidence confidence → policy action", intro: "Groundedness is an auditable prototype signal, not a model probability.", evidence: "Evidence", review: "HUMAN REVIEW", clarify: "CLARIFY", respond: "AUTO RESPOND", escalateTag: "ESCALATE" },
+  },
+  th: {
+    modules: {
+      overview: ["ภาพรวมสำหรับการสัมภาษณ์", "เชื่อมกับรายละเอียดงาน เส้นทางการนำเสนอ และ 4 สถานการณ์ iGaming"],
+      impact: ["ผลกระทบทางธุรกิจและ KPI", "เป้าหมายโดยประมาณ แผนการวัดผล และขอบเขตที่โปร่งใส"],
+    },
+    overview: {
+      eyebrow: "เส้นทางนำเสนอ 3 นาที",
+      title: "จากปัญหาหน้างาน iGaming สู่กระบวนการ AI ที่วัดผลได้",
+      intro: "ต้นแบบที่ใช้งานได้นี้แสดงวิธีที่ผมวิเคราะห์ความต้องการ กำหนดขอบเขตการตัดสินใจของ AI เชื่อมระบบงาน และวัดคุณค่าทางธุรกิจ ลูกค้า ธุรกรรม เอกสาร และการเชื่อมต่อทั้งหมดเป็นข้อมูลสมมติหรือระบบจำลอง",
+      privacy: "ตัวอย่างนโยบายถูกเขียนใหม่จากรูปแบบงานที่ไม่ระบุตัวตน ไม่มีชื่อผู้ให้บริการ URL รายชื่อผู้ใช้ รหัสภายใน หรือตัวเลขจากแหล่งข้อมูลจริง",
+      impactButton: "ดู KPI ที่คาดการณ์",
+      steps: ["ปัญหา", "ความต้องการ", "กระบวนการ AI", "การควบคุมโดยคน", "การวัดผล"],
+      scenariosEyebrow: "สถานการณ์ตัวอย่าง",
+      scenariosTitle: "4 เคสธุรกิจ กับ 4 ผลลัพธ์ที่ควบคุมได้",
+      scenariosHint: "เลือกสถานการณ์เพื่อเติมโจทย์ลงใน Workflow",
+      functionalDemo: "เดโมที่ทำงานได้",
+      controlledOutcome: "ผลลัพธ์ที่ควบคุม",
+      businessValue: "คุณค่าทางธุรกิจ",
+      openScenario: "เปิดสถานการณ์ในผู้ช่วยงานบริการลูกค้า →",
+      jdTitle: "ความสอดคล้องกับรายละเอียดงาน",
+      jd: [
+        ["การวิเคราะห์ความต้องการ", "เปลี่ยนปัญหางานบริการลูกค้า การชำระเงิน การยืนยันตัวตน และความเสี่ยง ให้เป็นประเภทคำขอ กฎ หลักฐานที่ต้องใช้ และเกณฑ์การส่งต่อ"],
+        ["การเชื่อมต่อระบบตั้งแต่ต้นจนจบ", "เชื่อมแชต การยืนยันลูกค้า การค้นข้อมูลแบบผสม เครื่องมือที่มีขอบเขต ระบบหลังบ้าน การส่งต่อ และการวิเคราะห์ผล"],
+        ["AI Agent และ RAG", "ใช้การค้นข้อมูลที่ตรวจสอบย้อนหลังได้ การอ้างอิง การตรวจว่าคำตอบมีหลักฐาน กฎความปลอดภัย และจำกัดจำนวนครั้งที่เรียกใช้เครื่องมือ"],
+        ["การพัฒนาความสามารถทีม", "เปิดให้ทีมเห็นกฎพฤติกรรม ร่องรอยการทำงาน สถานการณ์ และผู้รับผิดชอบ เพื่อให้ฝ่ายปฏิบัติการกำกับและเรียนรู้ได้"],
+        ["การส่งมอบคุณค่าและการวัดผล", "กำหนดเป้าหมายโครงการนำร่องและแผนวัดผล โดยไม่อ้างค่าคาดการณ์ว่าเป็นผลลัพธ์จากระบบใช้งานจริง"],
+      ],
+    },
+    scenarios: [
+      { area: "CS", title: "ตรวจสิทธิ์โปรโมชันและเงื่อนไขการถอน", message: "สำหรับโปรโมชัน Starter Match แบบจำลอง ผมกดเข้าร่วมก่อนฝากครั้งแรก ต้องตรวจสอบสิทธิ์ Turnover เกมที่ใช้ได้ และเพดานถอนอะไรบ้าง", outcome: "ค้นตารางสิทธิ์และตารางตัดสินใจถอนแบบจำลอง แล้วอธิบายเงื่อนไขที่เกี่ยวข้องพร้อมแหล่งอ้างอิง", value: "เปลี่ยนการค้นนโยบายที่ยาวและผิดพลาดง่ายให้เป็นคำตอบที่สม่ำเสมอ โดยยังส่งข้อยกเว้นให้คนตรวจ" },
+      { area: "PAYMENT", title: "รายการถอนล่าช้า", message: "รายการถอน WDL-2001 ของฉันอยู่ระหว่างดำเนินการมานานแล้ว", outcome: "ยืนยันผู้ใช้ ตรวจระบบหลังบ้านตามขอบเขตบัญชี แล้วอธิบายสถานะหรือส่งต่อ", value: "ลดการสลับหลายระบบและให้ทีมได้รับข้อมูลเคสที่ครบและตรวจสอบย้อนหลังได้" },
+      { area: "KYC", title: "อัปเดตเอกสารยืนยันตัวตน", message: "หนังสือเดินทางของฉันหมดอายุ ต้องอัปเดตเอกสารยืนยันตัวตนอย่างไร", outcome: "จัดเป็นข้อมูลส่วนบุคคลอ่อนไหวและส่งให้คนตรวจ โดยไม่รับเอกสารผ่านแชต", value: "ปกป้องข้อมูลส่วนบุคคลและคงการตัดสินใจที่มีกฎกำกับไว้กับผู้มีอำนาจ" },
+      { area: "RISK", title: "รายการที่ไม่ได้ทำ", message: "บัญชีเกมของฉันมีรายการที่ฉันไม่ได้ทำ", outcome: "จัดเป็นความเสี่ยงสูงและบังคับส่งต่อแบบมีขอบเขต แทนการตอบอัตโนมัติ", value: "เร่งจัดลำดับเคสที่อาจเกี่ยวกับ Fraud พร้อมเก็บหลักฐาน เหตุผล และผู้รับผิดชอบ" },
+    ],
+    impact: {
+      eyebrow: "เป้าหมายโครงการนำร่องโดยประมาณ — ไม่ใช่ผลลัพธ์จากระบบใช้งานจริง",
+      title: "ผลกระทบทางธุรกิจและแผนการวัดผล",
+      badge: "ต้องพิสูจน์ในโครงการนำร่อง",
+      intro: "ช่วงตัวเลขเหล่านี้เป็นสมมติฐานสำหรับวางแผนกำลังงาน ต้องเก็บค่าฐานจากข้อมูลจริงและพิสูจน์ด้วยโครงการนำร่องแบบควบคุม ก่อนตัดสินใจเรื่องจำนวนคนหรือผลตอบแทนจากการลงทุน",
+      metrics: [["อัตรารับเคสทั่วไปโดย AI", "40–60%", "เริ่มเฉพาะประเภทคำขอความเสี่ยงต่ำที่มีเอกสารครบ"], ["เวลาตอบครั้งแรก", "< 15 วินาที", "สำหรับเคสที่ AI ดูแลในช่วงโครงการนำร่อง"], ["คำตอบที่มีหลักฐานจากฐานความรู้", "> 90%", "วัดบนชุดทดสอบที่ติดป้ายและอยู่ในขอบเขต"], ["อัตราตรวจจับครบถ้วนของการส่งต่อเคสเสี่ยงสูง", "> 95%", "ให้ความปลอดภัยสำคัญกว่าขอบเขตงานอัตโนมัติ"], ["เวลาค้นหาข้อมูลด้วยคน", "ลด 30–50%", "เปรียบเทียบเวลาจัดการเคสก่อนและหลังใช้ผู้ช่วย AI"], ["ต้นทุนต่อเคสที่แก้ได้", "ลด 15–30%", "ตรวจหลังผ่านเกณฑ์คุณภาพและความพึงพอใจของลูกค้า"]],
+      estimate: "ค่าประมาณ",
+      confidenceTitle: "ความมั่นใจของ AI และเส้นทางการส่งต่อ",
+      confidenceIntro: "ความมั่นใจในที่นี้คือผลจากนโยบายที่ตรวจสอบได้ โดยดูคุณภาพหลักฐาน กฎประเภทคำขอและความเสี่ยง รวมถึงบริบทที่จำเป็น ไม่ใช่เปอร์เซ็นต์ที่โมเดลแต่งขึ้น",
+      confidenceSteps: [["หลักฐานชัดเจน", "ตอบ", "เอกสารเกี่ยวข้องผ่านเกณฑ์ตรวจหลักฐาน และไม่มีกฎบังคับให้คนตรวจ"], ["บริบทไม่ครบ", "ถามเพิ่ม", "ขอข้อมูลขั้นต่ำที่ปลอดภัย ไม่เดาหรือสร้างเคสก่อนเวลา"], ["หลักฐานอ่อน / ความเสี่ยงสูง", "ส่งต่อ", "สร้างชุดส่งต่อให้คนตรวจพร้อมเหตุผลและร่องรอยการทำงาน"]],
+      step: "ขั้นตอน",
+      rollout: [["1", "เก็บค่าฐาน", "ปริมาณเคส เวลาจัดการ อัตราแก้จบ ความพึงพอใจ และเหตุผลการส่งต่อ"], ["2", "ประเมินผลแบบออฟไลน์", "ชุดเคสติดป้ายสำหรับการจัดเส้นทาง การค้นข้อมูล และความปลอดภัย"], ["3", "ทดลองแบบเงา", "AI ให้คำแนะนำ โดยพนักงานยังเป็นผู้ตัดสินใจ"], ["4", "เปิดใช้งานแบบควบคุม", "ขยายเมื่อผ่านเกณฑ์คุณภาพเท่านั้น"]],
+    },
+    confidencePanel: { title: "ความมั่นใจของหลักฐาน → การตัดสินใจตามนโยบาย", intro: "Groundedness เป็นสัญญาณของ Prototype ที่ตรวจสอบได้ ไม่ใช่ความน่าจะเป็นจากโมเดล", evidence: "หลักฐาน", review: "ส่งให้คนตรวจ", clarify: "ถามเพิ่ม", respond: "ตอบอัตโนมัติ", escalateTag: "ส่งต่อ" },
+  },
+  zh: {
+    modules: {
+      overview: ["面试概览", "与岗位要求对齐、讲解路径及四个 iGaming 场景"],
+      impact: ["商业价值与 KPI", "预计目标、衡量计划与透明边界"],
+    },
+    overview: {
+      eyebrow: "3 分钟面试讲解路径",
+      title: "从 iGaming 运营问题到可衡量的 AI 工作流",
+      intro: "此功能原型展示我如何分析需求、约束 AI 决策、集成运营系统并衡量商业价值。所有客户、交易、文档和集成都为虚构或模拟数据。",
+      privacy: "领域政策示例由匿名化运营模式重新编写，不包含真实运营商名称、URL、用户列表、内部 ID 或源数据数值。",
+      impactButton: "查看预计 KPI",
+      steps: ["问题", "需求", "AI 工作流", "人工控制", "衡量"],
+      scenariosEyebrow: "场景演示",
+      scenariosTitle: "四个业务场景，四种受控结果",
+      scenariosHint: "选择场景并预填到实时工作流",
+      functionalDemo: "功能演示",
+      controlledOutcome: "受控结果",
+      businessValue: "商业价值",
+      openScenario: "在客服助手中打开场景 →",
+      jdTitle: "岗位要求对齐",
+      jd: [["需求分析", "将 CS、支付、KYC 和风险痛点转化为意图、规则、证据需求和转人工标准。"], ["端到端集成", "连接聊天、客户验证、混合检索、受限工具、后台适配器、转交和分析。"], ["AI Agents / RAG", "采用可追踪检索、引用、Groundedness 检查、确定性安全策略和工具调用上限。"], ["团队赋能", "公开行为规则、执行轨迹、场景和改进负责人，让运营团队能够治理和学习。"], ["价值交付与衡量", "定义试点目标和衡量计划，不将预计数字描述为生产结果。"]],
+    },
+    scenarios: [
+      { area: "CS", title: "促销资格与提款规则", message: "对于虚构的 Starter Match 活动，我在首次存款前已选择参加。需要检查哪些资格、流水、游戏范围和提款上限规则？", outcome: "检索虚构的资格矩阵和提款决策表，并引用来源说明适用规则。", value: "将冗长且易出错的政策查询转化为一致答案，同时保留例外人工审核。" },
+      { area: "PAYMENT", title: "延迟提款", message: "我的提款 WDL-2001 长时间处于处理中。", outcome: "验证用户、查询账户范围内的后台适配器，然后解释状态或转人工。", value: "减少系统切换，并为员工提供完整且可审计的案例上下文。" },
+      { area: "KYC", title: "身份文件更新", message: "我的护照已过期，应该如何更新身份文件？", outcome: "将其识别为敏感身份处理并转人工审核，不在聊天中收集文件。", value: "保护个人数据，并将受监管决策保留给授权人员。" },
+      { area: "RISK", title: "未经本人操作的交易", message: "我的游戏账户中出现了一笔不是我操作的交易。", outcome: "高风险分类触发强制且有边界的人工转交，而不是自动回答。", value: "优先处理潜在欺诈，同时保留证据、原因和负责人。" },
+    ],
+    impact: {
+      eyebrow: "预计试点目标——估算值，并非生产结果",
+      title: "商业价值与衡量计划",
+      badge: "需在试点中验证",
+      intro: "这些范围仅用于容量规划假设。必须先从真实流量建立基线，再通过受控试点验证，才能用于人员配置或 ROI 决策。",
+      metrics: [["常规咨询自动承接率", "40–60%", "仅从文档完整、低风险的意图开始"], ["首次响应时间", "< 15 秒", "适用于试点期间由 AI 处理的请求"], ["知识依据回答率", "> 90%", "在已标注且范围内的评估集上衡量"], ["高风险转人工召回率", "> 95%", "安全优先于自动化覆盖率"], ["人工搜索时间", "减少 30–50%", "比较使用 Copilot 前后的处理时间"], ["每个已解决联系的成本", "减少 15–30%", "仅在质量和 CSAT 护栏通过后验证"]],
+      estimate: "预计值",
+      confidenceTitle: "AI 置信与转人工流程",
+      confidenceIntro: "此处的“置信”是基于证据质量、意图/风险规则和必要上下文的可审计政策结果，而不是虚构的模型概率。",
+      confidenceSteps: [["证据充分", "回答", "相关来源通过 Groundedness 检查，且没有政策要求人工审核。"], ["上下文不足", "澄清", "仅请求最少的安全信息；不猜测，也不过早创建案例。"], ["证据不足 / 高风险", "转人工", "创建包含原因和轨迹的结构化人工审核转交。"]],
+      step: "步骤",
+      rollout: [["1", "基线", "咨询量、AHT、FCR、CSAT 和转交原因"], ["2", "离线评估", "用于路由、检索和安全性的标注案例"], ["3", "影子试点", "AI 提供建议，员工保留控制权"], ["4", "受控上线", "只有在质量护栏通过后才扩大范围"]],
+    },
+    confidencePanel: { title: "证据置信度 → 政策动作", intro: "Groundedness 是可审计的原型信号，不是模型概率。", evidence: "证据", review: "人工审核", clarify: "澄清", respond: "自动回答", escalateTag: "转人工" },
+  },
+} as const;
+
 export function Studio() {
   const { locale, setLocale, copy } = useUiLocale();
+  const interviewCopy = interviewUiCopy[locale];
   const modules = moduleIds.map((id, index) => ({
     id,
     number: String(index + 1).padStart(2, "0"),
-    label: id === "settings" ? locale === "th" ? "ตั้งค่าพฤติกรรม AI" : locale === "zh" ? "AI 行为设置" : "AI Behavior Settings" : id === "analytics" ? locale === "th" ? "วิเคราะห์ปัญหาลูกค้า" : locale === "zh" ? "客户问题分析" : "Support Analytics" : copy.modules[moduleCopyIndex[id]][0],
-    description: id === "settings" ? locale === "th" ? "บทบาท น้ำเสียง หลักคิด และกฎความปลอดภัย" : locale === "zh" ? "角色、语气、原则与安全规则" : "Role, tone, principles, and safety rules" : id === "analytics" ? locale === "th" ? "รายวัน รายสัปดาห์ รายเดือน และทีมที่ต้องปรับปรุง" : locale === "zh" ? "每日、每周、每月趋势与改进负责人" : "Daily, weekly, monthly trends and improvement owners" : copy.modules[moduleCopyIndex[id]][1],
+    label: id === "overview" ? interviewCopy.modules.overview[0] : id === "impact" ? interviewCopy.modules.impact[0] : id === "agent" ? locale === "th" ? "ผู้ช่วย AI แบบวางแผน" : locale === "zh" ? "智能代理助手" : copy.modules[moduleCopyIndex[id]][0] : id === "settings" ? locale === "th" ? "ตั้งค่าพฤติกรรม AI" : locale === "zh" ? "AI 行为设置" : "AI Behavior Settings" : id === "analytics" ? locale === "th" ? "วิเคราะห์ปัญหาลูกค้า" : locale === "zh" ? "客户问题分析" : "Support Analytics" : copy.modules[moduleCopyIndex[id]][0],
+    description: id === "overview" ? interviewCopy.modules.overview[1] : id === "impact" ? interviewCopy.modules.impact[1] : id === "settings" ? locale === "th" ? "บทบาท น้ำเสียง หลักคิด และกฎความปลอดภัย" : locale === "zh" ? "角色、语气、原则与安全规则" : "Role, tone, principles, and safety rules" : id === "analytics" ? locale === "th" ? "รายวัน รายสัปดาห์ รายเดือน และทีมที่ต้องปรับปรุง" : locale === "zh" ? "每日、每周、每月趋势与改进负责人" : "Daily, weekly, monthly trends and improvement owners" : copy.modules[moduleCopyIndex[id]][1],
   }));
-  const [active, setActive] = useState<Module>("support");
-  const [view, setView] = useState<"customer" | "internal">("customer");
+  const [active, setActive] = useState<Module>("overview");
+  const [view, setView] = useState<"customer" | "internal">("internal");
+  const [supportScenario, setSupportScenario] = useState<{ id: number; message: string } | null>(null);
   const viewLabels = locale === "th"
-    ? { customer: "Live Chat", internal: "ระบบการทำงานภายใน", customerTitle: "บริการลูกค้าออนไลน์", customerIntro: "สอบถามเรื่องฝากเงิน ถอนเงิน โปรโมชั่น หรือปัญหาเกมได้ที่นี่" }
+    ? { customer: "แชตลูกค้าออนไลน์", internal: "ระบบการทำงานภายใน", customerTitle: "บริการลูกค้าออนไลน์", customerIntro: "สอบถามเรื่องฝากเงิน ถอนเงิน โปรโมชั่น หรือปัญหาเกมได้ที่นี่" }
     : locale === "zh"
       ? { customer: "在线客服", internal: "内部 AI 系统", customerTitle: "在线客户服务", customerIntro: "可在此咨询存款、提款、促销或游戏问题" }
       : { customer: "Live Chat", internal: "Internal AI Operations", customerTitle: "Online customer support", customerIntro: "Ask about deposits, withdrawals, promotions, or game issues." };
@@ -269,8 +428,17 @@ export function Studio() {
             </span>
           </div>
           <div className="min-h-[570px] p-5 sm:p-7">
-            {active === "support" ? (
-              <SupportDemo locale={locale} />
+            {active === "overview" ? (
+              <InterviewOverview
+                locale={locale}
+                onOpenScenario={(message) => {
+                  setSupportScenario({ id: Date.now(), message });
+                  setActive("support");
+                }}
+                onOpenImpact={() => setActive("impact")}
+              />
+            ) : active === "support" ? (
+              <SupportDemo key={supportScenario?.id ?? 0} locale={locale} scenarioRequest={supportScenario} />
             ) : active === "knowledge" ? (
               <KnowledgeDemo locale={locale} />
             ) : active === "workflow" ? (
@@ -279,6 +447,8 @@ export function Studio() {
               <AgentDemo locale={locale} />
             ) : active === "analytics" ? (
               <SupportAnalyticsDemo locale={locale} />
+            ) : active === "impact" ? (
+              <BusinessImpactDemo locale={locale} />
             ) : <BehaviorSettingsDemo locale={locale} />}
           </div>
         </section>
@@ -288,6 +458,113 @@ export function Studio() {
         <p>{copy.footer}</p>
         <p className="font-mono">Next.js · TypeScript · Tailwind CSS</p>
       </footer>
+    </div>
+  );
+}
+
+function InterviewOverview({
+  locale,
+  onOpenScenario,
+  onOpenImpact,
+}: {
+  locale: UiLocale;
+  onOpenScenario: (message: string) => void;
+  onOpenImpact: () => void;
+}) {
+  const content = interviewUiCopy[locale];
+  const overview = content.overview;
+
+  return (
+    <div className="space-y-7">
+      <section className="rounded-2xl border border-accent/25 bg-gradient-to-br from-accent/10 to-transparent p-5 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-2xl">
+            <p className="font-mono text-[10px] uppercase tracking-[.2em] text-accent">{overview.eyebrow}</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{overview.title}</h2>
+            <p className="mt-3 text-sm leading-6 text-muted">{overview.intro}</p>
+            <p className="mt-2 text-xs leading-5 text-accent-secondary">{overview.privacy}</p>
+          </div>
+          <button type="button" onClick={onOpenImpact} className="kb-focusable min-h-[42px] rounded-lg bg-accent px-4 text-sm font-semibold text-[#07101F]">{overview.impactButton}</button>
+        </div>
+        <div className="mt-5 grid gap-2 sm:grid-cols-5">
+          {overview.steps.map((step, index) => (
+            <div key={step} className="rounded-lg border border-white/10 bg-black/15 p-3">
+              <p className="font-mono text-[10px] text-accent">0{index + 1}</p>
+              <p className="mt-1 text-xs font-medium text-foreground">{step}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div><p className="font-mono text-[10px] uppercase tracking-wider text-accent">{overview.scenariosEyebrow}</p><h3 className="mt-1 text-lg font-semibold text-foreground">{overview.scenariosTitle}</h3></div>
+          <p className="hidden text-xs text-muted sm:block">{overview.scenariosHint}</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {content.scenarios.map((scenario) => (
+            <article key={scenario.area} className="rounded-xl border border-white/10 bg-black/10 p-4">
+              <div className="flex items-center justify-between gap-3"><span className="rounded bg-accent/15 px-2 py-1 font-mono text-[10px] font-semibold text-accent">{scenario.area}</span><span className="text-[10px] uppercase tracking-wider text-muted">{overview.functionalDemo}</span></div>
+              <h4 className="mt-3 text-sm font-semibold text-foreground">{scenario.title}</h4>
+              <p className="mt-2 text-xs leading-5 text-muted"><span className="text-foreground">{overview.controlledOutcome}:</span> {scenario.outcome}</p>
+              <p className="mt-2 text-xs leading-5 text-muted"><span className="text-foreground">{overview.businessValue}:</span> {scenario.value}</p>
+              <button type="button" onClick={() => onOpenScenario(scenario.message)} className="kb-focusable mt-4 min-h-[38px] w-full rounded-lg border border-accent/25 bg-accent/5 px-3 text-xs font-semibold text-accent transition hover:bg-accent/10">{overview.openScenario}</button>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-white/10 bg-[#07101F] p-5">
+        <p className="font-mono text-[10px] uppercase tracking-wider text-accent">{overview.jdTitle}</p>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {overview.jd.map(([title, detail], index) => (
+            <div key={title} className={index === overview.jd.length - 1 ? "lg:col-span-2" : ""}>
+              <p className="text-sm font-semibold text-foreground">{title}</p>
+              <p className="mt-1 text-xs leading-5 text-muted">{detail}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function BusinessImpactDemo({ locale }: { locale: UiLocale }) {
+  const content = interviewUiCopy[locale].impact;
+  return (
+    <div className="space-y-7">
+      <section className="rounded-2xl border border-warning/25 bg-warning/5 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-mono text-[10px] uppercase tracking-wider text-warning">{content.eyebrow}</p><h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{content.title}</h2></div><span className="rounded-full border border-warning/30 px-3 py-1 text-xs font-semibold text-warning">{content.badge}</span></div>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">{content.intro}</p>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {content.metrics.map(([label, value, note]) => (
+          <article key={label} className="rounded-xl border border-white/10 bg-black/10 p-4">
+            <p className="font-mono text-xl font-semibold text-accent-secondary">{value}</p>
+            <p className="mt-2 text-sm font-semibold text-foreground">{label}</p>
+            <p className="mt-1 text-xs leading-5 text-muted">{note}</p>
+            <p className="mt-3 font-mono text-[9px] uppercase tracking-wider text-warning">{content.estimate}</p>
+          </article>
+        ))}
+      </section>
+
+      <section className="rounded-xl border border-white/10 bg-[#07101F] p-5">
+        <p className="font-mono text-[10px] uppercase tracking-wider text-accent">{content.confidenceTitle}</p>
+        <p className="mt-2 text-xs leading-5 text-muted">{content.confidenceIntro}</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {content.confidenceSteps.map(([signal, action, detail], index) => (
+            <div key={signal} className="rounded-xl border border-white/10 bg-black/15 p-4">
+              <div className="flex items-center justify-between"><span className="font-mono text-[10px] text-muted">0{index + 1}</span><span className={`rounded px-2 py-1 font-mono text-[10px] font-semibold ${index === 0 ? "bg-success/15 text-success" : index === 1 ? "bg-accent/15 text-accent" : "bg-warning/15 text-warning"}`}>{action}</span></div>
+              <p className="mt-3 text-sm font-semibold text-foreground">{signal}</p><p className="mt-1 text-xs leading-5 text-muted">{detail}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-4">
+        {content.rollout.map(([num, title, detail]) => <div key={num} className="rounded-xl border border-white/10 p-4"><p className="font-mono text-[10px] text-accent">{content.step} {num}</p><p className="mt-2 text-sm font-semibold text-foreground">{title}</p><p className="mt-1 text-xs leading-5 text-muted">{detail}</p></div>)}
+      </section>
     </div>
   );
 }
@@ -1660,13 +1937,22 @@ function BehaviorSettingsDemo({ locale }: { locale: UiLocale }) {
   );
 }
 
-function SupportDemo({ locale, customerView = false }: { locale: UiLocale; customerView?: boolean }) {
+function SupportDemo({
+  locale,
+  customerView = false,
+  scenarioRequest = null,
+}: {
+  locale: UiLocale;
+  customerView?: boolean;
+  scenarioRequest?: { id: number; message: string } | null;
+}) {
   const copy = uiCopy[locale];
+  const confidenceCopy = interviewUiCopy[locale].confidencePanel;
   const localizedScenarios = copy.scenarios.map(([label, message], index) => ({
     label: `${index + 1} · ${label}`,
     message,
   }));
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(scenarioRequest?.message ?? "");
   const [submittedMessage, setSubmittedMessage] = useState("");
   const [result, setResult] = useState<SupportResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -1933,7 +2219,7 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
             </div>
             <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-white/10 bg-white/[.04] px-4 py-3 text-sm leading-6 text-foreground">
               {!customerView && <span className={`mr-2 rounded px-2 py-0.5 font-mono text-[10px] font-semibold ${entry.decision === "ESCALATE" ? "bg-warning/20 text-warning" : "bg-success/20 text-success"}`}>
-                {entry.decision === "ESCALATE" ? "ESCALATE" : "AUTO RESPOND"}
+                {entry.decision === "ESCALATE" ? confidenceCopy.escalateTag : confidenceCopy.respond}
               </span>}
               {entry.answer}
             </div>
@@ -1970,10 +2256,28 @@ function SupportDemo({ locale, customerView = false }: { locale: UiLocale; custo
                     : "bg-success/20 text-success"
                 }`}
               >
-                {result.trace.decision === "ESCALATE" ? "ESCALATE" : "AUTO RESPOND"}
+                {result.trace.decision === "ESCALATE" ? confidenceCopy.escalateTag : confidenceCopy.respond}
               </span>}
               {result.answer}
             </div>
+
+            {!customerView && (
+              <div className="grid gap-2 rounded-xl border border-white/10 bg-[#07101F] p-3 sm:grid-cols-[1fr_auto_auto] sm:items-center">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-muted">{confidenceCopy.title}</p>
+                  <p className="mt-1 text-xs text-muted">{confidenceCopy.intro}</p>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-black/15 px-3 py-2 text-xs">
+                  <span className="text-muted">{confidenceCopy.evidence} </span>
+                  <span className={result.trace.verifier.grounded ? "font-semibold text-success" : "font-semibold text-warning"}>
+                    {result.trace.verifier.applicable ? `${Math.round(result.trace.verifier.groundednessScore * 100)}%` : "N/A"}
+                  </span>
+                </div>
+                <div className={`rounded-lg px-3 py-2 text-center font-mono text-[10px] font-semibold ${result.trace.decision === "ESCALATE" ? "bg-warning/15 text-warning" : result.clarificationRequired ? "bg-accent/15 text-accent" : "bg-success/15 text-success"}`}>
+                  {result.trace.decision === "ESCALATE" ? confidenceCopy.review : result.clarificationRequired ? confidenceCopy.clarify : confidenceCopy.respond}
+                </div>
+              </div>
+            )}
 
             {customer && result.slipUploadRequired && !slipResult && (
               <form onSubmit={uploadSlip} className="rounded-xl border border-accent/20 bg-accent/5 p-3">
