@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { decideSupportPolicy, runSupportAgent } from "./support-agent";
 import { notApplicableVerifierResult, verifyGroundedness } from "./verifier";
+import { resetLearnedLanguagePatternsForTests } from "./support-learning";
 
 describe("decideSupportPolicy (pure policy logic)", () => {
   it("escalates on insufficient evidence, even with no mandatory trigger and LOW risk", () => {
@@ -118,6 +119,34 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     expect(result.handoff).toBeNull();
     expect(result.answer).toContain("โปรหลักให้เลือก 10 รายการ");
     expect(result.answer).not.toContain("DEMO-CS-");
+  });
+
+  it("asks for clarification before creating a case when a non-critical request is not understood", async () => {
+    const result = await runSupportAgent("ช่วยดูอันนี้ให้หน่อย");
+    expect(result.clarificationRequired).toBe(true);
+    expect(result.trace.decision).toBe("AUTO_RESPOND");
+    expect(result.handoff).toBeNull();
+    expect(result.trace.steps.some((step) => step.tool === "request_clarification")).toBe(true);
+  });
+
+  it("learns an ambiguous customer phrase after an explicit clarification and reuses it", async () => {
+    resetLearnedLanguagePatternsForTests();
+    const ambiguous = "ของที่เปิดอยู่มีอะไร";
+    const first = await runSupportAgent(ambiguous);
+    expect(first.clarificationRequired).toBe(true);
+    expect(first.handoff).toBeNull();
+
+    const clarified = await runSupportAgent("หมายถึงโปรโมชั่นที่เปิดอยู่ตอนนี้มีอะไรบ้าง", [ambiguous]);
+    expect(clarified.trace.intent).toBe("promotion_bonus");
+    expect(clarified.learning).toMatchObject({ phrase: ambiguous, intent: "promotion_bonus" });
+    expect(clarified.trace.steps.some((step) => step.tool === "learn_language_pattern")).toBe(true);
+
+    const reused = await runSupportAgent(ambiguous);
+    expect(reused.trace.intent).toBe("promotion_bonus");
+    expect(reused.trace.decision).toBe("AUTO_RESPOND");
+    expect(reused.answer).toContain("โปรหลักให้เลือก 10 รายการ");
+    expect(reused.handoff).toBeNull();
+    resetLearnedLanguagePatternsForTests();
   });
 
   it("creates a simulated transaction-review case for missing deposits and withdrawals", async () => {

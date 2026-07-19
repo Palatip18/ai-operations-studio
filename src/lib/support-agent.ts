@@ -7,10 +7,11 @@ import { isOpenAIConfigured } from "./openai";
 import { summarize } from "./trace-redaction";
 import { RETRIEVAL_RELEVANCE_THRESHOLD } from "./agent";
 import { classifyQueryTopics } from "./query-topics";
-import { applyConversationContext, normalizeSupportInput, promotionCatalogAnswer } from "./multilingual";
+import { applyConversationContext, normalizeLocally, normalizeSupportInput, promotionCatalogAnswer } from "./multilingual";
 import { deriveTone, composeCustomerResponse } from "./response-composer";
 import { handleSimulatedHandoff, type HandoffResult } from "./support-handoff";
 import { composeTransactionStatusReply, lookupSimulatedTransaction, type BackofficeTransactionResult } from "./support-backoffice";
+import { learnLanguagePattern, resolveLearnedIntent, type LearnedLanguagePattern } from "./support-learning";
 
 /**
  * Bounded customer-support agent:
@@ -59,7 +60,7 @@ export type SupportTrace = {
   customerScope: string | null;
 };
 
-export type SupportResult = { answer: string; customerVerificationRequired?: boolean; slipUploadRequired?: boolean; clarificationRequired?: boolean; transaction?: BackofficeTransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
+export type SupportResult = { answer: string; customerVerificationRequired?: boolean; slipUploadRequired?: boolean; clarificationRequired?: boolean; learning?: LearnedLanguagePattern | null; transaction?: BackofficeTransactionResult | null; handoff?: HandoffResult | null; trace: SupportTrace };
 
 const WORKFLOW_INTENTS = new Set<Intent>(["request_status", "account_onboarding"]);
 
@@ -92,13 +93,20 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   const start = Date.now();
   const multilingual = await normalizeSupportInput(message);
   const processingMessage = applyConversationContext(message, multilingual.normalized, previousUserMessages.slice(-4));
-  const intent = classifyIntent(processingMessage);
+  const learnedIntent = resolveLearnedIntent(message);
+  const intent = learnedIntent ?? classifyIntent(processingMessage);
   const risk = classifyRisk(processingMessage, intent);
+  const catalogPattern = /promotion catalog|what promotions|which promotions|promotions? (?:and bonuses )?(?:are )?(?:currently )?available|list (?:the )?(?:current )?(?:promotions|offers)|มี\s*โปร(?:อะไรบ้าง|ไหนบ้าง)|โปร(?:มี)?อะไรบ้าง/i;
   const promotionCatalogRequest = intent === "promotion_bonus"
-    && /promotion catalog|what promotions|which promotions|promotions? (?:and bonuses )?(?:are )?(?:currently )?available|list (?:the )?(?:current )?(?:promotions|offers)|มี\s*โปร(?:อะไรบ้าง|ไหนบ้าง)|โปร(?:มี)?อะไรบ้าง/i.test(processingMessage);
+    && (learnedIntent === "promotion_bonus" || catalogPattern.test(processingMessage));
   const live = isOpenAIConfigured();
 
   const steps: SupportStepTrace[] = [];
+  const previousMessage = previousUserMessages.at(-1);
+  const previousAmbiguousMessage = previousMessage && classifyIntent(normalizeLocally(previousMessage)) === "unknown"
+    ? previousMessage
+    : null;
+  let learning: LearnedLanguagePattern | null = null;
   const sourceMap = new Map<string, SupportSource>();
   const groundingEvidence: { id: string; text: string }[] = [];
   let modelCallCount = 0;
@@ -179,11 +187,17 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   // If retrieval confidence is low, answer conservatively from available policy
   // or ask for the promotion name; never create a support case solely because
   // a short catalog question did not satisfy the generic verifier threshold.
-  if (intent === "promotion_bonus" && risk === "LOW" && !mandatory.escalate && decision === "ESCALATE") {
+  if (promotionCatalogRequest && risk === "LOW" && !mandatory.escalate && decision === "ESCALATE") {
     decision = "AUTO_RESPOND";
     escalationReason = null;
   }
-  const clarificationRequired = intent === "unknown" && !mandatory.escalate;
+  // Understanding comes before handoff. Missing evidence or an unknown intent
+  // produces one focused question; only an explicit safety/policy trigger can
+  // bypass clarification and create a review case immediately.
+  const clarificationRequired = !mandatory.escalate
+    && !customerVerificationRequired
+    && !transaction
+    && (intent === "unknown" || (!verifier.grounded && decision === "ESCALATE"));
   if (clarificationRequired) {
     decision = "AUTO_RESPOND";
     escalationReason = null;
@@ -215,6 +229,20 @@ export async function runSupportAgent(message: string, previousUserMessages: str
     } else {
       decision = "AUTO_RESPOND";
       escalationReason = null;
+    }
+  }
+
+  if (!learnedIntent && previousAmbiguousMessage && intent !== "unknown"
+    && !clarificationRequired && decision === "AUTO_RESPOND"
+    && (verifier.grounded || promotionCatalogRequest)) {
+    learning = learnLanguagePattern(previousAmbiguousMessage, intent);
+    if (learning) {
+      steps.push({
+        tool: "learn_language_pattern",
+        input: { intent: learning.intent, phraseLength: learning.phrase.length },
+        outputSummary: "Stored the clarified wording as a reusable intent alias. Business rules and factual knowledge were not changed.",
+        resultCount: 1,
+      });
     }
   }
 
@@ -300,6 +328,7 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   return {
     answer: safeAnswer,
     clarificationRequired,
+    learning,
     customerVerificationRequired,
     slipUploadRequired,
     transaction,
