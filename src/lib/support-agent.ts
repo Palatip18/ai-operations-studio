@@ -7,7 +7,7 @@ import { isOpenAIConfigured } from "./openai";
 import { summarize } from "./trace-redaction";
 import { RETRIEVAL_RELEVANCE_THRESHOLD } from "./agent";
 import { classifyQueryTopics } from "./query-topics";
-import { applyConversationContext, normalizeSupportInput } from "./multilingual";
+import { applyConversationContext, normalizeSupportInput, promotionCatalogAnswer } from "./multilingual";
 import { deriveTone, composeCustomerResponse } from "./response-composer";
 import { handleSimulatedHandoff, type HandoffResult } from "./support-handoff";
 import { composeTransactionStatusReply, lookupSimulatedTransaction, type BackofficeTransactionResult } from "./support-backoffice";
@@ -94,6 +94,8 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   const processingMessage = applyConversationContext(message, multilingual.normalized, previousUserMessages.slice(-4));
   const intent = classifyIntent(processingMessage);
   const risk = classifyRisk(processingMessage, intent);
+  const promotionCatalogRequest = intent === "promotion_bonus"
+    && /promotion catalog|what promotions|which promotions|promotions? (?:and bonuses )?(?:are )?(?:currently )?available|list (?:the )?(?:current )?(?:promotions|offers)|มี\s*โปร(?:อะไรบ้าง|ไหนบ้าง)|โปร(?:มี)?อะไรบ้าง/i.test(processingMessage);
   const live = isOpenAIConfigured();
 
   const steps: SupportStepTrace[] = [];
@@ -264,7 +266,9 @@ export async function runSupportAgent(message: string, previousUserMessages: str
     tone,
     handoffId: handoff?.handoffId ?? null
   });
-  if (clarificationRequired) {
+  if (promotionCatalogRequest && decision === "AUTO_RESPOND") {
+    safeAnswer = promotionCatalogAnswer(multilingual.language);
+  } else if (clarificationRequired) {
     safeAnswer = multilingual.language === "th"
       ? "ขออภัยค่ะ แอดมินยังไม่แน่ใจว่าลูกค้าต้องการสอบถามเรื่องไหน รบกวนแจ้งเพิ่มเติมได้ไหมคะว่าเป็นเรื่องฝากเงิน ถอนเงิน โปรโมชั่น หรือปัญหาเกม และเกิดปัญหาอย่างไรบ้างคะ"
       : multilingual.language === "zh"
