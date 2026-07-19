@@ -11,6 +11,7 @@ export function detectLanguage(text: string): SupportedLanguage {
 
 const LOCAL_NORMALIZATIONS: Record<"th" | "zh", Array<[RegExp, string]>> = {
   th: [
+    [/มี\s*โปร(?:อะไรบ้าง|ไหนบ้าง)|โปร(?:มี)?อะไรบ้าง|มีโปรโมชั่นอะไรบ้าง/gi, "what promotions bonuses and offers are currently available list promotion catalog"],
     [/ระบบนี้สร้าง(?:ขึ้น)?มาทำไม|สร้างระบบนี้ทำไม/gi, "why was this system built product purpose"],
     [/สมัครบัญชี|สร้างบัญชี|เปิดบัญชี/gi, "create a new account onboarding"],
     [/ใบแจ้งหนี้|ใบเสร็จ|การชำระเงิน|จ่ายเงิน/gi, "invoice billing payment"],
@@ -135,6 +136,15 @@ export async function normalizeSupportInput(text: string): Promise<{ language: S
 }
 
 export async function localizeSupportAnswer(text: string, language: SupportedLanguage): Promise<string> {
+  if (text.includes("Ten fictional offers are available") || (text.includes("Welcome Deposit 50%") && text.includes("Loyalty Points Exchange"))) {
+    if (language === "th") {
+      return "ตอนนี้มีโปรหลักให้เลือก 10 รายการค่ะ ได้แก่ โบนัสฝากครั้งแรก โบนัสกีฬาสำหรับสมาชิกใหม่ โบนัสฝากเล่นสล็อตรายวัน ฟรีสปินรายสัปดาห์ คืนยอดเล่นสล็อต คืนยอดคาสิโนสด บูสต์บิลกีฬาสเต็ป โบนัสคาสิโนช่วงสุดสัปดาห์ รางวัลแนะนำเพื่อน และแลกคะแนนสะสมค่ะ แต่ละโปรมีเงื่อนไขยอดฝาก เกมที่ร่วมรายการ ระยะเวลา และยอดเทิร์นต่างกัน สนใจโปรไหนแจ้งชื่อมาได้เลยนะคะ เดี๋ยวตรวจเงื่อนไขให้ค่ะ";
+    }
+    if (language === "zh") {
+      return "目前共有 10 项主要促销：首存奖金、新会员体育奖金、每日老虎机存款奖励、每周免费旋转、每周老虎机返水、真人娱乐场返水、体育串关加成、周末娱乐场充值奖金、推荐好友奖励和积分兑换。每项促销的存款要求、适用游戏、有效期及流水条件都不同。请告诉我您感兴趣的促销名称，我可以继续为您查询详细条件。";
+    }
+    return "There are currently 10 main promotions: a welcome deposit bonus, new-member sports bonus, daily slot reload, weekly free spins, weekly slot cashback, live-casino rebate, sports accumulator boost, weekend casino reload, referral reward, and loyalty-points exchange. Deposit requirements, eligible games, validity periods, and turnover conditions vary by promotion. Tell me which one interests you and I can check the full conditions.";
+  }
   if (text.includes("Weekend Reward") && text.includes("Activity Center")) {
     if (language === "th") {
       return "ตอนนี้โปร Weekend Reward เปิดให้รับตั้งแต่วันที่ 19–26 กรกฎาคม 2026 ค่ะ สามารถกดรับได้ที่เมนูศูนย์กิจกรรม หลังจากระบบตรวจสอบสิทธิ์เรียบร้อย โบนัสจะเข้ากระเป๋าโบนัสค่ะ หากกดรับไม่ได้หรือข้อมูลหน้าโปรไม่ตรงกัน รบกวนส่งภาพหน้าจอพร้อมเวลาที่พบปัญหา เพื่อให้เจ้าหน้าที่ตรวจสอบเพิ่มเติมนะคะ";

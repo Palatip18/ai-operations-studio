@@ -173,6 +173,14 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   const verifier = verifyGroundedness(answer, groundingEvidence, processingMessage);
   const mandatory = checkMandatoryEscalation(processingMessage, intent);
   let { decision, escalationReason } = decideSupportPolicy(mandatory, verifier, risk, intent);
+  // A low-risk request for promotion information is not an operational incident.
+  // If retrieval confidence is low, answer conservatively from available policy
+  // or ask for the promotion name; never create a support case solely because
+  // a short catalog question did not satisfy the generic verifier threshold.
+  if (intent === "promotion_bonus" && risk === "LOW" && !mandatory.escalate && decision === "ESCALATE") {
+    decision = "AUTO_RESPOND";
+    escalationReason = null;
+  }
   const clarificationRequired = intent === "unknown" && !mandatory.escalate;
   if (clarificationRequired) {
     decision = "AUTO_RESPOND";

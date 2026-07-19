@@ -109,6 +109,17 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     expect(game.trace.sources.some((s) => s.id === "gaming-game-issue-guide")).toBe(true);
   });
 
+  it("answers a short Thai promotion-catalog question without creating a review case", async () => {
+    const result = await runSupportAgent("มีโปรอะไรบ้าง");
+    expect(result.trace.intent).toBe("promotion_bonus");
+    expect(result.trace.risk).toBe("LOW");
+    expect(result.trace.decision).toBe("AUTO_RESPOND");
+    expect(result.trace.sources.some((source) => source.id === "gaming-promotion-overview")).toBe(true);
+    expect(result.handoff).toBeNull();
+    expect(result.answer).toContain("โปรหลักให้เลือก 10 รายการ");
+    expect(result.answer).not.toContain("DEMO-CS-");
+  });
+
   it("creates a simulated transaction-review case for missing deposits and withdrawals", async () => {
     for (const message of [
       "My deposit DEP-1002 was completed but the credit was not received.",
