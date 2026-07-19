@@ -32,7 +32,7 @@ const LOCAL_NORMALIZATIONS: Record<"th" | "zh", Array<[RegExp, string]>> = {
     [/กดรับ.*(?:โปร|โบนัส)|(?:โปร|โบนัส).*เข้า(?:ที่ไหน|ตรงไหน)|รับโบนัสที่ไหน/gi, "promotion claim channel credit destination bonus wallet"],
     [/สิทธิ์เต็ม|โควตาเต็ม|รับรายการไม่ได้|ยังรับโปรไม่ได้/gi, "limited promotion capacity unavailable retry follow up"],
     [/โปรโมชั่น|โปรโมชัน|โบนัส|คืนยอดเสีย|เครดิตฟรี|ฟรีสปิน|เทิร์นโอเวอร์|ยอดหมุนเวียน/gi, "promotion bonus cashback free spin turnover wagering requirement"],
-    [/เกมค้าง|เกมเข้าไม่ได้|เกมมีปัญหา|รอบเกม|ค่ายเกม|ยอดเงินไม่อัปเดต/gi, "game round provider stuck error balance game support"],
+    [/เกมค้าง|เกมเข้าไม่ได้|เกมมีปัญหา|ปัญหาเกม|รอบเกม|ค่ายเกม|ยอดเงินไม่อัปเดต/gi, "game round provider stuck error balance game support"],
     [/ยกเลิก|คืนเงิน/gi, "cancel refund"],
     [/เข้า(?:ระบบ)?ไม่ได้|ล็อกอินไม่ได้|ใช้งานไม่ได้|โหลดไม่ได้/gi, "cannot log in not working troubleshooting"],
     [/สถานะคำขอ|ติดตามคำขอ/gi, "request status tracking"],

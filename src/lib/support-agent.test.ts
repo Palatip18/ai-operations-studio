@@ -110,6 +110,25 @@ describe("runSupportAgent (integration, deterministic mode)", () => {
     expect(game.trace.sources.some((s) => s.id === "gaming-game-issue-guide")).toBe(true);
   });
 
+  it("understands a short Thai game issue and asks only for the missing case details", async () => {
+    const result = await runSupportAgent("ปัญหาเกม");
+    expect(result.trace.intent).toBe("game_support");
+    expect(result.clarificationRequired).toBe(true);
+    expect(result.trace.decision).toBe("AUTO_RESPOND");
+    expect(result.handoff).toBeNull();
+    expect(result.answer).toMatch(/ชื่อเกม|ค่ายเกม/);
+    expect(result.answer).toMatch(/เวลา.*เลขรอบเกม/);
+  });
+
+  it("creates a review card when a game incident has a symptom and traceable context", async () => {
+    const result = await runSupportAgent("เกม Gates of Olympus ค้างตอน 01:45 ยอดเงินไม่อัปเดต รอบ GAME-7788");
+    expect(result.trace.intent).toBe("game_support");
+    expect(result.clarificationRequired).toBe(false);
+    expect(result.trace.decision).toBe("ESCALATE");
+    expect(result.handoff?.success).toBe(true);
+    expect(result.answer).toContain("DEMO-CS-");
+  });
+
   it("answers a short Thai promotion-catalog question without creating a review case", async () => {
     const result = await runSupportAgent("มีโปรอะไรบ้าง");
     expect(result.trace.intent).toBe("promotion_bonus");

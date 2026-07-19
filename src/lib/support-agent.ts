@@ -99,6 +99,13 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   const catalogPattern = /promotion catalog|what promotions|which promotions|promotions? (?:and bonuses )?(?:are )?(?:currently )?available|list (?:the )?(?:current )?(?:promotions|offers)|มี\s*โปร(?:อะไรบ้าง|ไหนบ้าง)|โปร(?:มี)?อะไรบ้าง|โปรโมชั่น.*อะไรบ้าง|โปร(?:โมชั่น)?.*เปิดอยู่.*อะไรบ้าง/i;
   const promotionCatalogRequest = intent === "promotion_bonus"
     && (learnedIntent === "promotion_bonus" || catalogPattern.test(message) || catalogPattern.test(processingMessage));
+  const gameIssueSignal = intent === "game_support"
+    && /เกมค้าง|เกมเข้าไม่ได้|ยอดเงินไม่อัปเดต|ผลเกมผิด|เด้งออก|หลุด|game (?:is )?(?:stuck|frozen|error)|won't open|will not open|disconnect|unexpected balance|round.*(?:wrong|missing)/i.test(message);
+  const gameCaseContext = intent === "game_support"
+    && (/(?:รอบ|round)(?:\s*(?:id|ไอดี|เลขที่|เลข))?\s*[:#-]?\s*[A-Z0-9-]{4,}/i.test(message)
+      || /\b\d{1,2}[:.]\d{2}\b/.test(message));
+  const gameNeedsDetails = intent === "game_support" && (!gameIssueSignal || !gameCaseContext);
+  const gameIncidentReady = intent === "game_support" && gameIssueSignal && gameCaseContext;
   const live = isOpenAIConfigured();
 
   const steps: SupportStepTrace[] = [];
@@ -197,7 +204,7 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   const clarificationRequired = !mandatory.escalate
     && !customerVerificationRequired
     && !transaction
-    && (intent === "unknown" || (!verifier.grounded && decision === "ESCALATE"));
+    && (gameNeedsDetails || intent === "unknown" || (!verifier.grounded && decision === "ESCALATE"));
   if (clarificationRequired) {
     decision = "AUTO_RESPOND";
     escalationReason = null;
@@ -230,6 +237,14 @@ export async function runSupportAgent(message: string, previousUserMessages: str
       decision = "AUTO_RESPOND";
       escalationReason = null;
     }
+  }
+
+  if (gameNeedsDetails) {
+    decision = "AUTO_RESPOND";
+    escalationReason = null;
+  } else if (gameIncidentReady) {
+    decision = "ESCALATE";
+    escalationReason = "Game incident includes an observable symptom and case context for provider review.";
   }
 
   if (!learnedIntent && previousAmbiguousMessage && intent !== "unknown"
@@ -297,7 +312,13 @@ export async function runSupportAgent(message: string, previousUserMessages: str
   if (promotionCatalogRequest && decision === "AUTO_RESPOND") {
     safeAnswer = promotionCatalogAnswer(multilingual.language);
   } else if (clarificationRequired) {
-    safeAnswer = multilingual.language === "th"
+    safeAnswer = intent === "game_support" && multilingual.language === "th"
+      ? "รับทราบค่ะ เป็นปัญหาเกี่ยวกับเกม รบกวนแจ้งชื่อเกมหรือค่ายเกม อาการที่พบ เวลาที่เกิดเหตุ และเลขรอบเกมถ้ามีค่ะ หากเป็นเกมค้าง ยอดเงินไม่อัปเดต หรือผลรอบไม่ตรง ระบบจะรวบรวมข้อมูลเพื่อส่งตรวจสอบให้ค่ะ"
+      : intent === "game_support" && multilingual.language === "zh"
+        ? "了解，这是游戏相关问题。请提供游戏或供应商名称、出现的情况、发生时间，以及游戏回合编号（如有）。若游戏卡住、余额未更新或回合结果异常，系统会整理资料并提交审核。"
+        : intent === "game_support"
+          ? "Understood—this concerns a game. Please provide the game or provider name, what happened, the approximate time, and the round ID if available. If the game froze, the balance did not update, or the round result is incorrect, the system will prepare the details for review."
+          : multilingual.language === "th"
       ? "ขออภัยค่ะ แอดมินยังไม่แน่ใจว่าลูกค้าต้องการสอบถามเรื่องไหน รบกวนแจ้งเพิ่มเติมได้ไหมคะว่าเป็นเรื่องฝากเงิน ถอนเงิน โปรโมชั่น หรือปัญหาเกม และเกิดปัญหาอย่างไรบ้างคะ"
       : multilingual.language === "zh"
         ? "抱歉，我还不确定您想咨询哪一类问题。请说明是存款、提款、促销还是游戏问题，并补充具体情况。"
