@@ -4,8 +4,10 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { runSupportAgent, type SupportResult } from "@/lib/support-agent";
 import { recordSupportEvent } from "@/lib/support-analytics";
 import { createCustomerContextToken, customerContextCookieOptions, findDemoCustomer, readCustomerContext, SUPPORT_CUSTOMER_COOKIE } from "@/lib/support-customer";
+import { classifyIntent } from "@/lib/support-classification";
+import { normalizeLocally } from "@/lib/multilingual";
 
-function verificationOnlyResult(answer: string, customerVerificationRequired: boolean): SupportResult {
+function verificationOnlyResult(answer: string, customerVerificationRequired: boolean, language: "en" | "th" | "zh" = "en"): SupportResult {
   return {
     answer,
     customerVerificationRequired,
@@ -24,11 +26,21 @@ function verificationOnlyResult(answer: string, customerVerificationRequired: bo
       modelCallCount: 0,
       estimatedUsage: null,
       mode: "deterministic",
-      language: "en",
+      language,
       normalizationMode: "original",
       customerScope: null,
     },
   };
+}
+
+function looksLikeCustomerIdentifier(value: string) {
+  const compactPhone = value.replace(/[^\d]/g, "");
+  return /^[A-Z][A-Z0-9._-]{2,31}$/i.test(value) || /^0\d{9}$/.test(compactPhone);
+}
+
+function isTransactionSupportMessage(value: string) {
+  return classifyIntent(normalizeLocally(value)) === "deposit_withdrawal"
+    || /ฝาก(?:เงิน)?|ถอน(?:เงิน)?|deposit|withdraw(?:al|ing)?|top ?up|cash ?out/i.test(value);
 }
 
 export async function POST(request: Request) {
@@ -44,21 +56,26 @@ export async function POST(request: Request) {
     ? body.previousUserMessages.filter((item): item is string => typeof item === "string").slice(-4).map((item) => item.trim().slice(0, 500))
     : [];
 
-  if (!customer && /^USER-[A-Z0-9]{5,12}$/i.test(message)) {
+  const pendingMessage = [...previousUserMessages].reverse().find((item) => (
+    isTransactionSupportMessage(item)
+  ));
+  const awaitingCustomerIdentifier = !customer && Boolean(pendingMessage) && looksLikeCustomerIdentifier(message);
+
+  if (awaitingCustomerIdentifier) {
     const verifiedCustomer = findDemoCustomer(message);
     if (!verifiedCustomer) {
-      const thai = previousUserMessages.some((item) => /\p{Script=Thai}/u.test(item));
-      const answer = thai ? "ขออภัยค่ะ แอดมินยังไม่พบยูสเซอร์นี้ รบกวนลูกค้าตรวจสอบแล้วแจ้งเข้ามาใหม่อีกครั้งนะคะ" : "Sorry, that User ID was not found. Please check it and try again.";
-      return NextResponse.json(verificationOnlyResult(answer, true));
+      const thai = Boolean(pendingMessage && /\p{Script=Thai}/u.test(pendingMessage));
+      const answer = thai
+        ? "ขออภัยค่ะ ยังไม่พบบัญชีจากยูสเซอร์หรือเบอร์โทรนี้ รบกวนตรวจสอบข้อมูลแล้วแจ้งอีกครั้งนะคะ"
+        : "Sorry, no account was found for that username or phone number. Please check it and try again.";
+      return NextResponse.json(verificationOnlyResult(answer, true, thai ? "th" : "en"));
     }
 
-    const pendingMessage = [...previousUserMessages].reverse().find((item) => !/^USER-/i.test(item));
-    const result = pendingMessage
-      ? await runSupportAgent(pendingMessage, previousUserMessages.filter((item) => item !== pendingMessage), verifiedCustomer.userId)
-      : verificationOnlyResult(`User ${verifiedCustomer.userId} verified for this chat session. How can I help?`, false);
+    const result = await runSupportAgent(pendingMessage!, previousUserMessages.filter((item) => item !== pendingMessage), verifiedCustomer.userId);
     const thai = Boolean(pendingMessage && /\p{Script=Thai}/u.test(pendingMessage));
+    const verifiedReference = /^USER-/i.test(message) ? `ยูสเซอร์ ${message}` : `บัญชี ${message}`;
     result.answer = thai
-      ? `ได้ค่ะ แอดมินตรวจสอบยูสเซอร์ ${verifiedCustomer.userId} เรียบร้อยแล้วนะคะ ${result.answer}`
+      ? `ได้ค่ะ ตรวจสอบ${verifiedReference} เรียบร้อยแล้วนะคะ ${result.answer}`
       : `User ${verifiedCustomer.userId} is verified for this chat session. ${result.answer}`;
     result.trace.customerScope = verifiedCustomer.userId;
     if (!result.customerVerificationRequired && !result.clarificationRequired) recordSupportEvent(result.trace);

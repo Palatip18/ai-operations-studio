@@ -17,6 +17,13 @@ const customers = new Map<string, DemoCustomer>([
   ["USER-MALI02", { userId: "USER-MALI02", displayName: "Mali Demo", tier: "STANDARD", status: "ACTIVE" }],
 ]);
 
+const customerAliases = new Map<string, string>([
+  ["ABC123", "USER-RAY01"],
+  ["0800000001", "USER-RAY01"],
+  ["MALI456", "USER-MALI02"],
+  ["0800000002", "USER-MALI02"],
+]);
+
 function secret() {
   const value = process.env.DEMO_PASSWORD;
   if (!value) throw new Error("DEMO_PASSWORD is not configured");
@@ -33,8 +40,16 @@ function safeEqual(left: string, right: string) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-export function findDemoCustomer(userId: string): DemoCustomer | null {
-  return customers.get(userId.trim().toUpperCase()) ?? null;
+function normalizeCustomerIdentifier(identifier: string) {
+  const trimmed = identifier.trim();
+  const digits = trimmed.replace(/[^\d]/g, "");
+  return /^0\d{9}$/.test(digits) ? digits : trimmed.toUpperCase();
+}
+
+export function findDemoCustomer(identifier: string): DemoCustomer | null {
+  const normalized = normalizeCustomerIdentifier(identifier);
+  const canonicalId = customerAliases.get(normalized) ?? normalized;
+  return customers.get(canonicalId) ?? null;
 }
 
 export function createCustomerContextToken(customer: DemoCustomer, now = Date.now()) {

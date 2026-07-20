@@ -194,6 +194,41 @@ describe("agent trace redaction", () => {
     expect(verifiedBody.slipUploadRequired).toBe(true);
     expect(verifiedBody.answer).toContain("ตรวจสอบยูสเซอร์ USER-RAY01");
   });
+
+  it("treats a plain username as the answer when the previous turn requested customer verification", async () => {
+    const issue = "ฝากเงินไม่เข้า ช่วยตรวจสอบให้หน่อย";
+    const verify = await supportRoute(new Request("http://localhost/api/support", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: cookie(), "x-forwarded-for": "203.0.113.34" },
+      body: JSON.stringify({ message: "ABC123", previousUserMessages: [issue] }),
+    }));
+    expect(verify.status).toBe(200);
+    expect(verify.headers.get("set-cookie")).toContain(`${SUPPORT_CUSTOMER_COOKIE}=`);
+    const body = await verify.json();
+    expect(body.trace.customerScope).toBe("USER-RAY01");
+    expect(body.customerVerificationRequired).toBe(false);
+    expect(body.answer).toContain("ตรวจสอบบัญชี ABC123 เรียบร้อยแล้ว");
+    expect(body.answer).not.toMatch(/not yet sure|ยังไม่แน่ใจ/i);
+  });
+
+  it("accepts a registered phone format only while customer verification is pending", async () => {
+    const issue = "ถอนเงินยังไม่เข้า ช่วยตรวจสอบให้หน่อย";
+    const verify = await supportRoute(new Request("http://localhost/api/support", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: cookie(), "x-forwarded-for": "203.0.113.35" },
+      body: JSON.stringify({ message: "080-000-0001", previousUserMessages: [issue] }),
+    }));
+    const verifiedBody = await verify.json();
+    expect(verifiedBody.trace.customerScope).toBe("USER-RAY01");
+    expect(verifiedBody.customerVerificationRequired).toBe(false);
+
+    const noContext = await supportRoute(new Request("http://localhost/api/support", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: cookie(), "x-forwarded-for": "203.0.113.36" },
+      body: JSON.stringify({ message: "ABC123", previousUserMessages: [] }),
+    }));
+    expect(noContext.headers.get("set-cookie")).toBeNull();
+  });
 });
 
 describe("support agent trace redaction", () => {

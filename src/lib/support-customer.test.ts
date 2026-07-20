@@ -8,6 +8,8 @@ describe("simulated support customer context", () => {
 
   it("finds only known fictional users", () => {
     expect(findDemoCustomer("user-ray01")?.userId).toBe("USER-RAY01");
+    expect(findDemoCustomer("ABC123")?.userId).toBe("USER-RAY01");
+    expect(findDemoCustomer("080-000-0001")?.userId).toBe("USER-RAY01");
     expect(findDemoCustomer("USER-UNKNOWN")).toBeNull();
   });
 
