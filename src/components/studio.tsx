@@ -1769,6 +1769,41 @@ type AnalyticsResult = {
   };
 };
 
+type ChatHistoryTurn = {
+  id: string;
+  occurredAt: string;
+  userMessage: string;
+  assistantMessage: string;
+  intent: string;
+  risk: string;
+  decision: string;
+  language: string;
+  groundednessScore: number;
+  toolsUsed: string[];
+  sourceIds: string[];
+  handoffId: string | null;
+  transactionStatus: string | null;
+};
+type ChatHistorySession = {
+  id: string;
+  startedAt: string;
+  updatedAt: string;
+  endedAt: string | null;
+  status: "OPEN" | "ENDED";
+  turnCount: number;
+  primaryIntent: string;
+  highestRisk: string;
+  latestDecision: string;
+  languages: string[];
+  turns: ChatHistoryTurn[];
+};
+type ChatHistoryResult = {
+  storageMode: "persistent-redis" | "local-memory";
+  retentionDays: number;
+  containsRedactedChatText: boolean;
+  sessions: ChatHistorySession[];
+};
+
 function SupportAnalyticsDemo({ locale }: { locale: UiLocale }) {
   const [period, setPeriod] = useState<AnalyticsPeriod>("week");
   const [data, setData] = useState<AnalyticsResult | null>(null);
@@ -1776,13 +1811,44 @@ function SupportAnalyticsDemo({ locale }: { locale: UiLocale }) {
   const [error, setError] = useState("");
   const [dispatchResult, setDispatchResult] = useState<{ reportId: string; recipients: string[]; status: string } | null>(null);
   const [dispatching, setDispatching] = useState(false);
+  const [chatHistory, setChatHistory] = useState<ChatHistoryResult | null>(null);
+  const [chatHistoryLoading, setChatHistoryLoading] = useState(true);
+  const [chatHistoryError, setChatHistoryError] = useState("");
   const labels = locale === "th" ? {
-    title: "วิเคราะห์ปัญหาลูกค้า", intro: "บันทึกเหตุการณ์แบบไม่เก็บข้อความหรือข้อมูลระบุตัวลูกค้า เพื่อดูแนวโน้มและส่งรายงานให้ทีมที่เกี่ยวข้อง", day: "วันนี้", week: "7 วัน", month: "30 วัน", interactions: "การติดต่อทั้งหมด", auto: "AI แก้ได้เอง", escalated: "ส่งต่อพนักงาน", automation: "อัตราที่ AI แก้ได้", topIssue: "ปัญหาที่พบมากที่สุด", trend: "แนวโน้มจำนวนปัญหา", breakdown: "ปัญหาและสัดส่วน", owner: "ทีมที่เกี่ยวข้อง", action: "ข้อเสนอแนะเพื่อปรับปรุง", learningLog: "ทะเบียนเคสเพื่อพัฒนา AI", resolved: "AI แก้ได้เอง", employee: "ต้องส่งต่อพนักงาน", reason: "เหตุผล/สัญญาณพัฒนา", backlog: "รายการที่ควรนำไปปรับปรุงระบบ", send: "ส่งรายงานจำลอง", sending: "กำลังจัดทำรายงาน...", sent: "สร้างรายงานและเข้าคิวเรียบร้อย", privacy: "ไม่เก็บข้อความ User ID เบอร์โทร หรือข้อมูลธุรกรรมของลูกค้า", simulated: "ข้อมูลจำลอง + เหตุการณ์จากเดโม", noData: "ยังไม่มีข้อมูลในช่วงเวลานี้",
+    title: "วิเคราะห์ปัญหาลูกค้า", intro: "สรุปเหตุการณ์เพื่อดูแนวโน้ม ตรวจสอบเคสทดสอบ และส่งข้อมูลปรับปรุงให้ทีมที่เกี่ยวข้อง", day: "วันนี้", week: "7 วัน", month: "30 วัน", interactions: "การติดต่อทั้งหมด", auto: "AI แก้ได้เอง", escalated: "ส่งต่อพนักงาน", automation: "อัตราที่ AI แก้ได้", topIssue: "ปัญหาที่พบมากที่สุด", trend: "แนวโน้มจำนวนปัญหา", breakdown: "ปัญหาและสัดส่วน", owner: "ทีมที่เกี่ยวข้อง", action: "ข้อเสนอแนะเพื่อปรับปรุง", learningLog: "ทะเบียนเคสเพื่อพัฒนา AI", resolved: "AI แก้ได้เอง", employee: "ต้องส่งต่อพนักงาน", reason: "เหตุผล/สัญญาณพัฒนา", backlog: "รายการที่ควรนำไปปรับปรุงระบบ", send: "ส่งรายงานจำลอง", sending: "กำลังจัดทำรายงาน...", sent: "สร้างรายงานและเข้าคิวเรียบร้อย", privacy: "สถิติไม่เก็บข้อมูลระบุตัวลูกค้า ส่วนประวัติแชตเก็บเฉพาะข้อความทดสอบที่ผ่านการปิดบังข้อมูลอ่อนไหว", simulated: "ข้อมูลจำลอง + เหตุการณ์จากเดโม", noData: "ยังไม่มีข้อมูลในช่วงเวลานี้",
   } : locale === "zh" ? {
-    title: "客户问题分析", intro: "记录不含客户文本或身份信息的事件，用于趋势分析和改进分派", day: "今天", week: "7 天", month: "30 天", interactions: "总咨询量", auto: "AI 已解决", escalated: "转人工审核", automation: "AI 解决率", topIssue: "最常见问题", trend: "问题趋势", breakdown: "问题分布", owner: "负责团队", action: "改进建议", learningLog: "AI 学习案例日志", resolved: "AI 已解决", employee: "需要人工审核", reason: "原因/改进信号", backlog: "系统改进清单", send: "发送模拟报告", sending: "正在生成报告...", sent: "报告已创建并进入队列", privacy: "不保存客户消息、User ID、电话或交易资料", simulated: "模拟历史 + 演示事件", noData: "此期间暂无数据",
+    title: "客户问题分析", intro: "汇总事件趋势、检查测试案例，并将改进信息分派给相关团队", day: "今天", week: "7 天", month: "30 天", interactions: "总咨询量", auto: "AI 已解决", escalated: "转人工审核", automation: "AI 解决率", topIssue: "最常见问题", trend: "问题趋势", breakdown: "问题分布", owner: "负责团队", action: "改进建议", learningLog: "AI 学习案例日志", resolved: "AI 已解决", employee: "需要人工审核", reason: "原因/改进信号", backlog: "系统改进清单", send: "发送模拟报告", sending: "正在生成报告...", sent: "报告已创建并进入队列", privacy: "分析数据不含客户身份；聊天记录仅保存经过敏感信息遮盖的测试消息", simulated: "模拟历史 + 演示事件", noData: "此期间暂无数据",
   } : {
-    title: "Support Analytics", intro: "Privacy-safe event logging for trend analysis and routing improvement reports to the responsible teams.", day: "Today", week: "7 days", month: "30 days", interactions: "Total interactions", auto: "AI resolved", escalated: "Employee review", automation: "AI resolution rate", topIssue: "Top issue", trend: "Issue-volume trend", breakdown: "Issue mix", owner: "Responsible team", action: "Improvement recommendation", learningLog: "Case-learning log", resolved: "AI resolved", employee: "Employee review", reason: "Reason / learning signal", backlog: "System-improvement backlog", send: "Dispatch simulated report", sending: "Preparing report...", sent: "Report created and queued", privacy: "No customer message, User ID, phone number, or transaction data is stored", simulated: "Demo history + live demo events", noData: "No events in this period",
+    title: "Support Analytics", intro: "Summarized events for trend analysis, test-case review, and improvement routing to the responsible teams.", day: "Today", week: "7 days", month: "30 days", interactions: "Total interactions", auto: "AI resolved", escalated: "Employee review", automation: "AI resolution rate", topIssue: "Top issue", trend: "Issue-volume trend", breakdown: "Issue mix", owner: "Responsible team", action: "Improvement recommendation", learningLog: "Case-learning log", resolved: "AI resolved", employee: "Employee review", reason: "Reason / learning signal", backlog: "System-improvement backlog", send: "Dispatch simulated report", sending: "Preparing report...", sent: "Report created and queued", privacy: "Analytics excludes customer identifiers; chat history retains only test messages after sensitive-data redaction", simulated: "Demo history + live demo events", noData: "No events in this period",
   };
+
+  const historyLabels = locale === "th" ? {
+    title: "ประวัติแชตจากการทดสอบจริง",
+    intro: "HR สามารถเปิดดูแต่ละ Session ตามลำดับข้อความ พร้อมผลการจำแนกและเส้นทางตัดสินใจของ AI ได้",
+    refresh: "รีเฟรชประวัติ", loading: "กำลังโหลดประวัติแชต...", empty: "ยังไม่มีบทสนทนาที่บันทึกไว้ ลองทดสอบในหน้าแชตลูกค้าแล้วกลับมากดรีเฟรชค่ะ", customer: "ลูกค้า", assistant: "AI แอดมิน", open: "กำลังดำเนินการ", ended: "จบแชตแล้ว", turns: "รอบสนทนา", persistent: "เก็บถาวร", temporary: "เก็บชั่วคราว", retained: "เก็บข้อมูล 30 วัน · ปิดบังข้อมูลอ่อนไหวอัตโนมัติ", loadError: "โหลดประวัติแชตไม่สำเร็จ",
+  } : locale === "zh" ? {
+    title: "真实测试聊天记录",
+    intro: "HR 可按消息顺序查看每个会话，以及 AI 的分类和决策路径",
+    refresh: "刷新记录", loading: "正在加载聊天记录...", empty: "尚无已保存的会话。请先在客户聊天页面测试，然后刷新。", customer: "客户", assistant: "AI 客服", open: "进行中", ended: "已结束", turns: "轮对话", persistent: "持久保存", temporary: "临时保存", retained: "保留 30 天 · 自动遮盖敏感信息", loadError: "无法加载聊天记录",
+  } : {
+    title: "Live test chat history",
+    intro: "HR can review each session in message order, including the AI classification and decision path.",
+    refresh: "Refresh history", loading: "Loading chat history...", empty: "No saved conversations yet. Run a test in Customer Live Chat, then refresh.", customer: "Customer", assistant: "AI agent", open: "In progress", ended: "Ended", turns: "turns", persistent: "Persistent", temporary: "Temporary", retained: "Retained for 30 days · sensitive data redacted automatically", loadError: "Unable to load chat history",
+  };
+
+  async function loadChatHistory() {
+    setChatHistoryLoading(true);
+    setChatHistoryError("");
+    try {
+      const response = await fetch("/api/support/history?limit=30", { cache: "no-store" });
+      if (!response.ok) throw new Error("History request failed");
+      setChatHistory(await response.json() as ChatHistoryResult);
+    } catch {
+      setChatHistoryError(historyLabels.loadError);
+    } finally {
+      setChatHistoryLoading(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -1796,6 +1862,21 @@ function SupportAnalyticsDemo({ locale }: { locale: UiLocale }) {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [period, locale]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/support/history?limit=30", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("History request failed");
+        return response.json() as Promise<ChatHistoryResult>;
+      })
+      .then((result) => { if (!cancelled) setChatHistory(result); })
+      .catch(() => { if (!cancelled) setChatHistoryError(historyLabels.loadError); })
+      .finally(() => { if (!cancelled) setChatHistoryLoading(false); });
+    return () => { cancelled = true; };
+    // historyLabels is derived exclusively from locale.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
 
   async function dispatchReport() {
     setDispatching(true);
@@ -1857,6 +1938,34 @@ function SupportAnalyticsDemo({ locale }: { locale: UiLocale }) {
         <section className="rounded-xl border border-warning/15 bg-warning/5 p-4">
           <p className="font-mono text-[10px] uppercase tracking-wider text-warning">{labels.backlog}</p>
           <div className="mt-3 grid gap-3 md:grid-cols-2">{data.learning.improvementBacklog.slice(0, 6).map((item) => <div key={item.intent} className="rounded-lg border border-white/10 bg-black/10 p-3 text-xs"><div className="flex justify-between gap-3"><span className="font-medium text-foreground">{item.issue}</span><span className="font-mono text-warning">{item.employeeReviewCount} / {item.aiResolvedCount + item.employeeReviewCount}</span></div><p className="mt-2 text-accent-secondary">{item.owner}</p><p className="mt-1 leading-5 text-muted">{item.recommendation}</p></div>)}</div>
+        </section>
+
+        <section className="overflow-hidden rounded-xl border border-accent/20 bg-black/10">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 p-4">
+            <div>
+              <p className="font-semibold text-foreground">{historyLabels.title}</p>
+              <p className="mt-1 max-w-3xl text-xs leading-5 text-muted">{historyLabels.intro}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {chatHistory && <span className={`rounded-full border px-2.5 py-1 font-mono text-[10px] ${chatHistory.storageMode === "persistent-redis" ? "border-success/25 bg-success/5 text-success" : "border-warning/25 bg-warning/5 text-warning"}`}>{chatHistory.storageMode === "persistent-redis" ? historyLabels.persistent : historyLabels.temporary}</span>}
+              <button type="button" onClick={() => void loadChatHistory()} disabled={chatHistoryLoading} className="kb-focusable min-h-[36px] rounded-lg border border-white/10 px-3 text-xs text-muted hover:text-foreground disabled:opacity-50">{historyLabels.refresh}</button>
+            </div>
+          </div>
+          <div className="px-4 py-3 text-[10px] text-muted">{historyLabels.retained}</div>
+          {chatHistoryLoading ? <div className="p-6 text-center text-sm text-muted">{historyLabels.loading}</div> : chatHistoryError ? <div className="p-4 text-sm text-error">{chatHistoryError}</div> : !chatHistory?.sessions.length ? <div className="p-6 text-center text-sm text-muted">{historyLabels.empty}</div> : <div className="max-h-[42rem] divide-y divide-white/10 overflow-y-auto">
+            {chatHistory.sessions.map((session) => <details key={session.id} className="group p-4" open={chatHistory.sessions.length === 1}>
+              <summary className="kb-focusable cursor-pointer list-none rounded-lg text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div><p className="font-mono text-[11px] text-accent">{session.id}</p><p className="mt-1 text-muted">{new Date(session.startedAt).toLocaleString(locale === "th" ? "th-TH" : locale === "zh" ? "zh-CN" : "en-US")} · {session.turnCount} {historyLabels.turns} · {session.primaryIntent}</p></div>
+                  <span className={`rounded-full px-2 py-1 text-[10px] ${session.status === "OPEN" ? "bg-success/10 text-success" : "bg-white/5 text-muted"}`}>{session.status === "OPEN" ? historyLabels.open : historyLabels.ended}</span>
+                </div>
+              </summary>
+              <div className="mt-4 space-y-3">{session.turns.map((turn) => <div key={turn.id} className="rounded-lg border border-white/10 bg-[#07101F] p-3">
+                <div className="space-y-3 text-xs leading-5"><div><span className="font-semibold text-accent">{historyLabels.customer}</span><p className="mt-1 whitespace-pre-wrap text-foreground">{turn.userMessage}</p></div><div><span className="font-semibold text-success">{historyLabels.assistant}</span><p className="mt-1 whitespace-pre-wrap text-muted">{turn.assistantMessage}</p></div></div>
+                <div className="mt-3 flex flex-wrap gap-1.5 font-mono text-[9px] text-muted"><span className="rounded bg-white/5 px-2 py-1">intent: {turn.intent}</span><span className="rounded bg-white/5 px-2 py-1">risk: {turn.risk}</span><span className="rounded bg-white/5 px-2 py-1">decision: {turn.decision}</span><span className="rounded bg-white/5 px-2 py-1">grounded: {Math.round(turn.groundednessScore * 100)}%</span>{turn.toolsUsed.map((tool) => <span key={tool} className="rounded bg-accent/5 px-2 py-1 text-accent-secondary">{tool}</span>)}</div>
+              </div>)}</div>
+            </details>)}
+          </div>}
         </section>
 
         <div className="rounded-xl border border-success/15 bg-success/5 p-4">
@@ -2064,7 +2173,10 @@ function SupportDemo({
   }
 
   async function changeCustomer() {
-    await fetch("/api/support/customer", { method: "DELETE" }).catch(() => {});
+    await Promise.all([
+      fetch("/api/support/customer", { method: "DELETE" }).catch(() => null),
+      fetch("/api/support/history", { method: "DELETE" }).catch(() => null),
+    ]);
     setCustomer(null);
     clearConversation();
   }
@@ -2098,6 +2210,11 @@ function SupportDemo({
     setSlipFile(null);
     setSlipError("");
     setSlipResult(null);
+  }
+
+  async function startNewConversation() {
+    await fetch("/api/support/history", { method: "DELETE" }).catch(() => null);
+    clearConversation();
   }
 
   return (
@@ -2161,7 +2278,7 @@ function SupportDemo({
         {(history.length > 0 || submittedMessage) && (
           <button
             type="button"
-            onClick={clearConversation}
+            onClick={() => void startNewConversation()}
             disabled={loading}
             className="kb-focusable min-h-[36px] rounded-lg border border-white/10 px-3 py-1.5 text-xs text-muted transition hover:border-accent/35 hover:text-accent disabled:opacity-50"
           >

@@ -6,6 +6,13 @@ import { recordSupportEvent } from "@/lib/support-analytics";
 import { createCustomerContextToken, customerContextCookieOptions, findDemoCustomer, readCustomerContext, SUPPORT_CUSTOMER_COOKIE } from "@/lib/support-customer";
 import { classifyIntent } from "@/lib/support-classification";
 import { normalizeLocally } from "@/lib/multilingual";
+import {
+  createSupportChatSessionId,
+  readSupportChatSessionId,
+  saveSupportChatTurn,
+  SUPPORT_CHAT_SESSION_COOKIE,
+  supportChatSessionCookieOptions,
+} from "@/lib/support-chat-history";
 
 function verificationOnlyResult(answer: string, customerVerificationRequired: boolean, language: "en" | "th" | "zh" = "en"): SupportResult {
   return {
@@ -43,6 +50,20 @@ function isTransactionSupportMessage(value: string) {
     || /ฝาก(?:เงิน)?|ถอน(?:เงิน)?|deposit|withdraw(?:al|ing)?|top ?up|cash ?out/i.test(value);
 }
 
+async function persistSupportTurn(sessionId: string, message: string, result: SupportResult) {
+  try {
+    await saveSupportChatTurn({ sessionId, userMessage: message, result });
+  } catch (error) {
+    console.error("Support chat history persistence failed", error instanceof Error ? error.message : "Unknown storage error");
+  }
+}
+
+function supportResponse(result: SupportResult, sessionId: string) {
+  const response = NextResponse.json(result);
+  response.cookies.set(SUPPORT_CHAT_SESSION_COOKIE, sessionId, supportChatSessionCookieOptions);
+  return response;
+}
+
 export async function POST(request: Request) {
   if (!isAuthenticatedRequest(request)) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const customer = readCustomerContext(request);
@@ -55,6 +76,7 @@ export async function POST(request: Request) {
   const previousUserMessages = Array.isArray(body.previousUserMessages)
     ? body.previousUserMessages.filter((item): item is string => typeof item === "string").slice(-4).map((item) => item.trim().slice(0, 500))
     : [];
+  const chatSessionId = readSupportChatSessionId(request) ?? createSupportChatSessionId();
 
   const pendingMessage = [...previousUserMessages].reverse().find((item) => (
     isTransactionSupportMessage(item)
@@ -68,7 +90,9 @@ export async function POST(request: Request) {
       const answer = thai
         ? "ขออภัยค่ะ ยังไม่พบบัญชีจากยูสเซอร์หรือเบอร์โทรนี้ รบกวนตรวจสอบข้อมูลแล้วแจ้งอีกครั้งนะคะ"
         : "Sorry, no account was found for that username or phone number. Please check it and try again.";
-      return NextResponse.json(verificationOnlyResult(answer, true, thai ? "th" : "en"));
+      const result = verificationOnlyResult(answer, true, thai ? "th" : "en");
+      await persistSupportTurn(chatSessionId, message, result);
+      return supportResponse(result, chatSessionId);
     }
 
     const result = await runSupportAgent(pendingMessage!, previousUserMessages.filter((item) => item !== pendingMessage), verifiedCustomer.userId);
@@ -79,11 +103,13 @@ export async function POST(request: Request) {
       : `User ${verifiedCustomer.userId} is verified for this chat session. ${result.answer}`;
     result.trace.customerScope = verifiedCustomer.userId;
     if (!result.customerVerificationRequired && !result.clarificationRequired) recordSupportEvent(result.trace);
-    const response = NextResponse.json(result);
+    await persistSupportTurn(chatSessionId, message, result);
+    const response = supportResponse(result, chatSessionId);
     response.cookies.set(SUPPORT_CUSTOMER_COOKIE, createCustomerContextToken(verifiedCustomer), customerContextCookieOptions);
     return response;
   }
   const result = await runSupportAgent(message, previousUserMessages, customer?.userId ?? null);
   if (!result.customerVerificationRequired && !result.clarificationRequired) recordSupportEvent(result.trace);
-  return NextResponse.json(result);
+  await persistSupportTurn(chatSessionId, message, result);
+  return supportResponse(result, chatSessionId);
 }

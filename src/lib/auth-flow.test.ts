@@ -227,7 +227,7 @@ describe("agent trace redaction", () => {
       headers: { "content-type": "application/json", cookie: cookie(), "x-forwarded-for": "203.0.113.36" },
       body: JSON.stringify({ message: "ABC123", previousUserMessages: [] }),
     }));
-    expect(noContext.headers.get("set-cookie")).toBeNull();
+    expect(noContext.headers.get("set-cookie")).not.toContain(`${SUPPORT_CUSTOMER_COOKIE}=`);
   });
 });
 
